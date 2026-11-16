@@ -10,6 +10,8 @@ Loader {
     property var mdModel: null
     property string fontFamily: ""
     property real fontSize: Theme.regularFontSize
+    property real headingScale: 1.0
+    property real codeFontSize: fontSize * 0.9
     property real lineHeight: 1.0
     property real maxImageHeight: 200
     signal imagePreviewRequested(string source, string link)
@@ -51,6 +53,7 @@ Loader {
             blockData: root.blockData
             fontFamily: root.fontFamily
             fontSize: root.fontSize
+            headingScale: root.headingScale
             lineHeight: root.lineHeight
             first: root.blockIndex === 0
         }
@@ -74,7 +77,7 @@ Loader {
     Component {
         id: codeBlockComp
         MdCodeBlock {
-            fontSize: root.fontSize * 0.9
+            fontSize: root.codeFontSize
             lineHeight: root.lineHeight
             blockData: root.blockData
             blockIndex: root.blockIndex

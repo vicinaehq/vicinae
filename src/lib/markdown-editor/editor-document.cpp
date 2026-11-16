@@ -28,9 +28,13 @@ public:
     m_palette = palette;
     m_styles = palette.styles();
     m_marker = {};
-    m_marker.setForeground(palette.restrained(palette.blue));
-    m_heading = palette.restrained(palette.purple);
-    m_link = palette.restrained(palette.cyan);
+    m_marker.setForeground(palette.readable(palette.marker));
+    m_emphasis = {};
+    m_emphasis.setForeground(palette.readable(palette.emphasis));
+    m_heading = palette.readable(palette.heading);
+    m_link = palette.readable(palette.link);
+    m_linkTarget = palette.readable(palette.linkTarget);
+    m_inlineCode = palette.readable(palette.inlineCode);
     rehighlight();
   }
 
@@ -56,28 +60,28 @@ protected:
 
     const auto name = format.name();
     const auto text = m_line.mid(offset, length);
-    auto delimiters = [&](QStringView characters) {
+    auto delimiters = [&](QStringView characters, const QTextCharFormat &marker) {
       int start = 0;
       int end = length;
       while (start < end && characters.contains(text[start]))
         ++start;
       while (end > start && characters.contains(text[end - 1]))
         --end;
-      setFormat(offset, start, m_marker);
-      setFormat(offset + end, length - end, m_marker);
+      setFormat(offset, start, marker);
+      setFormat(offset + end, length - end, marker);
     };
 
     if (name.startsWith(u"Header H")) {
       style.setForeground(m_heading);
       setFormat(offset, length, style);
-      delimiters(u"#= ");
+      delimiters(u"#= ", m_marker);
     } else if (name.contains(u"Emphasis Text") || name.contains(u"Strong Text") ||
                name.contains(u"Strikethrough Text")) {
       style.setForeground(m_palette.foreground);
       setFormat(offset, length, style);
-      delimiters(u"*_~");
+      delimiters(u"*_~", m_emphasis);
     } else if (name == u"Inline Image" || name == u"Reference Image") {
-      style.setForeground(m_link);
+      style.setForeground(m_linkTarget);
       setFormat(offset, length, style);
       if (text.startsWith(u"![")) {
         int closing = 2;
@@ -93,17 +97,19 @@ protected:
           setFormat(offset + closing, std::min(2, length - closing), m_marker);
         }
       }
-      delimiters(u"[]()");
+      delimiters(u"[]()", m_marker);
     } else if (name.contains(u"Link") || name == u"Email" || name == u"Footnote") {
-      style.setForeground(m_link);
+      const bool destination = (name.startsWith(u"Reference-Link") && name != u"Reference-Link Name") ||
+                               name == u"Inline Image: Link";
+      style.setForeground(destination ? m_linkTarget : m_link);
       setFormat(offset, length, style);
-      delimiters(u"[]()<>");
+      delimiters(u"[]()<>", m_marker);
     } else if (name == u"Code") {
       const bool inlineCode = text.startsWith(u'`') && text.endsWith(u'`');
-      style.setForeground(inlineCode ? m_styles[Syntax::TextStyle::String] : m_palette.foreground);
+      style.setForeground(inlineCode ? m_inlineCode : m_palette.foreground);
       if (inlineCode) style.setBackground(Syntax::mix(m_palette.background, m_palette.foreground, 0.06));
       setFormat(offset, length, style);
-      if (inlineCode) delimiters(u"`");
+      if (inlineCode) delimiters(u"`", m_marker);
     } else if (name == u"Fenced Code" || name == u"Table" || name == u"Horizontal Rule" || name == u"List" ||
                name == u"Number List" || name == u"Blockquote" || name == u"Line Break") {
       setFormat(offset, length, m_marker);
@@ -117,7 +123,7 @@ protected:
       style.setForeground(m_palette.foreground);
       style.setBackground(Syntax::mix(m_palette.background, m_link, 0.15));
       setFormat(offset, length, style);
-      delimiters(u"=");
+      delimiters(u"=", m_emphasis);
     } else {
       setFormat(offset, length, style);
     }
@@ -132,8 +138,11 @@ private:
   Syntax::Palette m_palette;
   Syntax::StyleMap m_styles;
   QTextCharFormat m_marker;
+  QTextCharFormat m_emphasis;
   QColor m_heading;
   QColor m_link;
+  QColor m_linkTarget;
+  QColor m_inlineCode;
   QStringView m_line;
 };
 

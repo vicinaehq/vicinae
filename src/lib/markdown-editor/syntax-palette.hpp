@@ -32,50 +32,64 @@ inline double contrast(const QColor &first, const QColor &second) {
 struct Palette {
   QColor background = QColor("#202124");
   QColor foreground = QColor("#d4d4d4");
-  QColor muted = QColor("#92969c");
-  QColor accent = QColor("#8ab4f8");
-  QColor blue = QColor("#8ab4f8");
-  QColor purple = QColor("#c5a5df");
-  QColor cyan = QColor("#8fc9cf");
-  QColor green = QColor("#a8c799");
-  QColor orange = QColor("#d3b18d");
-  QColor red = QColor("#d99797");
+  QColor keyword = QColor("#8eb7e8");
+  QColor controlFlow = QColor("#c6a0db");
+  QColor function = QColor("#e6c384");
+  QColor type = QColor("#7fc5c0");
+  QColor string = QColor("#b2c98f");
+  QColor number = QColor("#e9aa80");
+  QColor constant = QColor("#c4a7e7");
+  QColor attribute = QColor("#9abfdd");
+  QColor preprocessor = QColor("#d99ca7");
+  QColor special = QColor("#e6c384");
+  QColor error = QColor("#ef8b82");
+  QColor comment = QColor("#868b98");
+  QColor heading = QColor("#e6c384");
+  QColor emphasis = QColor("#d99ca7");
+  QColor link = QColor("#7fc5c0");
+  QColor linkTarget = QColor("#96a9c8");
+  QColor inlineCode = QColor("#e9aa80");
+  QColor marker = QColor("#8eb7e8");
 
   bool operator==(const Palette &) const = default;
 
   QColor readable(const QColor &color) const {
     const auto minimum = std::min(4.5, contrast(foreground, background));
-    auto result = color;
-    for (int step = 1; step <= 10 && contrast(result, background) < minimum; ++step)
-      result = mix(color, foreground, step / 10.0);
+    const auto opaque = mix(background, color, color.alphaF());
+    auto result = opaque;
+    for (int step = 1; step <= 100 && contrast(result, background) < minimum; ++step)
+      result = mix(opaque, foreground, step / 100.0);
     return result;
-  }
-
-  QColor restrained(const QColor &color) const {
-    return readable(mix(mix(foreground, color, 0.85), background, 0.04));
   }
 
   StyleMap styles() const {
     StyleMap map;
     map.fill(foreground);
-    auto set = [&](TextStyle style, const QColor &color) { map[style] = restrained(color); };
-    for (auto style : {TextStyle::Keyword, TextStyle::ControlFlow, TextStyle::Import, TextStyle::Attribute})
-      set(style, purple);
-    for (auto style : {TextStyle::Function, TextStyle::Information, TextStyle::Others})
-      set(style, blue);
-    for (auto style : {TextStyle::BuiltIn, TextStyle::Extension, TextStyle::DataType})
-      set(style, cyan);
+    auto set = [&](TextStyle style, const QColor &color) { map[style] = readable(color); };
+    set(TextStyle::Keyword, keyword);
+    set(TextStyle::ControlFlow, controlFlow);
+    set(TextStyle::Import, controlFlow);
+    set(TextStyle::Function, function);
+    set(TextStyle::BuiltIn, function);
+    set(TextStyle::Extension, type);
+    set(TextStyle::DataType, type);
+    set(TextStyle::Attribute, attribute);
+    set(TextStyle::Preprocessor, preprocessor);
+    set(TextStyle::Constant, constant);
+    set(TextStyle::Information, type);
+    set(TextStyle::Others, special);
+    set(TextStyle::SpecialChar, special);
     for (auto style :
          {TextStyle::Char, TextStyle::String, TextStyle::VerbatimString, TextStyle::SpecialString})
-      set(style, green);
-    for (auto style : {TextStyle::Preprocessor, TextStyle::SpecialChar, TextStyle::DecVal, TextStyle::BaseN,
-                       TextStyle::Float, TextStyle::Constant, TextStyle::Warning})
-      set(style, orange);
+      set(style, string);
+    for (auto style : {TextStyle::DecVal, TextStyle::BaseN, TextStyle::Float})
+      set(style, number);
+    set(TextStyle::Warning, number);
     for (auto style : {TextStyle::Alert, TextStyle::Error})
-      set(style, red);
+      set(style, error);
     for (auto style : {TextStyle::Comment, TextStyle::Documentation, TextStyle::Annotation,
                        TextStyle::CommentVar, TextStyle::RegionMarker})
-      map[style] = readable(muted);
+      set(style, comment);
     return map;
   }
 };

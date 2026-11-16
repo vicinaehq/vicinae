@@ -239,7 +239,7 @@ private slots:
     Editor::EditorDocument editor;
     editor.attach(&text);
     const QString source = QStringLiteral(
-        "# Heading\n\n**bold** and *italic* and ~~removed~~\n\n"
+        "# Heading\n\n**bold** and *italic* and ~~removed~~ and `inline`\n\n"
         "![Alt text](https://example.com/image.png)\n![Local](image.png)\n![Reference][image]\n"
         "[Label](https://example.com)\n\n> Quote\n\n- [x] Complete\n\n"
         "```cpp\nconst char *message = \"hello\"; // *literal*\n```\n");
@@ -259,28 +259,30 @@ private slots:
       Syntax::Palette palette;
       palette.foreground = dark ? QColor("#c7c9ce") : QColor("#30343a");
       palette.background = dark ? QColor("#24262a") : QColor("#f7f5f2");
-      palette.accent = QColor("#5678ab");
+      palette.marker = QColor("#5678ab");
       editor.setPalette(palette);
-      QCOMPARE(formatAt("Heading").foreground().color(), palette.restrained(palette.purple));
+      QCOMPARE(formatAt("Heading").foreground().color(), palette.readable(palette.heading));
       QCOMPARE(formatAt("Heading").fontWeight(), QFont::Bold);
-      QCOMPARE(formatAt("#").foreground().color(), palette.restrained(palette.blue));
+      QCOMPARE(formatAt("#").foreground().color(), palette.readable(palette.marker));
       QCOMPARE(formatAt("bold").fontWeight(), QFont::Bold);
       QCOMPARE(formatAt("**").fontWeight(), QFont::Normal);
-      QCOMPARE(formatAt("**").foreground().color(), palette.restrained(palette.blue));
+      QCOMPARE(formatAt("**").foreground().color(), palette.readable(palette.emphasis));
       QVERIFY(formatAt("italic").fontItalic());
       QVERIFY(formatAt("removed").fontStrikeOut());
+      QCOMPARE(formatAt("inline").foreground().color(), palette.readable(palette.inlineCode));
+      QVERIFY(formatAt("inline").foreground().color() != formatAt("hello").foreground().color());
       for (const auto &label : {"Alt text", "Local", "Reference", "Label"})
-        QCOMPARE(formatAt(label).foreground().color(), palette.restrained(palette.cyan));
+        QCOMPARE(formatAt(label).foreground().color(), palette.readable(palette.link));
       QCOMPARE(formatAt("Quote").foreground().color(), palette.foreground);
       QCOMPARE(formatAt("https://example.com/image.png").foreground().color(),
-               palette.restrained(palette.cyan));
-      QCOMPARE(formatAt("(image.png)", 1).foreground().color(), palette.restrained(palette.cyan));
-      QCOMPARE(formatAt("![").foreground().color(), palette.restrained(palette.blue));
-      QCOMPARE(formatAt("const").foreground().color(), palette.styles()[Syntax::TextStyle::Keyword]);
+               palette.readable(palette.linkTarget));
+      QCOMPARE(formatAt("(image.png)", 1).foreground().color(), palette.readable(palette.linkTarget));
+      QCOMPARE(formatAt("![").foreground().color(), palette.readable(palette.marker));
+      QCOMPARE(formatAt("const").foreground().color(), palette.styles()[Syntax::TextStyle::Attribute]);
       QCOMPARE(formatAt("const").fontWeight(), QFont::Normal);
       QCOMPARE(formatAt("char").foreground().color(), palette.styles()[Syntax::TextStyle::DataType]);
       QCOMPARE(formatAt("hello").foreground().color(), palette.styles()[Syntax::TextStyle::String]);
-      QCOMPARE(formatAt("literal").foreground().color(), palette.readable(palette.muted));
+      QCOMPARE(formatAt("literal").foreground().color(), palette.readable(palette.comment));
       QCOMPARE(editor.text(), source);
       QCOMPARE(editor.revision(), 0);
       QVERIFY(!text.isUndoAvailable());
@@ -297,7 +299,7 @@ private slots:
     QTextCursor cursor(&preview);
     cursor.setPosition(2);
     QCOMPARE(cursor.charFormat().foreground().color().name(),
-             styles[Vicinae::Syntax::TextStyle::Keyword].name());
+             styles[Vicinae::Syntax::TextStyle::Attribute].name());
     QCOMPARE(cursor.charFormat().fontWeight(), QFont::Normal);
     cursor.setPosition(source.indexOf("hello") + 1);
     QCOMPARE(cursor.charFormat().foreground().color().name(),
@@ -311,18 +313,79 @@ private slots:
       Palette palette;
       palette.background = dark ? QColor("#16171b") : QColor("#fcfaf7");
       palette.foreground = dark ? QColor("#dadce0") : QColor("#282a30");
-      palette.blue = Qt::blue;
-      palette.purple = Qt::magenta;
-      palette.green = Qt::green;
-      palette.cyan = Qt::cyan;
-      palette.orange = Qt::yellow;
-      palette.red = Qt::red;
+      palette.keyword = Qt::blue;
+      palette.controlFlow = Qt::magenta;
+      palette.string = Qt::green;
+      palette.type = Qt::cyan;
+      palette.number = Qt::yellow;
+      palette.error = Qt::red;
       for (const auto &color : palette.styles()) {
         QVERIFY(contrast(color, palette.background) >= 4.49);
         QVERIFY(color.isValid());
       }
-      QVERIFY(palette.styles()[TextStyle::String] != palette.green);
+      if (contrast(palette.string, palette.background) >= 4.5)
+        QCOMPARE(palette.styles()[TextStyle::String], palette.string);
       QCOMPARE(palette.styles()[TextStyle::Variable], palette.foreground);
+    }
+  }
+
+  void syntaxRolesUseThemeOverridesAndFallbacks() {
+    auto parsed = ThemeFile::fromString(R"(
+      [meta]
+      name = "Custom"
+      description = "Syntax palette"
+      variant = "dark"
+      [colors.accents]
+      blue = "#98b8e8"
+      orange = "#e8b898"
+      [colors.syntax]
+      keyword = "colors.accents.orange"
+      inline_code = "#e8c898"
+    )",
+                                        "custom.toml");
+    QVERIFY(parsed);
+    QVERIFY(parsed->diagnostics.empty());
+    parsed->file.setParent(std::make_shared<ThemeFile>(ThemeFile::vicinaeDark()));
+    const auto palette = syntax::paletteForTheme(parsed->file);
+    QCOMPARE(palette.keyword, QColor("#e8b898"));
+    QCOMPARE(palette.marker, QColor("#98b8e8"));
+    QCOMPARE(palette.inlineCode, QColor("#e8c898"));
+    QCOMPARE(palette.function, parsed->file.resolve(SemanticColor::Yellow));
+    const auto restored = ThemeFile::fromString(parsed->file.toToml(), "restored.toml");
+    QVERIFY(restored);
+    QVERIFY(restored->diagnostics.empty());
+    const auto roundTrip = syntax::paletteForTheme(restored->file);
+    QCOMPARE(roundTrip.keyword, palette.keyword);
+    QCOMPARE(roundTrip.inlineCode, palette.inlineCode);
+    QCOMPARE(roundTrip.marker, palette.marker);
+  }
+
+  void bundledSyntaxPalettesRemainReadable() {
+    for (const auto &entry : std::filesystem::directory_iterator(THEME_DIR)) {
+      if (entry.path().extension() != ".toml") continue;
+      const auto path = entry.path().string();
+      auto parsed = ThemeFile::fromFile(entry.path());
+      QVERIFY2(parsed.has_value(), path.c_str());
+      for (const auto &diagnostic : parsed->diagnostics)
+        QVERIFY2(!diagnostic.starts_with("unused config key colors.syntax"), diagnostic.c_str());
+      parsed->file.setParent(std::make_shared<ThemeFile>(parsed->file.isDark() ? ThemeFile::vicinaeDark()
+                                                                               : ThemeFile::vicinaeLight()));
+      const auto palette = syntax::paletteForTheme(parsed->file);
+      for (const auto &color : palette.styles()) {
+        QVERIFY2(color.isValid(), path.c_str());
+        QVERIFY2(Vicinae::Syntax::contrast(color, palette.background) >=
+                     std::min(4.5, Vicinae::Syntax::contrast(palette.foreground, palette.background)) - 0.01,
+                 path.c_str());
+      }
+    }
+    for (const auto &theme : {ThemeFile::vicinaeDark(), ThemeFile::vicinaeLight()}) {
+      const auto palette = syntax::paletteForTheme(theme);
+      const auto styles = palette.styles();
+      QCOMPARE(styles[Vicinae::Syntax::TextStyle::Keyword], palette.keyword);
+      QCOMPARE(styles[Vicinae::Syntax::TextStyle::Function], palette.function);
+      QCOMPARE(styles[Vicinae::Syntax::TextStyle::String], palette.string);
+      QVERIFY(styles[Vicinae::Syntax::TextStyle::Keyword] != styles[Vicinae::Syntax::TextStyle::ControlFlow]);
+      QVERIFY(styles[Vicinae::Syntax::TextStyle::Keyword] != styles[Vicinae::Syntax::TextStyle::Attribute]);
     }
   }
 

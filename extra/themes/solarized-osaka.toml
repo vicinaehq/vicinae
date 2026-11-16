@@ -25,6 +25,21 @@ purple = "#6D71C4"
 red = "#DB302D"
 yellow = "#B28500"
 
+[colors.syntax]
+keyword = "colors.accents.green"
+control_flow = "colors.accents.green"
+function = "colors.accents.blue"
+type = "colors.accents.yellow"
+string = "colors.accents.cyan"
+number = "colors.accents.cyan"
+constant = "colors.accents.cyan"
+attribute = "colors.accents.blue"
+preprocessor = "colors.accents.orange"
+special = "colors.accents.red"
+heading = "colors.accents.blue"
+emphasis = "colors.accents.magenta"
+inline_code = "colors.accents.cyan"
+
 [colors.list.item.selection]
 background = { name = "colors.core.accent", opacity = 0.36 }
 secondary_background = { name = "colors.core.accent", opacity = 0.45 }

@@ -10,8 +10,10 @@ KDE Markdown grammar, including the grammars for fenced code. Highlighting does
 not modify the source or the undo history. The host supplies fonts and colors.
 Call `EditorDocument::setPalette(Syntax::Palette)` with the host's semantic colors
 when its theme changes. The same palette supplies code colors to the preview
-renderer. Syntax colors are softened and adjusted for contrast; Markdown text,
-markers, image labels, and destinations have separate treatments. Embedded code
+renderer. The palette names syntax roles rather than UI accent colors. Authored
+colors are preserved unless they need a contrast correction against the editor
+background. Markdown headings, emphasis markers, links, destinations, and inline
+code have their own roles, independent of programming-language strings. Embedded code
 keeps its own grammar, including when tokens share names with Markdown tokens.
 
 The host owns the document controller and passes it to the component's

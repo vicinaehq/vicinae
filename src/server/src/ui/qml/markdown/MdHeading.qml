@@ -8,6 +8,7 @@ DocumentText {
     property var blockData: ({})
     property string fontFamily: ""
     property bool first: false
+    property real headingScale: 1.0
 
     readonly property var scaleFactors: [2.0, 1.6, 1.3, 1.16, 1.0]
     readonly property int level: Math.max(1, Math.min(5, blockData.level ?? 1))
@@ -17,7 +18,7 @@ DocumentText {
     wrapMode: TextEdit.Wrap
     color: Theme.foreground
 
-    font.pointSize: fontSize * scaleFactors[level - 1]
+    font.pointSize: fontSize * (1 + (scaleFactors[level - 1] - 1) * headingScale)
 
     Binding on font.family {
         value: root.fontFamily

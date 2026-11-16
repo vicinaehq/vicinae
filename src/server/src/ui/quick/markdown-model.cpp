@@ -320,7 +320,7 @@ MarkdownModel::MarkdownModel(QObject *parent) : DocumentModel(parent) {
     rebuildInlineStyles();
     if (!m_markdown.isEmpty()) {
       if (m_async)
-        setMarkdownAsync(m_markdown);
+        setMarkdownAsync(m_markdown, m_incremental);
       else
         setMarkdown(m_markdown);
     }
@@ -355,11 +355,12 @@ QHash<int, QByteArray> MarkdownModel::roleNames() const {
 void MarkdownModel::rebuildInlineStyles() {
   ++m_styleGeneration;
   auto &theme = ThemeService::instance().theme();
-  m_styles.inlineCodeFg = theme.resolve(SemanticColor::Foreground).name(QColor::HexRgb);
+  const auto palette = syntax::paletteForTheme(theme);
+  m_styles.inlineCodeFg = palette.readable(palette.inlineCode).name(QColor::HexRgb);
   m_styles.linkColor = theme.resolve(SemanticColor::LinkDefault).name(QColor::HexRgb);
   m_styles.textColor = theme.resolve(SemanticColor::Foreground).name(QColor::HexRgb);
   m_styles.monoFamily = ServiceRegistry::instance()->fontService()->builtinMonoFontFamily();
-  m_styles.syntax = syntax::buildStyleMap(theme);
+  m_styles.syntax = palette.styles();
   m_styles.dark = theme.isDark();
 }
 
@@ -697,9 +698,43 @@ void MarkdownModel::setMarkdown(const QString &markdown) {
   setLoading(false);
 }
 
-void MarkdownModel::applyBlocks(const QString &markdown, std::vector<Block> blocks) {
+void MarkdownModel::applyBlocks(const QString &markdown, std::vector<Block> blocks, bool incremental) {
   const bool appended = !m_renderedMarkdown.isEmpty() && markdown.startsWith(m_renderedMarkdown);
   m_renderedMarkdown = markdown;
+  if (incremental) {
+    const int oldCount = static_cast<int>(m_blocks.size());
+    const int newCount = static_cast<int>(blocks.size());
+    const auto equal = [&](int before, int after) {
+      return m_blocks[before].type == blocks[after].type && m_blocks[before].data == blocks[after].data;
+    };
+    int first = 0;
+    while (first < std::min(oldCount, newCount) && equal(first, first))
+      ++first;
+    int oldEnd = oldCount;
+    int newEnd = newCount;
+    while (oldEnd > first && newEnd > first && equal(oldEnd - 1, newEnd - 1)) {
+      --oldEnd;
+      --newEnd;
+    }
+    const int commonEnd = std::min(oldEnd, newEnd);
+    for (int row = first; row < commonEnd; ++row)
+      m_blocks[row] = std::move(blocks[row]);
+    if (first < commonEnd)
+      emit dataChanged(index(first), index(commonEnd - 1), {BlockTypeRole, BlockDataRole});
+    if (commonEnd < oldEnd) {
+      beginRemoveRows({}, commonEnd, oldEnd - 1);
+      m_blocks.erase(m_blocks.begin() + commonEnd, m_blocks.begin() + oldEnd);
+      endRemoveRows();
+    }
+    if (commonEnd < newEnd) {
+      beginInsertRows({}, commonEnd, newEnd - 1);
+      m_blocks.reserve(blocks.size());
+      m_blocks.insert(m_blocks.begin() + commonEnd, std::make_move_iterator(blocks.begin() + commonEnd),
+                      std::make_move_iterator(blocks.begin() + newEnd));
+      endInsertRows();
+    }
+    return;
+  }
   if (appended) {
     const int oldCount = static_cast<int>(m_blocks.size());
     const int newCount = static_cast<int>(blocks.size());
@@ -738,9 +773,10 @@ void MarkdownModel::setLoading(bool loading) {
   emit loadingChanged();
 }
 
-void MarkdownModel::setMarkdownAsync(QString markdown) {
+void MarkdownModel::setMarkdownAsync(QString markdown, bool incremental) {
   ++m_parseGeneration;
   m_async = true;
+  m_incremental = incremental;
   m_markdown = std::move(markdown);
   setLoading(true);
   if (!m_parseRunning) startParse();
@@ -750,14 +786,17 @@ void MarkdownModel::startParse() {
   m_parseRunning = true;
   const auto generation = m_parseGeneration;
   const auto styleGeneration = m_styleGeneration;
+  const auto incremental = m_incremental;
   const auto markdown = m_markdown;
   QtConcurrent::run([markdown, styles = m_styles] {
     return parseBlocks(markdown, styles);
-  }).then(this, [this, generation, styleGeneration, markdown](std::vector<Block> blocks) {
+  }).then(this, [this, generation, styleGeneration, markdown, incremental](std::vector<Block> blocks) {
     m_parseRunning = false;
     if (!m_async) return;
-    if (styleGeneration == m_styleGeneration && m_markdown.startsWith(markdown))
-      applyBlocks(markdown, std::move(blocks));
+    // Keep live editing visible even when new input arrives faster than parsing finishes.
+    const bool liveUpdate = incremental && m_incremental;
+    if (styleGeneration == m_styleGeneration && (liveUpdate || m_markdown.startsWith(markdown)))
+      applyBlocks(markdown, std::move(blocks), incremental);
     if (generation != m_parseGeneration)
       startParse();
     else

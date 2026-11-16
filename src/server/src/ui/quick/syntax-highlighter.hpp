@@ -24,14 +24,24 @@ using StyleMap = Vicinae::Syntax::StyleMap;
 inline Vicinae::Syntax::Palette paletteForTheme(const ThemeFile &theme) {
   return {.background = theme.resolve(SemanticColor::Background),
           .foreground = theme.resolve(SemanticColor::Foreground),
-          .muted = theme.resolve(SemanticColor::TextMuted),
-          .accent = theme.resolve(SemanticColor::LinkDefault),
-          .blue = theme.resolve(SemanticColor::Blue),
-          .purple = theme.resolve(SemanticColor::Purple),
-          .cyan = theme.resolve(SemanticColor::Cyan),
-          .green = theme.resolve(SemanticColor::Green),
-          .orange = theme.resolve(SemanticColor::Orange),
-          .red = theme.resolve(SemanticColor::Red)};
+          .keyword = theme.resolve(SemanticColor::SyntaxKeyword),
+          .controlFlow = theme.resolve(SemanticColor::SyntaxControlFlow),
+          .function = theme.resolve(SemanticColor::SyntaxFunction),
+          .type = theme.resolve(SemanticColor::SyntaxType),
+          .string = theme.resolve(SemanticColor::SyntaxString),
+          .number = theme.resolve(SemanticColor::SyntaxNumber),
+          .constant = theme.resolve(SemanticColor::SyntaxConstant),
+          .attribute = theme.resolve(SemanticColor::SyntaxAttribute),
+          .preprocessor = theme.resolve(SemanticColor::SyntaxPreprocessor),
+          .special = theme.resolve(SemanticColor::SyntaxSpecial),
+          .error = theme.resolve(SemanticColor::SyntaxError),
+          .comment = theme.resolve(SemanticColor::SyntaxComment),
+          .heading = theme.resolve(SemanticColor::SyntaxHeading),
+          .emphasis = theme.resolve(SemanticColor::SyntaxEmphasis),
+          .link = theme.resolve(SemanticColor::SyntaxLink),
+          .linkTarget = theme.resolve(SemanticColor::SyntaxLinkTarget),
+          .inlineCode = theme.resolve(SemanticColor::SyntaxInlineCode),
+          .marker = theme.resolve(SemanticColor::SyntaxMarker)};
 }
 
 inline StyleMap buildStyleMap(const ThemeFile &theme) { return paletteForTheme(theme).styles(); }

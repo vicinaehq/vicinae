@@ -14,7 +14,9 @@ Window {
     property real toolbarCenterY: headerHeight / 2
     property real toolbarLeftInset: 12
     readonly property real toolbarButtonSize: 30
-    readonly property list<Item> titlebarControls: [titleInput, searchButton, newButton, editButton, previewButton, moreButton]
+    readonly property list<Item> titlebarControls: [titleInput, searchButton, newButton, editButton, splitButton, previewButton, moreButton]
+    readonly property bool splitView: NotesWindowHost.viewMode === NotesWindowHost.Split
+    readonly property bool previewOnly: NotesWindowHost.viewMode === NotesWindowHost.Preview
     width: 800
     height: 760
     minimumWidth: 480
@@ -108,7 +110,7 @@ Window {
             color: Theme.divider
         }
         Rectangle {
-            implicitWidth: 82
+            implicitWidth: 122
             implicitHeight: root.toolbarButtonSize
             radius: 7
             color: Config.withAlpha(Theme.foreground, 0.025)
@@ -122,36 +124,54 @@ Window {
                     width: 38
                     height: root.toolbarButtonSize - 4
                     radius: 5
-                    iconSource: Img.icon(BuiltinIcon.Pencil).withFillColor(NotesWindowHost.preview ? Theme.textMuted : Theme.foreground)
+                    iconSource: Img.icon(BuiltinIcon.Pencil).withFillColor(NotesWindowHost.viewMode === NotesWindowHost.Edit ? Theme.foreground : Theme.textMuted)
                     accessibleName: qsTr("Edit note")
                     Accessible.role: Accessible.RadioButton
                     Accessible.checkable: true
-                    Accessible.checked: !NotesWindowHost.preview
+                    Accessible.checked: NotesWindowHost.viewMode === NotesWindowHost.Edit
                     Accessible.onToggleAction: editButton.clicked()
                     activeFocusOnTab: true
-                    variant: NotesWindowHost.preview ? "ghost" : "secondary"
+                    variant: NotesWindowHost.viewMode === NotesWindowHost.Edit ? "secondary" : "ghost"
                     ToolTip.visible: hovered
                     ToolTip.delay: 600
                     ToolTip.text: accessibleName
-                    onClicked: NotesWindowHost.preview = false
+                    onClicked: NotesWindowHost.viewMode = NotesWindowHost.Edit
+                }
+                ViciButton {
+                    id: splitButton
+                    width: 38
+                    height: root.toolbarButtonSize - 4
+                    radius: 5
+                    iconSource: Img.icon(BuiltinIcon.AppWindowSidebarRight).withFillColor(root.splitView ? Theme.foreground : Theme.textMuted)
+                    accessibleName: qsTr("Side by side")
+                    Accessible.role: Accessible.RadioButton
+                    Accessible.checkable: true
+                    Accessible.checked: root.splitView
+                    Accessible.onToggleAction: splitButton.clicked()
+                    activeFocusOnTab: true
+                    variant: root.splitView ? "secondary" : "ghost"
+                    ToolTip.visible: hovered
+                    ToolTip.delay: 600
+                    ToolTip.text: accessibleName
+                    onClicked: NotesWindowHost.viewMode = NotesWindowHost.Split
                 }
                 ViciButton {
                     id: previewButton
                     width: 38
                     height: root.toolbarButtonSize - 4
                     radius: 5
-                    iconSource: Img.icon(BuiltinIcon.Eye).withFillColor(NotesWindowHost.preview ? Theme.foreground : Theme.textMuted)
+                    iconSource: Img.icon(BuiltinIcon.Eye).withFillColor(root.previewOnly ? Theme.foreground : Theme.textMuted)
                     accessibleName: qsTr("Preview note")
                     Accessible.role: Accessible.RadioButton
                     Accessible.checkable: true
-                    Accessible.checked: NotesWindowHost.preview
+                    Accessible.checked: root.previewOnly
                     Accessible.onToggleAction: previewButton.clicked()
                     activeFocusOnTab: true
-                    variant: NotesWindowHost.preview ? "secondary" : "ghost"
+                    variant: root.previewOnly ? "secondary" : "ghost"
                     ToolTip.visible: hovered
                     ToolTip.delay: 600
                     ToolTip.text: accessibleName
-                    onClicked: NotesWindowHost.preview = true
+                    onClicked: NotesWindowHost.viewMode = NotesWindowHost.Preview
                 }
             }
         }
@@ -210,99 +230,122 @@ Window {
                     font.pointSize: Theme.regularFontSize
                 }
             }
-            Item {
+            SplitView {
+                id: panes
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 enabled: !NotesWindowHost.loading
-                MarkdownEditor {
-                    id: editor
-                    anchors.fill: parent
-                    anchors.bottomMargin: findBar.visible ? findBar.height + 8 : 0
-                    visible: !NotesWindowHost.preview
-                    document: NotesWindowHost.document
-                    foreground: Theme.foreground
-                    mutedForeground: Theme.textPlaceholder
-                    selectionColor: Theme.textSelectionBg
-                    selectedTextColor: Theme.textSelectionFg
-                    fontFamily: Theme.monoFontFamily
-                    topPadding: 20
-                    ViciWheelHandler {
-                        target: editor.flickable
+                orientation: Qt.Horizontal
+                handle: Rectangle {
+                    implicitWidth: 9
+                    color: "transparent"
+                    Rectangle {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        width: 1
+                        height: parent.height
+                        color: parent.SplitHandle.pressed || parent.SplitHandle.hovered ? Theme.inputBorderFocus : Theme.divider
                     }
                 }
-                Rectangle {
-                    id: findBar
-                    visible: false
-                    anchors.bottom: parent.bottom
-                    anchors.right: parent.right
-                    anchors.rightMargin: editor.contentPadding
-                    width: parent.width - editor.contentPadding * 2
-                    height: 42
-                    radius: 8
-                    color: Theme.secondaryBackground
-                    border.color: Theme.divider
-                    Keys.onShortcutOverride: event => event.accepted = event.key === Qt.Key_Escape
-                    Keys.onEscapePressed: root.closeFind()
-                    RowLayout {
+                Item {
+                    visible: !root.previewOnly
+                    SplitView.minimumWidth: 220
+                    SplitView.preferredWidth: panes.width / 2
+                    SplitView.fillWidth: !root.splitView
+                    MarkdownEditor {
+                        id: editor
                         anchors.fill: parent
-                        anchors.margins: 6
-                        spacing: 2
-                        TextField {
-                            id: findInput
-                            Layout.fillWidth: true
-                            Layout.minimumWidth: 60
-                            Layout.fillHeight: true
-                            placeholderText: qsTr("Find in note…")
-                            Accessible.name: placeholderText
-                            placeholderTextColor: Theme.textMuted
-                            color: Theme.foreground
-                            selectionColor: Theme.textSelectionBg
-                            selectedTextColor: Theme.textSelectionFg
-                            font.family: Theme.fontFamily
-                            font.pointSize: Theme.regularFontSize
-                            padding: 6
-                            background: null
-                            onTextEdited: editor.find(text, false, true)
-                            Keys.onReturnPressed: event => editor.find(text, !!(event.modifiers & Qt.ShiftModifier))
-                            Keys.onEnterPressed: event => editor.find(text, !!(event.modifiers & Qt.ShiftModifier))
+                        anchors.bottomMargin: findBar.visible ? findBar.height + 8 : 0
+                        document: NotesWindowHost.document
+                        foreground: Theme.foreground
+                        mutedForeground: Theme.textPlaceholder
+                        selectionColor: Theme.textSelectionBg
+                        selectedTextColor: Theme.textSelectionFg
+                        fontFamily: Theme.monoFontFamily
+                        fontSize: Theme.regularFontSize
+                        contentPadding: root.splitView ? 24 : Math.max(32, (width - 760) / 2)
+                        topPadding: 20
+                        ViciWheelHandler {
+                            target: editor.flickable
                         }
-                        ViciButton {
-                            implicitWidth: 26
-                            implicitHeight: 28
-                            iconSource: Img.icon(BuiltinIcon.ChevronUp).withFillColor(Theme.textMuted)
-                            accessibleName: qsTr("Previous match")
-                            activeFocusOnTab: true
-                            ToolTip.visible: hovered
-                            ToolTip.delay: 600
-                            ToolTip.text: accessibleName
-                            onClicked: editor.find(findInput.text, true)
-                        }
-                        ViciButton {
-                            implicitWidth: 26
-                            implicitHeight: 28
-                            iconSource: Img.icon(BuiltinIcon.ChevronDown).withFillColor(Theme.textMuted)
-                            accessibleName: qsTr("Next match")
-                            activeFocusOnTab: true
-                            ToolTip.visible: hovered
-                            ToolTip.delay: 600
-                            ToolTip.text: accessibleName
-                            onClicked: editor.find(findInput.text, false)
-                        }
-                        ViciButton {
-                            implicitWidth: 26
-                            implicitHeight: 28
-                            iconSource: Img.icon(BuiltinIcon.Xmark).withFillColor(Theme.textMuted)
-                            accessibleName: qsTr("Close find")
-                            activeFocusOnTab: true
-                            onClicked: root.closeFind()
+                    }
+                    Rectangle {
+                        id: findBar
+                        visible: false
+                        anchors.bottom: parent.bottom
+                        anchors.right: parent.right
+                        anchors.rightMargin: editor.contentPadding
+                        width: parent.width - editor.contentPadding * 2
+                        height: 42
+                        radius: 8
+                        color: Theme.secondaryBackground
+                        border.color: Theme.divider
+                        Keys.onShortcutOverride: event => event.accepted = event.key === Qt.Key_Escape
+                        Keys.onEscapePressed: root.closeFind()
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.margins: 6
+                            spacing: 2
+                            TextField {
+                                id: findInput
+                                Layout.fillWidth: true
+                                Layout.minimumWidth: 60
+                                Layout.fillHeight: true
+                                placeholderText: qsTr("Find in note…")
+                                Accessible.name: placeholderText
+                                placeholderTextColor: Theme.textMuted
+                                color: Theme.foreground
+                                selectionColor: Theme.textSelectionBg
+                                selectedTextColor: Theme.textSelectionFg
+                                font.family: Theme.fontFamily
+                                font.pointSize: Theme.regularFontSize
+                                padding: 6
+                                background: null
+                                onTextEdited: editor.find(text, false, true)
+                                Keys.onReturnPressed: event => editor.find(text, !!(event.modifiers & Qt.ShiftModifier))
+                                Keys.onEnterPressed: event => editor.find(text, !!(event.modifiers & Qt.ShiftModifier))
+                            }
+                            ViciButton {
+                                implicitWidth: 26
+                                implicitHeight: 28
+                                iconSource: Img.icon(BuiltinIcon.ChevronUp).withFillColor(Theme.textMuted)
+                                accessibleName: qsTr("Previous match")
+                                activeFocusOnTab: true
+                                ToolTip.visible: hovered
+                                ToolTip.delay: 600
+                                ToolTip.text: accessibleName
+                                onClicked: editor.find(findInput.text, true)
+                            }
+                            ViciButton {
+                                implicitWidth: 26
+                                implicitHeight: 28
+                                iconSource: Img.icon(BuiltinIcon.ChevronDown).withFillColor(Theme.textMuted)
+                                accessibleName: qsTr("Next match")
+                                activeFocusOnTab: true
+                                ToolTip.visible: hovered
+                                ToolTip.delay: 600
+                                ToolTip.text: accessibleName
+                                onClicked: editor.find(findInput.text, false)
+                            }
+                            ViciButton {
+                                implicitWidth: 26
+                                implicitHeight: 28
+                                iconSource: Img.icon(BuiltinIcon.Xmark).withFillColor(Theme.textMuted)
+                                accessibleName: qsTr("Close find")
+                                activeFocusOnTab: true
+                                onClicked: root.closeFind()
+                            }
                         }
                     }
                 }
                 MarkdownView {
-                    anchors.fill: parent
-                    visible: NotesWindowHost.preview
+                    visible: root.splitView || root.previewOnly
+                    SplitView.minimumWidth: 220
+                    SplitView.fillWidth: true
                     model: NotesWindowHost.previewModel
-                    contentPadding: editor.contentPadding
+                    fontSize: editor.fontSize
+                    headingScale: 0.5
+                    codeFontSize: editor.fontSize
+                    contentPadding: root.splitView ? 24 : Math.max(32, (width - 760) / 2)
                     topPadding: 20
                 }
             }
@@ -375,7 +418,8 @@ Window {
         editor.focusEditor();
     }
     function openFind() {
-        NotesWindowHost.preview = false;
+        if (root.previewOnly)
+            NotesWindowHost.viewMode = NotesWindowHost.Edit;
         findBar.visible = true;
         findInput.forceActiveFocus();
         findInput.selectAll();
@@ -402,16 +446,16 @@ Window {
     }
     Shortcut {
         sequence: "Ctrl+Shift+P"
-        onActivated: NotesWindowHost.preview = !NotesWindowHost.preview
+        onActivated: NotesWindowHost.viewMode = root.previewOnly ? NotesWindowHost.Edit : NotesWindowHost.Preview
     }
     Connections {
         target: NotesWindowHost
-        function onPreviewChanged() {
-            if (NotesWindowHost.preview)
+        function onViewModeChanged() {
+            if (root.previewOnly)
                 findBar.visible = false;
         }
         function onFocusRequested() {
-            if (!NotesWindowHost.preview)
+            if (!root.previewOnly)
                 editor.focusEditor();
         }
     }

@@ -91,6 +91,25 @@ ThemeFile ThemeFile::vicinaeDark() {
       {SemanticColor::Blue, QColor("#2F6FED")},
       {SemanticColor::Magenta, QColor("#BC8CFF")},
       {SemanticColor::Purple, QColor("#BC8CFF")},
+
+      {SemanticColor::SyntaxKeyword, QColor("#8eb7e8")},
+      {SemanticColor::SyntaxControlFlow, QColor("#c6a0db")},
+      {SemanticColor::SyntaxFunction, QColor("#e6c384")},
+      {SemanticColor::SyntaxType, QColor("#7fc5c0")},
+      {SemanticColor::SyntaxString, QColor("#b2c98f")},
+      {SemanticColor::SyntaxNumber, QColor("#e9aa80")},
+      {SemanticColor::SyntaxConstant, QColor("#c4a7e7")},
+      {SemanticColor::SyntaxAttribute, QColor("#9abfdd")},
+      {SemanticColor::SyntaxPreprocessor, QColor("#d99ca7")},
+      {SemanticColor::SyntaxSpecial, QColor("#e6c384")},
+      {SemanticColor::SyntaxError, QColor("#ef8b82")},
+      {SemanticColor::SyntaxComment, QColor("#868b98")},
+      {SemanticColor::SyntaxHeading, QColor("#e6c384")},
+      {SemanticColor::SyntaxEmphasis, QColor("#d99ca7")},
+      {SemanticColor::SyntaxLink, QColor("#7fc5c0")},
+      {SemanticColor::SyntaxLinkTarget, QColor("#96a9c8")},
+      {SemanticColor::SyntaxInlineCode, QColor("#e9aa80")},
+      {SemanticColor::SyntaxMarker, QColor("#8eb7e8")},
   };
 
   return ThemeFile(data);
@@ -123,6 +142,25 @@ ThemeFile ThemeFile::vicinaeLight() {
       {SemanticColor::Blue, QColor("#1F6FEB")},
       {SemanticColor::Magenta, QColor("#8B6EBF")},
       {SemanticColor::Purple, QColor("#8B6EBF")},
+
+      {SemanticColor::SyntaxKeyword, QColor("#245c9a")},
+      {SemanticColor::SyntaxControlFlow, QColor("#8353a6")},
+      {SemanticColor::SyntaxFunction, QColor("#805c1a")},
+      {SemanticColor::SyntaxType, QColor("#236c70")},
+      {SemanticColor::SyntaxString, QColor("#50702d")},
+      {SemanticColor::SyntaxNumber, QColor("#9b4b24")},
+      {SemanticColor::SyntaxConstant, QColor("#8052a6")},
+      {SemanticColor::SyntaxAttribute, QColor("#316b8b")},
+      {SemanticColor::SyntaxPreprocessor, QColor("#9b4e62")},
+      {SemanticColor::SyntaxSpecial, QColor("#96651e")},
+      {SemanticColor::SyntaxError, QColor("#b43932")},
+      {SemanticColor::SyntaxComment, QColor("#716e69")},
+      {SemanticColor::SyntaxHeading, QColor("#805c1a")},
+      {SemanticColor::SyntaxEmphasis, QColor("#9b4e62")},
+      {SemanticColor::SyntaxLink, QColor("#236c70")},
+      {SemanticColor::SyntaxLinkTarget, QColor("#596a84")},
+      {SemanticColor::SyntaxInlineCode, QColor("#9b4b24")},
+      {SemanticColor::SyntaxMarker, QColor("#245c9a")},
   };
 
   return ThemeFile(data);
@@ -134,6 +172,43 @@ QColor ThemeFile::inherit(SemanticColor color) const {
 
 QColor ThemeFile::deriveSemantic(SemanticColor color) const {
   switch (color) {
+  case SemanticColor::SyntaxKeyword:
+    return resolve(SemanticColor::Blue);
+  case SemanticColor::SyntaxControlFlow:
+    return resolve(SemanticColor::Purple);
+  case SemanticColor::SyntaxFunction:
+    return resolve(SemanticColor::Yellow);
+  case SemanticColor::SyntaxType:
+    return resolve(SemanticColor::Cyan);
+  case SemanticColor::SyntaxString:
+    return resolve(SemanticColor::Green);
+  case SemanticColor::SyntaxNumber:
+    return resolve(SemanticColor::Orange);
+  case SemanticColor::SyntaxConstant:
+    return resolve(SemanticColor::Purple);
+  case SemanticColor::SyntaxAttribute:
+    return resolve(SemanticColor::Cyan);
+  case SemanticColor::SyntaxPreprocessor:
+    return resolve(SemanticColor::Magenta);
+  case SemanticColor::SyntaxSpecial:
+    return resolve(SemanticColor::Yellow);
+  case SemanticColor::SyntaxError:
+    return resolve(SemanticColor::Red);
+  case SemanticColor::SyntaxComment:
+    return resolve(SemanticColor::TextMuted);
+  case SemanticColor::SyntaxHeading:
+    return resolve(SemanticColor::Accent);
+  case SemanticColor::SyntaxEmphasis:
+    return resolve(SemanticColor::Magenta);
+  case SemanticColor::SyntaxLink:
+    return resolve(SemanticColor::Cyan);
+  case SemanticColor::SyntaxLinkTarget:
+    return resolve(SemanticColor::Blue);
+  case SemanticColor::SyntaxInlineCode:
+    return resolve(SemanticColor::Orange);
+  case SemanticColor::SyntaxMarker:
+    return resolve(SemanticColor::Blue);
+
   case SemanticColor::LinkDefault:
     return resolve(SemanticColor::Blue);
   case SemanticColor::LinkVisited:
