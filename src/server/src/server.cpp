@@ -119,6 +119,7 @@
 #include "services/ai/tool-registry.hpp"
 #include "ui/settings/settings-controller.hpp"
 #include "ui/windows/chat-window-controller.hpp"
+#include "ui/windows/notes-window-controller.hpp"
 #include "services/tray/tray-service.hpp"
 #include "ui/windows/launcher-window.hpp"
 #include "ui/windows/onboarding-window.hpp"
@@ -431,6 +432,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
         std::make_unique<DictationService>(Omnicast::dataDir(), *ai, *registry->mediaControl(), *registry));
     registry->setAI(std::move(ai));
     registry->setAiCommands(std::make_unique<AiCommandStore>(Omnicast::dataDir() / "ai-commands.json"));
+    registry->setNotes(std::make_unique<Notes::Store>(Omnicast::dataDir() / "notes"));
     registry->setConversations(
         std::make_unique<AI::ConversationStore>(Omnicast::dataDir() / "conversations"));
     QObject::connect(registry->conversations(), &AI::ConversationStore::errorOccurred,
@@ -519,7 +521,11 @@ int startServer(const ServerLaunchOptions &launchOpts) {
   ctx.settings = std::make_unique<SettingsController>(ctx);
   ctx.services = ServiceRegistry::instance();
   ctx.chat = std::make_unique<ChatWindowController>(ctx);
+<<<<<<< HEAD
   ctx.aiCommands = std::make_unique<AiCommandRunner>(ctx);
+=======
+  ctx.notes = std::make_unique<NotesWindowManager>(ctx);
+>>>>>>> 249b62fcc (feat: notes wip)
 
   IpcCommandServer commandServer(&ctx);
 
