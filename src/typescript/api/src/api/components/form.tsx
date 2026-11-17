@@ -1,8 +1,15 @@
-import type { ReactNode, Ref } from "react";
+import {
+	type ReactNode,
+	type Ref,
+	useContext,
+	useEffect,
+	useState,
+} from "react";
 import { useImperativeFormHandle } from "../hooks/use-imperative-form-handle";
 import { useEventCounted } from "../hooks/use-event-counted";
 import { type ImageLike, serializeProtoImage } from "../image";
 import { Dropdown as MainDropdown } from "./dropdown";
+import { DateFieldsContext, parseDate } from "./form-values";
 
 /**
  * @category UI Components
@@ -187,17 +194,21 @@ const FormRoot: React.FC<Form.Props> = ({
 	navigationTitle,
 	searchBarAccessory,
 }) => {
+	const [dateFields] = useState(() => new Set<string>());
+
 	return (
-		<form
-			//@ts-ignore
-			enableDrafts={enableDrafts}
-			isLoading={isLoading}
-			navigationTitle={navigationTitle}
-		>
-			{searchBarAccessory}
-			{children}
-			{actions}
-		</form>
+		<DateFieldsContext.Provider value={dateFields}>
+			<form
+				//@ts-ignore
+				enableDrafts={enableDrafts}
+				isLoading={isLoading}
+				navigationTitle={navigationTitle}
+			>
+				{searchBarAccessory}
+				{children}
+				{actions}
+			</form>
+		</DateFieldsContext.Provider>
 	);
 };
 
@@ -249,11 +260,16 @@ const DatePickerRoot: React.FC<Form.DatePicker.Props> = ({
 }) => {
 	useImperativeFormHandle(ref);
 
+	const dateFields = useContext(DateFieldsContext);
+	useEffect(() => {
+		dateFields?.add(props.id);
+		return () => {
+			dateFields?.delete(props.id);
+		};
+	}, [dateFields, props.id]);
+
 	const _onChange = onChange
-		? (newValue: string | null) => {
-				const dateObj = newValue ? new Date(newValue) : null;
-				onChange(dateObj);
-			}
+		? (newValue: string | null) => onChange(parseDate(newValue))
 		: undefined;
 
 	return (

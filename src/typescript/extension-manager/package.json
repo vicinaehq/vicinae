@@ -4,7 +4,7 @@
 	"description": "Extension manager process responsible for loading and unloading extension bundles",
 	"main": "index.js",
 	"scripts": {
-		"test": "echo \"Error: no test specified\" && exit 1",
+		"test": "node scripts/test.mjs",
 		"typecheck": "tsc --noEmit",
 		"build-only": "node scripts/build.mjs",
 		"build": "run-p typecheck build-only",
