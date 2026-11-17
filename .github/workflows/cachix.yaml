@@ -33,6 +33,8 @@ jobs:
         pushFilter: "(swift-bin|swift-.*-RELEASE.*\\.tar\\.gz)"
     - name: Build Flake
       run: nix build -L --no-update-lock-file
+    - name: Build local AI backend
+      run: nix build -L --no-update-lock-file .#with-local-ai
     - name: Build Soulver backend
       if: matrix.os == 'depot-ubuntu-24.04-16'
       run: nix build -L --no-update-lock-file .#with-soulver
