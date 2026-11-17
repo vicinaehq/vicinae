@@ -89,20 +89,6 @@ in {
       '';
     };
 
-    inputServer.enable = lib.mkOption {
-      type = lib.types.bool;
-      default = false;
-      description = ''
-        Whether to use the bundled input server for keyboard input (Linux only).
-        On NixOS, enable `hardware.uinput.enable` and add your user to the `uinput`
-        group in the system configuration, then log out and back in.
-        This lets any process running as your user simulate keyboard input.
-        Input monitoring, including automatic snippet expansion, requires
-        additional permissions that this option does not grant.
-        Custom packages must honor `VICINAE_INPUT_SERVER_BIN`.
-      '';
-    };
-
     enableSoulver = lib.mkOption {
       type = lib.types.bool;
       default = false;
@@ -316,17 +302,12 @@ in {
         overrideString = lib.concatStringsSep ":" allOverrides;
       in ''
         wrapProgram $out/bin/vicinae \
-          ${lib.optionalString (allOverrides != []) ''--set VICINAE_OVERRIDES "${overrideString}"''} \
-          ${lib.optionalString cfg.inputServer.enable ''--set-default VICINAE_INPUT_SERVER_BIN "${vicinaePkg}/libexec/vicinae/vicinae-input-server"''}
+          ${lib.optionalString (allOverrides != []) ''--set VICINAE_OVERRIDES "${overrideString}"''}
       '';
     };
   in
     lib.mkIf cfg.enable {
       assertions = [
-        {
-          assertion = cfg.inputServer.enable -> pkgs.stdenv.hostPlatform.isLinux;
-          message = "programs.vicinae.inputServer.enable is only supported on Linux";
-        }
         {
           assertion = !(cfg.enableSoulver && cfg.enableNumen);
           message = "programs.vicinae.enableSoulver and programs.vicinae.enableNumen are mutually exclusive";

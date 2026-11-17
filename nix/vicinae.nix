@@ -273,7 +273,7 @@ in
       ]
       ++ lib.optionals isLinux [
         "--prefix PATH : ${lib.getBin pulseaudio}/bin"
-        "--set-default VICINAE_INPUT_SERVER_BIN /run/wrappers/bin/vicinae-input-server"
+        "--set VICINAE_INPUT_SERVER_BIN /run/wrappers/bin/vicinae-input-server"
       ];
 
     meta = {
