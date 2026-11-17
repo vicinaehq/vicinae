@@ -45,6 +45,8 @@ When you need more, Vicinae can be extended in several ways:
 
 Everything you need to know to get started with Vicinae is at [vicinae.com](https://vicinae.com). If you have any question, please feel free to come ask it on [discord](https://discord.gg/rP4ecD42p7)!
 
+For the bundled input server with Home Manager on NixOS, see the [Nix setup guide](nix/README.md).
+
 ## Sponsors
 
 ### Gold sponsors
