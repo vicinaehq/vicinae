@@ -10,8 +10,7 @@
 #include "utils/json-file.hpp"
 
 /**
- * User-defined AI commands, kept in one JSON file. A command expands its prompt template, sends it to a
- * model and pastes the response in the active app, over the selection when there is one, or copies it.
+ * User-defined AI commands, kept in one JSON file.
  */
 class AiCommandStore : public QObject {
   Q_OBJECT
@@ -20,7 +19,6 @@ signals:
   void changed();
 
 public:
-  /** What happens to the model's response. */
   enum class Output { Paste, Copy };
 
   struct Command {

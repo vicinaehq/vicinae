@@ -22,9 +22,7 @@ constexpr auto CLIPBOARD_PLACEHOLDER = "clipboard";
 
 ImageURL iconUrl(const AiCommandStore::Command &command);
 PlaceholderString parsePrompt(const AiCommandStore::Command &command);
-/** The fields to fill in before running the command, one per argument placeholder. */
 ArgumentList arguments(const PlaceholderString &prompt);
-/** The values of the launcher's argument fields, in order. */
 std::vector<QString> completionValues(const ApplicationContext *ctx);
 inline ImageURL defaultIconUrl() { return ImageURL::builtin(DEFAULT_ICON).setBackgroundTint(COLOR); }
 

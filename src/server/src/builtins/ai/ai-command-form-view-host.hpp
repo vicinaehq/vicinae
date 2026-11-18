@@ -68,7 +68,6 @@ public:
 private:
   void buildIconItems();
   void rebuildModels();
-  /** The command being edited, which keeps its id on save. */
   const AiCommandStore::Command *editedCommand() const;
 
   Mode m_mode = Mode::Create;
