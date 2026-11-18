@@ -12,6 +12,7 @@ Loader {
     property real fontSize: Theme.regularFontSize
     property real lineHeight: 1.0
     property real maxImageHeight: 200
+    signal imagePreviewRequested(string source, string link)
 
     sourceComponent: {
         switch (root.blockType) {
@@ -102,9 +103,11 @@ Loader {
     Component {
         id: imageComp
         MdImage {
+            actions: root.mdModel
             fontSize: root.fontSize * 0.9
             blockData: root.blockData
             maxImageHeight: root.maxImageHeight
+            onPreviewRequested: (source, link) => root.imagePreviewRequested(source, link)
         }
     }
     Component {

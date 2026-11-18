@@ -15,8 +15,8 @@
 
 ExtensionSettingsModel::ExtensionSettingsModel(AI::ToolRegistry &tools, QObject *parent)
     : QAbstractListModel(parent), m_prefModel(new PreferenceFormModel(this)),
-      m_cmdPrefModel(new PreferenceFormModel(this)), m_commandModel(new ProviderCommandModel(this)),
-      m_tools(tools) {
+      m_cmdPrefModel(new PreferenceFormModel(this)), m_toolPrefModel(new PreferenceFormModel(this)),
+      m_commandModel(new ProviderCommandModel(this)), m_tools(tools) {
 
   auto *manager = ServiceRegistry::instance()->rootItemManager();
   connect(manager, &RootItemManager::itemsChanged, this, [this]() { rebuild(m_filter); });
@@ -485,6 +485,13 @@ void ExtensionSettingsModel::loadCommandPreferences(const QString &entrypointId)
   }
 }
 
+void ExtensionSettingsModel::loadToolPreferences(const QString &toolId) {
+  const auto providerId = selectedProviderId().toStdString();
+  const auto *entry = m_tools.find(providerId, toolId.toStdString());
+  m_toolPrefModel->loadTool({providerId, toolId.toStdString()},
+                            entry ? entry->contribution.preferences : PreferenceList{});
+}
+
 QVariantList ExtensionSettingsModel::tools() const {
   const auto &registry = m_tools;
   const auto providerId = selectedProviderId().toStdString();
@@ -499,6 +506,7 @@ QVariantList ExtensionSettingsModel::tools() const {
                     {QStringLiteral("name"), tool.title},
                     {QStringLiteral("description"), tool.description},
                     {QStringLiteral("iconSource"), qml::imageSourceFor(tool.icon)},
+                    {QStringLiteral("hasPreferences"), !tool.preferences.empty()},
                     {QStringLiteral("policy"), enumName(registry.toolPolicy(entry.providerId, tool.id))}});
   }
 

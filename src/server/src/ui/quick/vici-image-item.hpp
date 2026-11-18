@@ -14,6 +14,7 @@ class ViciImageItem : public QQuickItem {
   Q_PROPERTY(int fillMode READ fillMode WRITE setFillMode NOTIFY fillModeChanged)
   Q_PROPERTY(bool cache READ cache WRITE setCache NOTIFY cacheChanged)
   Q_PROPERTY(bool safetyMargins READ safetyMargins WRITE setSafetyMargins NOTIFY safetyMarginsChanged)
+  Q_PROPERTY(bool fallbackEnabled READ fallbackEnabled WRITE setFallbackEnabled NOTIFY fallbackEnabledChanged)
   Q_PROPERTY(int status READ status NOTIFY statusChanged)
 
 signals:
@@ -22,6 +23,7 @@ signals:
   void fillModeChanged();
   void cacheChanged();
   void safetyMarginsChanged();
+  void fallbackEnabledChanged();
   void statusChanged();
 
 public:
@@ -49,6 +51,9 @@ public:
   bool safetyMargins() const { return m_safetyMargins; }
   void setSafetyMargins(bool enabled);
 
+  bool fallbackEnabled() const { return m_fallbackEnabled; }
+  void setFallbackEnabled(bool enabled);
+
   int status() const { return m_status; }
 
 protected:
@@ -66,6 +71,7 @@ private:
   int m_fillMode = PreserveAspectFit;
   bool m_cache = true;
   bool m_safetyMargins = false;
+  bool m_fallbackEnabled = true;
   Status m_status = Null;
 
   ImageStream *m_stream = nullptr;

@@ -42,6 +42,11 @@ Item {
         id: linkHandler
     }
 
+    MarkdownImagePreview {
+        id: imagePreview
+        actions: linkHandler
+    }
+
     ScrollViewport {
         id: viewport
         anchors.fill: parent
@@ -101,6 +106,7 @@ Item {
             }
 
             delegate: ChatDocumentBlock {
+                imageActions: linkHandler
                 awaitingResponse: root.session.awaitingResponse
                 thinking: root.session.thinking
                 compact: root.compact
@@ -111,6 +117,7 @@ Item {
                 DocumentScope.row: index
                 width: chatFlick.width
                 onPreviewRequested: content => root.previewRequested(content)
+                onImagePreviewRequested: (source, link) => imagePreview.show(source, link)
                 onToolGroupToggled: toolId => {
                     chatScroll.pauseFollowing();
                     root.session.toggleToolGroup(toolId);

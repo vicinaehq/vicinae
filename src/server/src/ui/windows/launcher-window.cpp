@@ -472,6 +472,8 @@ void LauncherWindow::loadRoot() {
   }
 }
 
+bool LauncherWindow::foregroundLent() { return LauncherWindowPlatform::foregroundLent(); }
+
 void LauncherWindow::unloadRoot() {
   if (m_dragOverlayVisible) endWindowDrag();
   m_ctx.navigation->setWindow(nullptr);

@@ -18,6 +18,7 @@
 #include "icon-theme-db/icon-theme-db.hpp"
 #endif
 #include "extension/extension-interval-scheduler.hpp"
+#include "extension/headless-command-runner.hpp"
 #include "ipc/ipc-command-server.hpp"
 #include "keyboard/keybind-manager.hpp"
 #include "keyboard/keyboard.hpp"
@@ -550,6 +551,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
         toast = toasts->currentToast();
       });
 
+  ctx.services->setHeadlessCommandRunner(std::make_unique<HeadlessCommandRunner>(ctx));
   ExtensionIntervalScheduler intervalScheduler(ctx);
   intervalScheduler.rebuild();
 

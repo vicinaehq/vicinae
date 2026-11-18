@@ -11,6 +11,10 @@
 #include <ranges>
 #include <utility>
 
+namespace {
+bool isAbsolutePath(std::string_view entry) { return std::filesystem::path(entry).is_absolute(); }
+} // namespace
+
 void DMenuSection::setRawEntries(std::vector<std::string_view> entries) {
   m_entries = std::move(entries);
   m_filtered.clear();
@@ -51,7 +55,7 @@ DMenuSection::IndexedData DMenuSection::entryAt(int i) const {
 
 QString DMenuSection::itemTitle(int i) const {
   auto entry = entryAt(i).first;
-  if (entry.starts_with('/')) {
+  if (isAbsolutePath(entry)) {
     return QString::fromStdString(getLastPathComponent(std::filesystem::path(entry)));
   }
   return QString::fromUtf8(entry.data(), entry.size());
@@ -60,7 +64,7 @@ QString DMenuSection::itemTitle(int i) const {
 QString DMenuSection::itemSubtitle(int i) const {
   if (!m_noQuickLook) return {};
   auto entry = entryAt(i).first;
-  if (entry.starts_with('/')) {
+  if (isAbsolutePath(entry)) {
     std::error_code ec;
     if (std::filesystem::exists(entry, ec)) {
       return QString::fromStdString(std::filesystem::path(entry).parent_path().string());
@@ -71,7 +75,7 @@ QString DMenuSection::itemSubtitle(int i) const {
 
 std::optional<ImageURL> DMenuSection::itemIcon(int i) const {
   auto entry = entryAt(i).first;
-  if (entry.starts_with('/')) {
+  if (isAbsolutePath(entry)) {
     std::error_code ec;
     if (std::filesystem::exists(entry, ec)) { return ImageURL::fileIcon(entry); }
   }
@@ -126,7 +130,7 @@ void DMenuSection::onSelected(int i) {
   auto entry = entryAt(i).first;
   if (!entry.empty()) {
     std::error_code ec;
-    if (entry.starts_with('/') && std::filesystem::exists(entry, ec)) {
+    if (isAbsolutePath(entry) && std::filesystem::exists(entry, ec)) {
       if (m_onFileHighlighted) m_onFileHighlighted(entry);
     }
   }

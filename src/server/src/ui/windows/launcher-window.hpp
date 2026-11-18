@@ -128,6 +128,7 @@ public:
   bool commandHeld() const { return m_commandHeld; }
 
   Q_INVOKABLE void expand();
+  Q_INVOKABLE static bool foregroundLent();
   Q_INVOKABLE void forwardSearchText(const QString &text);
   Q_INVOKABLE void handleTab();
   Q_INVOKABLE bool forwardKey(int key, int modifiers = 0, int scanCode = 0);

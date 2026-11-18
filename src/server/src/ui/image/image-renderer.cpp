@@ -472,7 +472,10 @@ QImage decodeAndTransform(const QByteArray &data, const QSize &size, const QColo
   if (data.trimmed().startsWith("<?xml") || data.trimmed().startsWith("<svg")) {
     QSvgRenderer renderer(data);
     if (renderer.isValid()) {
-      img = QImage(contentSize, QImage::Format_ARGB32_Premultiplied);
+      const QSize imageSize = contentSize.isEmpty()
+                                  ? renderer.defaultSize()
+                                  : renderer.defaultSize().scaled(contentSize, Qt::KeepAspectRatio);
+      img = QImage(imageSize, QImage::Format_ARGB32_Premultiplied);
       img.fill(Qt::transparent);
       QPainter painter(&img);
       painter.setRenderHint(QPainter::Antialiasing, true);

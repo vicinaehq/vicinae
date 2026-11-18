@@ -243,6 +243,8 @@ QColor ThemeFile::deriveSemantic(SemanticColor color) const {
     return QColor::fromRgbF(0, 0, 0, isLight() ? 0.15f : 0.5f);
   case SemanticColor::MainWindowBackdrop:
     return QColor::fromRgbF(0, 0, 0, 0.4f);
+  case SemanticColor::MainWindowShadowColor:
+    return QColor::fromRgbF(0, 0, 0, 0.3f);
   case SemanticColor::SettingsWindowBorder:
     return resolve(SemanticColor::MainWindowBorder);
   case SemanticColor::StatusBarBackground:

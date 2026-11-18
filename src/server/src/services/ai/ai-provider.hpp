@@ -1,6 +1,9 @@
 #pragma once
 #include "ai-capability.hpp"
 #include "ai-tool.hpp"
+#include "chat-image.hpp"
+#include "chat-resource.hpp"
+#include "ai-reasoning.hpp"
 #include <cstdint>
 #include <expected>
 #include <glaze/core/common.hpp>
@@ -110,11 +113,6 @@ struct TextPart {
   std::string text;
 };
 
-struct ImagePart {
-  std::string mimeType;
-  QByteArray base64;
-};
-
 struct ToolCallPart {
   std::string id;
   std::string name;
@@ -126,7 +124,7 @@ struct ToolResultPart {
   std::string content;
 };
 
-using ChatPart = std::variant<TextPart, ImagePart, ToolCallPart, ToolResultPart>;
+using ChatPart = std::variant<TextPart, ImagePart, ResourcePart, ToolCallPart, ToolResultPart>;
 
 /**
  * Tool calls live on assistant messages and their results on tool messages, paired by call id, so a
@@ -178,6 +176,8 @@ signals:
   // The model waits for the user to allow a tool reported through `toolActivityChanged`.
   void approvalRequested(const std::string &callId) const;
   void dataAdded(const std::string &text) const;
+  void imageAdded(const ImagePart &image) const;
+  void resourceAdded(const ResourcePart &resource) const;
   void errorOccurred(const std::string &reason) const;
   void finished() const;
 
@@ -204,6 +204,7 @@ struct ChatCompletionPayload {
    * Some providers may not support this at all.
    */
   ThinkingMode thinking = ThinkingMode::Medium;
+  std::optional<std::string> reasoningEffort;
   ChatHistory messages;
   std::vector<AbstractTool *> tools;
   // A guard rather than a target: models that think may spend part of it before answering.
@@ -337,6 +338,10 @@ public:
    *
    */
   virtual void preloadModel(std::string_view modelId) {}
+  virtual void prepareReasoning(std::string_view modelId) {}
+  virtual std::optional<ReasoningOptions> reasoningOptions(std::string_view modelId) const {
+    return std::nullopt;
+  }
 
   /**
    * The use announced by `preloadModel` will not happen.

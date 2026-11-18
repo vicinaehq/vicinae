@@ -107,6 +107,7 @@ Popup {
             height: parent.height - 48
             source: root.sources[root.currentIndex] ?? ""
             fillMode: Image.PreserveAspectFit
+            fallbackEnabled: false
 
             MouseArea {
                 anchors.fill: parent
@@ -118,6 +119,15 @@ Popup {
             anchors.centerIn: parent
             running: image.status === Image.Loading
             visible: running
+        }
+
+        Text {
+            anchors.centerIn: parent
+            visible: image.status === ViciImage.Error
+            text: qsTr("Image unavailable")
+            color: "white"
+            font.family: Theme.fontFamily
+            font.pointSize: Theme.regularFontSize
         }
 
         CircleButton {

@@ -35,6 +35,8 @@ public:
 private:
   struct Content {
     QPointer<MarkdownModel> markdown;
+    std::optional<QString> image;
+    std::optional<QVariantList> attachment;
     QVariantMap tool;
     int sourcePart = 0;
     int offset = 0;

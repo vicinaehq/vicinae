@@ -288,6 +288,11 @@ set(SRCS
 
 	src/extension/extension.hpp
 	src/extension/extension.cpp
+	src/extension/extension-tool.hpp
+	src/extension/extension-preferences.hpp
+	src/extension/extension-tool.cpp
+	src/extension/headless-command-runner.hpp
+	src/extension/headless-command-runner.cpp
 
 	src/extension/extension-command.hpp
 	src/extension/extension-command.cpp
@@ -663,6 +668,11 @@ set(SRCS
 	src/services/ai/cli/cli-process.hpp
 	src/services/ai/cli/cli-process.cpp
 	src/services/ai/acp/acp-provider.hpp
+	src/services/ai/acp/acp-content.hpp
+	src/services/ai/chat-image.hpp
+	src/services/ai/chat-resource.hpp
+	src/services/ai/ai-reasoning.hpp
+	src/services/ai/acp/acp-config.hpp
 	src/services/ai/acp/acp-provider.cpp
 	src/services/ai/mcp/mcp-server.hpp
 	src/services/ai/mcp/mcp-server.cpp
@@ -1482,6 +1492,8 @@ set(VICINAE_QML_FILES
 	src/ui/qml/markdown/MdList.qml
 	src/ui/qml/markdown/MdTable.qml
 	src/ui/qml/markdown/MdImage.qml
+	src/ui/qml/markdown/MarkdownImageMenu.qml
+	src/ui/qml/markdown/MarkdownImagePreview.qml
 	src/ui/qml/markdown/MdHorizontalRule.qml
 	src/ui/qml/markdown/MdHtmlBlock.qml
 	src/ui/qml/markdown/MdBlockquote.qml
@@ -1771,6 +1783,7 @@ qt_add_translations(${TARGET}
 		${CMAKE_CURRENT_SOURCE_DIR}/translations/vicinae_es_ES.ts
 		${CMAKE_CURRENT_SOURCE_DIR}/translations/vicinae_fr.ts
 		${CMAKE_CURRENT_SOURCE_DIR}/translations/vicinae_it.ts
+		${CMAKE_CURRENT_SOURCE_DIR}/translations/vicinae_ko.ts
 		${CMAKE_CURRENT_SOURCE_DIR}/translations/vicinae_pl.ts
 		${CMAKE_CURRENT_SOURCE_DIR}/translations/vicinae_ru.ts
 		${CMAKE_CURRENT_SOURCE_DIR}/translations/vicinae_uk.ts
@@ -1802,8 +1815,11 @@ if (BUILD_TESTS AND UNIX AND NOT APPLE)
 		src/services/builtin-icon/builtin-icon.cpp
 		src/services/audio-control/pactl/pactl-audio-control.cpp
 		src/services/clipboard/clipboard-mime.cpp
+		src/services/extension-registry/extension-manifest.cpp
+		src/utils/utils.cpp
 		tests/pactl-audio-control.cpp
 		tests/clipboard-mime.cpp
+		tests/extension-manifest.cpp
 	)
 	target_link_libraries(${TEST_TARGET} PRIVATE vicinae::common Qt6::Concurrent glaze::glaze)
 	target_link_libraries(${TEST_TARGET} PRIVATE Catch2::Catch2WithMain Qt6::Core Qt6::Gui)
@@ -1821,6 +1837,6 @@ if(BUILD_TESTS)
 		src/ui/quick/math-renderer.cpp
 		src/ui/quick/math-renderer.hpp
 	)
-	target_link_libraries(vicinae-document-tests PRIVATE JKQTMathText6 Qt6::Quick Qt6::Svg Qt6::Test)
+	target_link_libraries(vicinae-document-tests PRIVATE JKQTMathText6 Qt6::Quick Qt6::Svg Qt6::Test glaze::glaze)
 	target_compile_features(vicinae-document-tests PRIVATE cxx_std_23)
 endif()

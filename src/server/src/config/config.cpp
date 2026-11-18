@@ -164,7 +164,18 @@ bool Manager::writeUser(const Partial<ConfigValue> &cfg) {
   }
 
   std::error_code ec;
-  fs::path tmp = m_userPath;
+  fs::path target = m_userPath;
+
+  // Write through symlinks instead of replacing them
+  if (fs::is_symlink(m_userPath, ec)) {
+    target = fs::canonical(m_userPath, ec);
+    if (ec) {
+      qWarning() << "Failed to resolve config symlink" << m_userPath.string().c_str() << ec.message().c_str();
+      return false;
+    }
+  }
+
+  fs::path tmp = target;
 
   tmp += ".tmp";
 
@@ -179,7 +190,7 @@ bool Manager::writeUser(const Partial<ConfigValue> &cfg) {
     }
   }
 
-  fs::rename(tmp, m_userPath, ec);
+  fs::rename(tmp, target, ec);
 
   if (ec) {
     fs::remove(tmp, ec);

@@ -14,6 +14,11 @@ Item {
     property bool _autoScroll: false
     focus: true
 
+    MarkdownImagePreview {
+        id: imagePreview
+        actions: root.model
+    }
+
     function scrollUp() {
         view.flick(0, 800);
     }
@@ -73,6 +78,7 @@ Item {
                     mdModel: root.model
                     fontFamily: root.fontFamily
                     maxImageHeight: root.height * 0.7
+                    onImagePreviewRequested: (source, link) => imagePreview.show(source, link)
                 }
             }
             onContentHeightChanged: {
