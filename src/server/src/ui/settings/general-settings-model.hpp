@@ -48,6 +48,12 @@ class GeneralSettingsModel : public QObject {
   Q_PROPERTY(CompletionModel *keybindingSchemeModel READ keybindingSchemeModel CONSTANT)
   Q_PROPERTY(CompletionModel *languageModel READ languageModel CONSTANT)
   Q_PROPERTY(QVariant currentLanguage READ currentLanguage NOTIFY configChanged)
+  Q_PROPERTY(bool switchInputSourceOnOpen READ switchInputSourceOnOpen WRITE setSwitchInputSourceOnOpen NOTIFY
+                 configChanged)
+  Q_PROPERTY(bool restoreInputSourceOnClose READ restoreInputSourceOnClose WRITE setRestoreInputSourceOnClose
+                 NOTIFY configChanged)
+  Q_PROPERTY(CompletionModel *inputSourceModel READ inputSourceModel CONSTANT)
+  Q_PROPERTY(QVariant currentInputSource READ currentInputSource NOTIFY configChanged)
   Q_PROPERTY(QVariant currentTheme READ currentTheme NOTIFY configChanged)
   Q_PROPERTY(QVariant currentFont READ currentFont NOTIFY configChanged)
   Q_PROPERTY(QVariant currentIconTheme READ currentIconTheme NOTIFY configChanged)
@@ -132,6 +138,14 @@ public:
   Q_INVOKABLE void selectFaviconService(const QString &id);
   Q_INVOKABLE void selectKeybindingScheme(const QString &id);
   Q_INVOKABLE void selectLanguage(const QString &id);
+  Q_INVOKABLE void selectInputSource(const QString &id);
+
+  bool switchInputSourceOnOpen() const;
+  void setSwitchInputSourceOnOpen(bool v);
+  bool restoreInputSourceOnClose() const;
+  void setRestoreInputSourceOnClose(bool v);
+  CompletionModel *inputSourceModel() { return &m_inputSourceModel; }
+  QVariant currentInputSource() const;
 
   QString toggleShortcut() const;
   void setToggleShortcut(const QString &shortcut);
@@ -147,6 +161,7 @@ private:
   QVariantList faviconServiceItems() const;
   QVariantList keybindingSchemeItems() const;
   QVariantList languageItems() const;
+  QVariantList inputSourceItems() const;
   void refreshDynamicModels();
 
   CompletionModel m_windowMaterialModel{this};
@@ -156,6 +171,8 @@ private:
   CompletionModel m_faviconServiceModel{this};
   CompletionModel m_keybindingSchemeModel{this};
   CompletionModel m_languageModel{this};
+  CompletionModel m_inputSourceModel{this};
   QVariantList m_themeItems;
   QVariantList m_iconThemeItems;
+  QVariantList m_inputSourceItems;
 };

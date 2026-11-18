@@ -73,6 +73,16 @@
 	// Navigation scheme. Supports: 'default' | 'vim' | 'emacs'
 	"keybinding": "default",
 
+	// Automatically switch to a specific keyboard input source when the launcher opens.
+	"switch_input_source_on_open": false,
+
+	// Target keyboard input source ID to switch to when opening the launcher (e.g. "com.apple.keylayout.US").
+	// If omitted or empty, the system default English layout (e.g. US or ABC) is selected.
+	// "target_input_source": "com.apple.keylayout.US",
+
+	// Restore the previous keyboard input source when the launcher closes.
+	"restore_input_source_on_close": false,
+
 	"font": {
 		// Text rendering backend used by Qt Quick text.
 		// "native": uses the platform rasterizer (CoreText/DirectWrite/fontconfig), matching how other apps on the system render text
