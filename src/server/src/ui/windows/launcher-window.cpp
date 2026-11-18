@@ -277,6 +277,7 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
   if (m_hudBridge) {
     connect(nav, &NavigationController::showHudRequested, m_hudBridge, &HudBridge::show);
     connect(nav, &NavigationController::dictationHudRequested, m_hudBridge, &HudBridge::showDictation);
+    connect(nav, &NavigationController::activityHudRequested, m_hudBridge, &HudBridge::showActivity);
   }
 
   auto *toast = m_ctx.services->toastService();

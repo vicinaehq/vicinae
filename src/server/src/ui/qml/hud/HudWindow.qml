@@ -8,29 +8,33 @@ Window {
     id: root
 
     readonly property bool dictating: Hud.dictation !== null
+    readonly property bool hasActivity: Hud.activity !== null
+    readonly property bool busy: dictating || hasActivity
     readonly property bool dictationMessage: dictating && Hud.dictation.message !== ""
-    readonly property bool working: dictating && !dictationMessage && (Hud.dictation.transcribing || Hud.dictation.rewriting)
+    readonly property bool activityMessage: hasActivity && Hud.activity.message !== ""
+    readonly property bool showsMessage: dictationMessage || activityMessage
+    readonly property bool working: (dictating && !dictationMessage && (Hud.dictation.transcribing || Hud.dictation.rewriting)) || (hasActivity && !activityMessage)
     readonly property bool recording: dictating && !dictationMessage && !working
     readonly property bool captureReady: recording && Hud.dictation.captureReady
     readonly property color mutedColor: Config.withAlpha(Theme.foreground, 0.6)
 
-    property color pillColor: Config.withAlpha(Theme.background, dictating ? 0.98 : 0.9)
+    property color pillColor: Config.withAlpha(Theme.background, busy ? 0.98 : 0.9)
     property color pillBorderColor: Config.withAlpha(Theme.foreground, Theme.isDark ? 0.12 : 0.18)
     property int pillBorderWidth: 1
     property real pillRadius: height / 2
-    property real pillWidth: dictating ? (dictationMessage ? Math.max(216, Math.min(360, messageLabel.implicitWidth + 72)) : working ? Math.max(216, Math.min(360, workLabel.implicitWidth + 88)) : 172) : noticeRow.width + 30
+    property real pillWidth: busy ? (showsMessage ? Math.max(216, Math.min(360, messageLabel.implicitWidth + 72)) : working ? Math.max(216, Math.min(360, workLabel.implicitWidth + 88)) : 172) : noticeRow.width + 30
 
     signal shown
 
     width: pillWidth
-    height: dictating ? 42 : noticeRow.height + 20
-    title: dictating ? qsTr("Dictation") : Hud.text
+    height: busy ? 42 : noticeRow.height + 20
+    title: dictating ? qsTr("Dictation") : hasActivity ? Hud.activity.text : Hud.text
     flags: Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.ToolTip | Qt.WindowDoesNotAcceptFocus
     color: "transparent"
     visible: false
 
     Behavior on pillWidth {
-        enabled: root.visible && root.dictating && !root.dictationMessage
+        enabled: root.visible && root.busy && !root.showsMessage
         NumberAnimation {
             duration: 320
             easing.type: Easing.OutCubic
@@ -132,7 +136,7 @@ Window {
 
         RowLayout {
             id: noticeRow
-            visible: !root.dictating
+            visible: !root.busy
             anchors.centerIn: parent
             spacing: 5
 
@@ -157,7 +161,7 @@ Window {
 
         Item {
             anchors.fill: parent
-            visible: root.dictating
+            visible: root.busy
 
             HudButton {
                 id: finishButton
@@ -242,7 +246,7 @@ Window {
                 anchors.centerIn: parent
                 width: Math.min(implicitWidth, 272)
                 visible: root.working
-                text: root.dictating && Hud.dictation.rewriting ? qsTr("Rewriting") : qsTr("Transcribing")
+                text: root.hasActivity ? Hud.activity.text : root.dictating && Hud.dictation.rewriting ? qsTr("Rewriting") : qsTr("Transcribing")
                 color: root.mutedColor
                 font.family: Theme.fontFamily
                 font.pointSize: Theme.smallerFontSize
@@ -259,8 +263,8 @@ Window {
                 anchors.right: cancelButton.left
                 anchors.rightMargin: 6
                 anchors.verticalCenter: parent.verticalCenter
-                visible: root.dictationMessage
-                text: root.dictating ? Hud.dictation.message : ""
+                visible: root.showsMessage
+                text: root.hasActivity ? Hud.activity.message : root.dictating ? Hud.dictation.message : ""
                 color: Theme.foreground
                 font.family: Theme.fontFamily
                 font.pointSize: Theme.smallerFontSize
@@ -275,10 +279,14 @@ Window {
                 anchors.right: parent.right
                 anchors.rightMargin: 6
                 anchors.verticalCenter: parent.verticalCenter
-                label: root.dictationMessage ? qsTr("Dismiss") : qsTr("Cancel dictation")
+                label: root.showsMessage ? qsTr("Dismiss") : root.hasActivity ? qsTr("Cancel") : qsTr("Cancel dictation")
                 icon: Img.icon(BuiltinIcon.Xmark).withFillColor(hovered ? Theme.foreground : root.mutedColor)
-                onClicked: if (Hud.dictation)
-                    Hud.dictation.cancel()
+                onClicked: {
+                    if (Hud.activity)
+                        Hud.activity.cancel();
+                    else if (Hud.dictation)
+                        Hud.dictation.cancel();
+                }
             }
         }
     }

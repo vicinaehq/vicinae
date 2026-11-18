@@ -47,6 +47,7 @@ class AppRuntime;
 class GlobalShortcutService;
 class LocalModelRegistry;
 class DictationService;
+class AiCommandStore;
 
 namespace config {
 class Manager;
@@ -110,6 +111,7 @@ public:
   AI::ConversationStore *conversations() const;
   LocalModelRegistry *localModels() const;
   DictationService *dictation() const;
+  AiCommandStore *aiCommands() const;
 
   void setPowerManager(std::unique_ptr<PowerManager> manager);
   void setTrayHost(std::unique_ptr<AbstractTrayHost> service);
@@ -159,6 +161,7 @@ public:
   void setTools(std::unique_ptr<AI::ToolRegistry> registry);
   void setLocalModels(std::unique_ptr<LocalModelRegistry> registry);
   void setDictation(std::unique_ptr<DictationService> service);
+  void setAiCommands(std::unique_ptr<AiCommandStore> store);
 
 private:
   static inline ServiceRegistry *s_instance = nullptr;
@@ -207,6 +210,7 @@ private:
   std::unique_ptr<LocalModelRegistry> m_localModels;
   std::unique_ptr<AI::Service> m_ai;
   std::unique_ptr<DictationService> m_dictation;
+  std::unique_ptr<AiCommandStore> m_aiCommands;
   std::unique_ptr<AI::ToolRegistry> m_tools;
   std::unique_ptr<AI::ConversationStore> m_conversations;
 };

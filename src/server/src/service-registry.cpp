@@ -1,5 +1,6 @@
 #include "services/ai/conversation-store.hpp"
 #include "service-registry.hpp"
+#include "services/ai-commands/ai-command-store.hpp"
 #include "services/dictation/dictation-service.hpp"
 #ifdef Q_OS_LINUX
 #include "services/input-server/linux-input-server.hpp"
@@ -126,6 +127,12 @@ DictationService *ServiceRegistry::dictation() const { return m_dictation.get();
 
 void ServiceRegistry::setDictation(std::unique_ptr<DictationService> service) {
   m_dictation = std::move(service);
+}
+
+AiCommandStore *ServiceRegistry::aiCommands() const { return m_aiCommands.get(); }
+
+void ServiceRegistry::setAiCommands(std::unique_ptr<AiCommandStore> store) {
+  m_aiCommands = std::move(store);
 }
 
 UpdateService *ServiceRegistry::updateService() const { return m_updateService.get(); }

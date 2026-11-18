@@ -18,6 +18,7 @@
 #include <qevent.h>
 
 class DictationSession;
+class HudActivity;
 class BaseView;
 class DialogContentWidget;
 class ActionPanelView;
@@ -119,6 +120,7 @@ signals:
   void loadingChanged(bool value) const;
   void showHudRequested(const QString &title, const std::optional<ImageURL> &icon);
   void dictationHudRequested(DictationSession *session);
+  void activityHudRequested(HudActivity *activity);
 
   void completionValuesChanged(const ArgumentValues &values) const;
 
@@ -234,6 +236,7 @@ public:
    */
   void showHud(const QString &title, const std::optional<ImageURL> &icon = std::nullopt);
   void showDictationHud(DictationSession *session);
+  void showActivityHud(HudActivity *activity);
 
   void launch(const std::shared_ptr<AbstractCmd> &cmd);
   void launch(const std::shared_ptr<AbstractCmd> &cmd, const ArgumentValues &arguments);

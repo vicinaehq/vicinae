@@ -30,6 +30,8 @@
 #include "root-search/apps/app-root-provider.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
 #include "root-search/shortcuts/shortcut-root-provider.hpp"
+#include "root-search/ai-commands/ai-command-root-provider.hpp"
+#include "services/ai-commands/ai-command-store.hpp"
 #ifdef Q_OS_MACOS
 #include "root-search/apple-shortcuts/apple-shortcut-root-provider.hpp"
 #include "root-search/macos-settings/macos-settings-root-provider.hpp"
@@ -427,6 +429,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     registry->setDictation(
         std::make_unique<DictationService>(Omnicast::dataDir(), *ai, *registry->mediaControl(), *registry));
     registry->setAI(std::move(ai));
+    registry->setAiCommands(std::make_unique<AiCommandStore>(Omnicast::dataDir() / "ai-commands.json"));
     registry->setConversations(
         std::make_unique<AI::ConversationStore>(Omnicast::dataDir() / "conversations"));
     QObject::connect(registry->conversations(), &AI::ConversationStore::errorOccurred,
@@ -485,6 +488,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
 
     root->loadProvider(std::make_unique<AppRootProvider>(*registry->appDb()));
     root->loadProvider(std::make_unique<ShortcutRootProvider>(*registry->shortcuts()));
+    root->loadProvider(std::make_unique<AiCommandRootProvider>(*registry->aiCommands()));
     root->loadProvider(std::make_unique<ScriptRootProvider>(*registry->scriptDb()));
     root->loadProvider(std::make_unique<BrowserTabProvider>(*registry->browserExtension()));
 #ifdef Q_OS_MACOS

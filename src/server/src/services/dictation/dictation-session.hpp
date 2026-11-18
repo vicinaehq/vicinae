@@ -4,7 +4,7 @@
 #include <QTimer>
 #include <QtQml/qqmlregistration.h>
 #include "services/dictation/dictation-action.hpp"
-#include "services/dictation/dictation-rewrite.hpp"
+#include "services/ai/text-rewrite.hpp"
 #include "services/paste/paste-service.hpp"
 #include "services/dictation/transcription-session.hpp"
 #include "services/global-shortcuts/global-shortcut-service.hpp"
@@ -75,7 +75,7 @@ private:
   ServiceRegistry &m_services;
   TranscriptionSetup m_setup;
   TranscriptionSession m_session;
-  DictationRewrite m_rewrite;
+  TextRewrite m_rewrite;
   Transcript m_transcript;
   std::string m_styleName;
   Dictation::DictationAction m_action;

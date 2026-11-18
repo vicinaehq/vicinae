@@ -1,6 +1,8 @@
 #pragma once
 #include <qcoreapplication.h>
 #include "builtins/ai/ai.hpp"
+#include "builtins/ai/ai-commands.hpp"
+#include "builtins/ai/ai-commands-view-host.hpp"
 #include "conversation-history-view-host.hpp"
 #include "command/command-database.hpp"
 #include "command/single-view-command-context.hpp"
@@ -61,6 +63,28 @@ class ConversationHistoryCommand : public BuiltinViewCommand<ConversationHistory
   }
 };
 
+class ManageAiCommandsCommand : public BuiltinViewCommand<AiCommandsViewHost> {
+  Q_DECLARE_TR_FUNCTIONS(ManageAiCommandsCommand)
+  QString id() const override { return QStringLiteral("manage-commands"); }
+  QString name() const override { return tr("Manage AI Commands"); }
+  QString description() const override {
+    return tr("Rewrite the selected text in any app with your own AI instructions.");
+  }
+  std::vector<QString> keywords() const override { return {"rewrite", "prompt", "selection"}; }
+  ImageURL iconUrl() const override { return AiCommands::defaultIconUrl(); }
+};
+
+class CreateAiCommandCommand : public GuardedBuiltinCallbackCommand {
+  Q_DECLARE_TR_FUNCTIONS(CreateAiCommandCommand)
+  QString id() const override { return QStringLiteral("create-command"); }
+  QString name() const override { return tr("Create AI Command"); }
+  std::vector<QString> keywords() const override { return {"rewrite", "prompt", "selection"}; }
+  ImageURL iconUrl() const override { return AiCommands::defaultIconUrl().setBadge(BuiltinIcon::Plus); }
+  void execute(CommandController &controller) const override {
+    AiCommands::openCreateForm(controller.context());
+  }
+};
+
 class AiExtension : public TypedCommandRepository<AiPreferences> {
   Q_DECLARE_TR_FUNCTIONS(AiExtension)
 
@@ -75,5 +99,7 @@ public:
     registerCommand<AIChatCommand>();
     registerCommand<OpenLastChatCommand>();
     registerCommand<ConversationHistoryCommand>();
+    registerCommand<ManageAiCommandsCommand>();
+    registerCommand<CreateAiCommandCommand>();
   }
 };

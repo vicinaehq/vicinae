@@ -120,6 +120,8 @@ void NavigationController::showDictationHud(DictationSession *session) {
   emit dictationHudRequested(session);
 }
 
+void NavigationController::showActivityHud(HudActivity *activity) { emit activityHudRequested(activity); }
+
 void NavigationController::applyPopToRoot(const PendingPopToRoot &settings) {
   auto resolveApplicablePopToRoot = [&]() {
     if (settings.type == PopToRootType::Default)
