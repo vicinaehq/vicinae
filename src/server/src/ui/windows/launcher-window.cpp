@@ -406,7 +406,12 @@ void LauncherWindow::handleVisibilityChanged(bool visible) {
   if (visible) {
     applyWindowConfig();
     tryCompaction();
+    // On macOS the QML window has already made itself visible, and show() would also reset the window
+    // state: AppKit reports the fixed-size panel as zoomed, so Qt would animate an un-zoom that blocks
+    // for ~40 ms and can move the window.
+#ifndef Q_OS_MACOS
     m_window->show();
+#endif
     m_window->raise();
     LauncherWindowPlatform::grantForeground();
     m_window->requestActivate();
@@ -806,20 +811,8 @@ void LauncherWindow::applyShowPlacement() {
   if (!restoreWindowPosition()) positionOnCursorScreen();
 }
 
-// AppKit shifts this panel ~40px upward after orderFront (source unidentified, immune to
-// animationBehavior=None), hence: show at opacity 0, re-assert placement next tick, reveal.
 void LauncherWindow::prepareShow() {
-  if (!m_window) return;
-  m_window->setOpacity(0.0);
-  applyShowPlacement();
-}
-
-void LauncherWindow::finalizeShow() {
-  QTimer::singleShot(0, this, [this]() {
-    if (!m_window) return;
-    applyShowPlacement();
-    m_window->setOpacity(1.0);
-  });
+  if (m_window) applyShowPlacement();
 }
 
 void LauncherWindow::beginWindowDrag() {
