@@ -459,11 +459,10 @@ ipc_gen::Result<ipc_gen::DMenuResponse>::Future IpcService::dmenu(ipc_gen::DMenu
 }
 
 ipc_gen::Result<void>::Future IpcService::browserInit(ipc_gen::BrowserInitRequest req) {
-  std::shared_ptr<AbstractBrowserPeer> peer;
-
   if (req.protocolVersion.value_or(1) >= BROWSER_PROTOCOL_VERSION) {
-    peer = std::make_shared<IpcBrowserPeer>(*this);
+    if (!m_browserPeer) m_browserPeer = std::make_shared<IpcBrowserPeer>(*this);
   } else {
+    m_browserPeer.reset();
     qWarning() << "Browser extension in" << req.name.c_str() << "is too old, it needs to be updated";
   }
 
@@ -473,7 +472,7 @@ ipc_gen::Result<void>::Future IpcService::browserInit(ipc_gen::BrowserInitReques
                                                        .version = req.version,
                                                        .permissions = req.permissions,
                                                        .optionalPermissions = req.optionalPermissions,
-                                                       .peer = std::move(peer)});
+                                                       .peer = m_browserPeer});
   m_browser = std::move(req);
 
   return ipc_gen::Result<void>::ok();
@@ -536,7 +535,7 @@ IpcCommandServer::IpcCommandServer(ApplicationContext *ctx, QObject *parent) : Q
 void IpcCommandServer::handleDisconnection(IpcConnection *connection) {
   // drop the browser first, so that nothing calls into the connection while it is torn down
   if (const auto &browser = connection->service()->browser()) {
-    m_ctx.services->browserExtension()->unregisterBrowser(browser->id);
+    m_ctx.services->browserExtension()->unregisterBrowser(browser->id, connection->service()->browserPeer());
   }
 
   connection->deleteLater();

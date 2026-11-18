@@ -9,7 +9,7 @@ class IpcService;
 
 /**
  * Browser extension connected to the IPC server: every action is a call the extension replies to.
- * Owned by the browser extension service, which drops it before the connection goes away.
+ * The connection retains its peer so metadata refreshes preserve its identity.
  */
 class IpcBrowserPeer : public AbstractBrowserPeer {
 public:
@@ -17,7 +17,12 @@ public:
 
   Future<void> focusTab(int tabId) override;
   Future<void> closeTab(int tabId) override;
+  Future<void> setPinned(int tabId, bool pinned) override;
+  Future<void> setMuted(int tabId, bool muted) override;
+  Future<void> bookmarkTab(const ipc_gen::BookmarkTabRequest &req) override;
+  Future<void> duplicateTab(int tabId) override;
   Future<std::vector<ipc_gen::BrowserBookmarkInfo>> bookmarks() override;
+  Future<std::vector<ipc_gen::BrowserBookmarkFolderInfo>> bookmarkFolders() override;
   Future<void> removeBookmark(const std::string &bookmarkId) override;
   Future<std::vector<ipc_gen::BrowserHistoryItemInfo>> searchHistory(const std::string &query,
                                                                      int maxResults) override;

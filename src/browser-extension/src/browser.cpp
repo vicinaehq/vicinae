@@ -187,6 +187,12 @@ int main(int ac, char **av) {
     port.request("browser/get-bookmarks", ipc::Ipc_browserGetBookmarks_Params{}, std::move(respond));
   });
 
+  client.ipc().onBrowserGetBookmarkFolders(
+      [&](ipc::Responder<std::vector<ipc::BrowserBookmarkFolderInfo>> respond) {
+        port.request("browser/get-bookmark-folders", ipc::Ipc_browserGetBookmarkFolders_Params{},
+                     std::move(respond));
+      });
+
   client.ipc().onBrowserRemoveBookmark([&](const std::string &bookmarkId, ipc::Responder<void> respond) {
     port.request("browser/remove-bookmark", ipc::Ipc_browserRemoveBookmark_Params{.bookmarkId = bookmarkId},
                  std::move(respond));
@@ -211,6 +217,22 @@ int main(int ac, char **av) {
   client.ipc().onBrowserRequestPermission([&](const std::string &permission, ipc::Responder<void> respond) {
     port.request("browser/request-permission",
                  ipc::Ipc_browserRequestPermission_Params{.permission = permission}, std::move(respond));
+  });
+
+  client.ipc().onBrowserSetPinned([&](const ipc::SetPinnedRequest &req, ipc::Responder<void> respond) {
+    port.request("browser/set-pinned", req, std::move(respond));
+  });
+
+  client.ipc().onBrowserSetMuted([&](const ipc::SetMutedRequest &req, ipc::Responder<void> respond) {
+    port.request("browser/set-muted", req, std::move(respond));
+  });
+
+  client.ipc().onBrowserBookmarkTab([&](const ipc::BookmarkTabRequest &req, ipc::Responder<void> respond) {
+    port.request("browser/bookmark-tab", req, std::move(respond));
+  });
+
+  client.ipc().onBrowserDuplicateTab([&](const ipc::DuplicateTabRequest &req, ipc::Responder<void> respond) {
+    port.request("browser/duplicate-tab", req, std::move(respond));
   });
 
   // Handle messages from the browser extension (via stdin native messaging)

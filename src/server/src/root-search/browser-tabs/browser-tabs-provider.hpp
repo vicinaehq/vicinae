@@ -21,7 +21,7 @@ class BrowserTabRootItem : public RootItem {
 
   QString subtitle() const override { return m_tab.title.c_str(); }
 
-  std::vector<QString> keywords() const override { return {m_tab.url.c_str()}; }
+  std::vector<QString> keywords() const override { return {m_tab.url.c_str(), m_tab.browserLabel.c_str()}; }
 
   std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx,
                                                    const RootItemMetadata &metadata) const override {
@@ -29,7 +29,7 @@ class BrowserTabRootItem : public RootItem {
   }
 
   AccessoryList accessories() const override {
-    ListAccessory accessory{.text = tr("Tab")};
+    ListAccessory accessory{.text = m_tab.displayBrowserLabel(tr("Tab"))};
 
     if (m_tab.audible) { accessory.icon = ImageURL::emoji(m_tab.muted ? "🔇" : "🔊"); }
 

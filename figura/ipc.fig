@@ -117,6 +117,32 @@ struct BrowserHistoryItemInfo {
   visitCount: int;
 };
 
+struct BrowserBookmarkFolderInfo {
+  id: string;
+  path: string[];
+};
+
+struct SetPinnedRequest {
+  tabId: int;
+  pinned: bool;
+};
+
+struct SetMutedRequest {
+  tabId: int;
+  muted: bool;
+};
+
+struct BookmarkTabRequest {
+  tabId: int;
+  title: string;
+  url: string;
+  folderId?: string;
+};
+
+struct DuplicateTabRequest {
+  tabId: int;
+};
+
 struct FileResult {
   path: string;
   score: uint;
@@ -182,9 +208,14 @@ service Ipc {
   client fn browserFocusTab(tabId: int) => void;
   client fn browserCloseTab(tabId: int) => void;
   client fn browserGetBookmarks() => BrowserBookmarkInfo[];
+  client fn browserGetBookmarkFolders() => BrowserBookmarkFolderInfo[];
   client fn browserRemoveBookmark(bookmarkId: string) => void;
   client fn browserSearchHistory(query: string, maxResults: int) => BrowserHistoryItemInfo[];
   client fn browserRemoveHistoryUrl(url: string) => void;
   client fn browserClearHistory() => void;
   client fn browserRequestPermission(permission: string) => void;
+  client fn browserSetPinned(req: SetPinnedRequest) => void;
+  client fn browserSetMuted(req: SetMutedRequest) => void;
+  client fn browserBookmarkTab(req: BookmarkTabRequest) => void;
+  client fn browserDuplicateTab(req: DuplicateTabRequest) => void;
 }

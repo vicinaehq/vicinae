@@ -387,6 +387,8 @@ set(SRCS
 	src/builtins/browser/browser-history-model.cpp
 	src/builtins/browser/browser-history-view-host.hpp
 	src/builtins/browser/browser-history-view-host.cpp
+	src/builtins/browser/bookmark-tab-form-view-host.hpp
+	src/builtins/browser/bookmark-tab-form-view-host.cpp
 	src/builtins/vicinae/builtin-icons-model.hpp
 	src/builtins/vicinae/builtin-icons-model.cpp
 	src/builtins/vicinae/builtin-icons-view-host.hpp
@@ -1472,6 +1474,7 @@ set(VICINAE_QML_FILES
 	src/ui/qml/views/AliasFormView.qml
 	src/ui/qml/views/VocabularyFormView.qml
 	src/ui/qml/views/DictationStyleFormView.qml
+	src/ui/qml/views/BookmarkTabFormView.qml
 	src/ui/qml/views/ShortcutFormView.qml
 	src/ui/qml/form/PlaceholderCompleter.qml
 	src/ui/qml/form/PlaceholderHighlight.qml
@@ -1814,10 +1817,13 @@ if (BUILD_TESTS AND UNIX AND NOT APPLE)
 		src/services/builtin-icon/builtin-icon.hpp
 		src/services/builtin-icon/builtin-icon.cpp
 		src/services/audio-control/pactl/pactl-audio-control.cpp
+		src/services/browser-extension-service.hpp
+		${GENOUT}/ipc-server.hpp
 		src/services/clipboard/clipboard-mime.cpp
 		src/services/extension-registry/extension-manifest.cpp
 		src/utils/utils.cpp
 		tests/pactl-audio-control.cpp
+		tests/browser-extension-service.cpp
 		tests/clipboard-mime.cpp
 		tests/extension-manifest.cpp
 	)

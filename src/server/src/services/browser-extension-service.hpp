@@ -4,16 +4,20 @@
 #include <QTimer>
 #include <algorithm>
 #include <chrono>
+#include <cstddef>
 #include <cstdint>
+#include <expected>
 #include <functional>
 #include <glaze/core/reflect.hpp>
 #include <memory>
 #include <optional>
-#include <span>
 #include <ranges>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
+#include <unordered_map>
+#include <utility>
 #include "ui/image/url.hpp"
 #include "generated/ipc-server.hpp"
 
@@ -28,7 +32,12 @@ public:
 
   virtual Future<void> focusTab(int tabId) = 0;
   virtual Future<void> closeTab(int tabId) = 0;
+  virtual Future<void> setPinned(int tabId, bool pinned) = 0;
+  virtual Future<void> setMuted(int tabId, bool muted) = 0;
+  virtual Future<void> bookmarkTab(const ipc_gen::BookmarkTabRequest &req) = 0;
+  virtual Future<void> duplicateTab(int tabId) = 0;
   virtual Future<std::vector<ipc_gen::BrowserBookmarkInfo>> bookmarks() = 0;
+  virtual Future<std::vector<ipc_gen::BrowserBookmarkFolderInfo>> bookmarkFolders() = 0;
   virtual Future<void> removeBookmark(const std::string &bookmarkId) = 0;
   virtual Future<std::vector<ipc_gen::BrowserHistoryItemInfo>> searchHistory(const std::string &query,
                                                                              int maxResults) = 0;
@@ -44,6 +53,7 @@ class BrowserExtensionService : public QObject {
 public:
   enum class PermissionAccess : std::uint8_t { Granted, NeedsPermission, NeedsUpdate, NoBrowser };
   template <typename T> using Future = ipc_gen::Result<T>::Future;
+  enum class TabAction : std::uint8_t { Focus, Close, Pin, Unpin, Mute, Unmute, Bookmark, Duplicate };
 
 signals:
   void tabsChanged() const;
@@ -76,10 +86,18 @@ public:
 
   struct BrowserTab : ipc_gen::BrowserTabInfo {
     std::string browserId;
+    std::string browserLabel;
+    std::optional<std::string> browserShortId;
 
     std::string uniqueId() const { return std::format("{}-{}", browserId, id); }
     QString host() const { return urlHost(url); }
     ImageURL icon() const { return urlIcon(url, BuiltinIcon::AppWindowSidebarLeft); }
+
+    QString displayBrowserLabel(QString fallback) const {
+      if (!browserLabel.empty()) fallback = QString::fromStdString(browserLabel);
+      if (browserShortId) fallback += QStringLiteral(" (%1)").arg(QString::fromStdString(*browserShortId));
+      return fallback;
+    }
   };
 
   struct BrowserBookmark : ipc_gen::BrowserBookmarkInfo {
@@ -119,7 +137,9 @@ public:
     std::shared_ptr<AbstractBrowserPeer> peer;
     std::vector<BrowserTab> tabs;
     std::optional<std::vector<BrowserBookmark>> bookmarks;
+    std::vector<ipc_gen::BrowserBookmarkFolderInfo> folders;
     std::optional<int> pendingBookmarksRequest;
+    std::optional<int> pendingFoldersRequest;
     std::vector<BrowserHistoryItem> history;
     bool historyTruncated = false;
     std::optional<int> pendingHistoryRequest;
@@ -139,13 +159,31 @@ public:
     connect(&m_bookmarksEviction, &QTimer::timeout, this, [this]() {
       for (auto &browser : m_browsers) {
         browser.bookmarks.reset();
+        browser.folders.clear();
+        browser.pendingFoldersRequest.reset();
       }
     });
   }
 
-  std::vector<BrowserTab> tabs() const {
-    auto tabs = m_browsers | std::views::transform([](auto &&b) { return b.tabs; }) | std::views::join |
-                std::ranges::to<std::vector>();
+  std::vector<BrowserTab> tabs(std::optional<std::string_view> browserId = std::nullopt) const {
+    std::size_t count = 0;
+    std::unordered_map<std::string, int> labelCounts;
+    labelCounts.reserve(m_browsers.size());
+    for (const auto &browser : m_browsers) {
+      ++labelCounts[browser.name];
+      if (!browserId || browser.id == *browserId) count += browser.tabs.size();
+    }
+
+    std::vector<BrowserTab> tabs;
+    tabs.reserve(count);
+    for (const auto &browser : m_browsers) {
+      if (browserId && browser.id != *browserId) continue;
+      for (const auto &tab : browser.tabs) {
+        auto &copy = tabs.emplace_back(tab);
+        copy.browserLabel = browser.name;
+        if (labelCounts[browser.name] > 1) copy.browserShortId = browser.id.substr(0, 8);
+      }
+    }
 
     std::ranges::stable_sort(tabs, std::greater{}, &BrowserTab::lastAccessed);
 
@@ -201,6 +239,64 @@ public:
 
   Future<void> closeTab(const BrowserTab &tab) { return closeTab(tab.browserId, tab.id); }
 
+  Future<void> requestTabAction(const std::string &browserId, int tabId, TabAction action,
+                                std::optional<std::string> title = {}, std::optional<std::string> url = {},
+                                std::optional<std::string> folderId = {}) {
+    auto browser = findById(browserId);
+    if (browser == m_browsers.end()) return Void::fail("No such browser");
+    if (browser->isOutdated()) return Void::fail(OUTDATED_EXTENSION_ERROR);
+    auto tab =
+        std::ranges::find_if(browser->tabs, [tabId](const BrowserTab &item) { return item.id == tabId; });
+    if (tab == browser->tabs.end()) return Void::fail("No such tab");
+    std::string bookmarkTitle;
+    std::string bookmarkUrl;
+    if (action == TabAction::Bookmark) {
+      bookmarkTitle = title.value_or(tab->title);
+      bookmarkUrl = url.value_or(tab->url);
+      const QUrl parsed(bookmarkUrl.c_str());
+      if (!parsed.isValid() || parsed.scheme().isEmpty()) return Void::fail("Invalid bookmark URL");
+    }
+
+    switch (action) {
+    case TabAction::Focus:
+      return browser->peer->focusTab(tabId);
+    case TabAction::Close:
+      return closeTab(browserId, tabId);
+    case TabAction::Pin:
+    case TabAction::Unpin:
+      return browser->peer->setPinned(tabId, action == TabAction::Pin);
+    case TabAction::Mute:
+    case TabAction::Unmute:
+      return browser->peer->setMuted(tabId, action == TabAction::Mute);
+    case TabAction::Bookmark:
+      return browser->peer->bookmarkTab({.tabId = tabId,
+                                         .title = std::move(bookmarkTitle),
+                                         .url = std::move(bookmarkUrl),
+                                         .folderId = std::move(folderId)});
+    case TabAction::Duplicate:
+      return browser->peer->duplicateTab(tabId);
+    }
+    return Void::fail("Unknown tab action");
+  }
+
+  auto setPinned(const std::string &browserId, int tabId, bool pinned) {
+    return requestTabAction(browserId, tabId, pinned ? TabAction::Pin : TabAction::Unpin);
+  }
+
+  auto setMuted(const std::string &browserId, int tabId, bool muted) {
+    return requestTabAction(browserId, tabId, muted ? TabAction::Mute : TabAction::Unmute);
+  }
+
+  auto bookmarkTab(const std::string &browserId, int tabId, std::optional<std::string> title = {},
+                   std::optional<std::string> url = {}, std::optional<std::string> folderId = {}) {
+    return requestTabAction(browserId, tabId, TabAction::Bookmark, std::move(title), std::move(url),
+                            std::move(folderId));
+  }
+
+  auto duplicateTab(const std::string &browserId, int tabId) {
+    return requestTabAction(browserId, tabId, TabAction::Duplicate);
+  }
+
   /**
    * Find the first active tab. If many browsers are connected, the active tab from the first connected
    * browser is returned.
@@ -216,14 +312,33 @@ public:
   }
 
   void registerBrowser(BrowserInfo info) {
+    // Older extensions identify themselves with a full user agent.
+    if (info.name.starts_with("Mozilla/")) {
+      if (info.name.find("Edg/") != std::string::npos)
+        info.name = "Microsoft Edge";
+      else if (info.name.find("OPR/") != std::string::npos)
+        info.name = "Opera";
+      else if (info.name.find("Firefox/") != std::string::npos)
+        info.name = "Firefox";
+      else if (info.name.find("Chrome/") != std::string::npos)
+        info.name = "Chromium";
+      else
+        info.name.clear();
+    }
     if (auto it = findById(info.id); it != m_browsers.end()) {
-      // released after the swap: failing its pending calls must not observe a half-replaced entry
-      auto previousPeer = std::move(it->peer);
-      *it = std::move(info);
+      it->name = std::move(info.name);
+      it->engine = std::move(info.engine);
+      it->optionalPermissions = std::move(info.optionalPermissions);
+      auto previousPeer = std::exchange(it->peer, std::move(info.peer));
+      it->version = std::move(info.version);
+      setPermissions(it->id, std::move(info.permissions).value_or(std::vector<std::string>{}));
+      emit tabsChanged();
+      return;
     } else {
       m_browsers.emplace_back(std::move(info));
     }
     emit browsersChanged();
+    emit tabsChanged();
   }
 
   void unregisterBrowser(const std::string &id) {
@@ -235,6 +350,10 @@ public:
       emit historyChanged();
       emit browsersChanged();
     }
+  }
+
+  void unregisterBrowser(const std::string &id, const std::shared_ptr<AbstractBrowserPeer> &peer) {
+    if (const auto current = browser(id); current && current->peer == peer) unregisterBrowser(id);
   }
 
   std::span<const BrowserInfo> browsers() const { return m_browsers; }
@@ -263,14 +382,24 @@ public:
    * Request bookmarks from every browser that granted access and has no cached copy.
    * bookmarksChanged is emitted as responses come in.
    */
-  void fetchBookmarks() {
+  void fetchBookmarks(std::optional<std::string_view> browserId = std::nullopt) {
     for (auto &browser : m_browsers) {
+      if (browserId && browser.id != *browserId) continue;
       if (!browser.hasPermission(BOOKMARKS_PERMISSION)) continue;
       if (browser.bookmarks || browser.pendingBookmarksRequest) continue;
 
       const int requestId = m_nextRequestId++;
 
       browser.pendingBookmarksRequest = requestId;
+      browser.pendingFoldersRequest = requestId;
+      browser.peer->bookmarkFolders().then(
+          this, [this, browserId = browser.id, requestId](FoldersResult result) {
+            auto it = findById(browserId);
+            if (it == m_browsers.end() || it->pendingFoldersRequest != requestId) return;
+            it->pendingFoldersRequest.reset();
+            if (result) it->folders = std::move(*result);
+            emit bookmarksChanged();
+          });
       browser.peer->bookmarks().then(this, [this, browserId = browser.id, requestId](BookmarksResult result) {
         setBookmarks(browserId, requestId, std::move(result));
       });
@@ -278,7 +407,9 @@ public:
   }
 
   bool isFetchingBookmarks() const {
-    return std::ranges::any_of(m_browsers, [](auto &&b) { return b.pendingBookmarksRequest.has_value(); });
+    return std::ranges::any_of(m_browsers, [](auto &&b) {
+      return b.pendingBookmarksRequest.has_value() || b.pendingFoldersRequest.has_value();
+    });
   }
 
   Future<void> removeBookmark(const BrowserBookmark &bookmark) {
@@ -309,6 +440,8 @@ public:
 
     if (!it->hasPermission(BOOKMARKS_PERMISSION)) {
       it->bookmarks.reset();
+      it->folders.clear();
+      it->pendingFoldersRequest.reset();
       it->pendingBookmarksRequest.reset();
       emit bookmarksChanged();
     }
@@ -411,6 +544,7 @@ public:
 private:
   using Void = ipc_gen::Result<void>;
   using BookmarksResult = ipc_gen::Result<std::vector<ipc_gen::BrowserBookmarkInfo>>::Type;
+  using FoldersResult = ipc_gen::Result<std::vector<ipc_gen::BrowserBookmarkFolderInfo>>::Type;
   using HistoryResult = ipc_gen::Result<std::vector<ipc_gen::BrowserHistoryItemInfo>>::Type;
 
   void setBookmarks(const std::string &browserId, int requestId, BookmarksResult result) {

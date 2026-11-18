@@ -3,6 +3,7 @@
 #include <QLocalSocket>
 #include <QDebug>
 #include <qlocalserver.h>
+#include <memory>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -15,6 +16,8 @@ namespace AI {
 class AbstractChatCompletionStream;
 class McpServer;
 } // namespace AI
+
+class AbstractBrowserPeer;
 
 class IpcService : public ipc_gen::AbstractIpc {
 public:
@@ -39,6 +42,7 @@ public:
 
   // set once the client identified itself as a browser extension
   const std::optional<ipc_gen::BrowserInitRequest> &browser() const { return m_browser; }
+  const std::shared_ptr<AbstractBrowserPeer> &browserPeer() const { return m_browserPeer; }
 
 private:
   static constexpr int BROWSER_PROTOCOL_VERSION = 2;
@@ -47,6 +51,7 @@ private:
 
   ApplicationContext &m_ctx;
   std::optional<ipc_gen::BrowserInitRequest> m_browser;
+  std::shared_ptr<AbstractBrowserPeer> m_browserPeer;
   int m_completionIdx = 0;
   // Dropped with the connection, which aborts whatever is still streaming
   std::unordered_map<std::string, std::shared_ptr<AI::AbstractChatCompletionStream>> m_completions;

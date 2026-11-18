@@ -22,7 +22,8 @@ jobs:
       - name: Install pinned clang-format
         run: |
           url=$(curl -fsSL https://pypi.org/pypi/clang-format/23.1.0/json | jq -r '.urls[] | select(.filename | test("manylinux.*x86_64")) | .url')
-          curl -fsSL "$url" | bsdtar -xOf - clang_format/data/bin/clang-format > /usr/local/bin/clang-format
+          curl -fsSL "$url" -o /tmp/clang-format.whl
+          bsdtar -xOf /tmp/clang-format.whl clang_format/data/bin/clang-format > /usr/local/bin/clang-format
           chmod +x /usr/local/bin/clang-format
           clang-format --version
 
