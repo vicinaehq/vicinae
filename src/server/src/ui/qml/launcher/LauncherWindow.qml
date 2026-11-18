@@ -13,6 +13,7 @@ LauncherWindowBase {
     property int cornerRadius: Config.borderRounding
     property bool blurEnabled: Config.blurEnabled
     property bool shadowEnabled: shadowPadding > 0
+    property color csdShadowColor: Config.withAlpha(Theme.csdShadowColor, Theme.csdShadowColor.a * Config.windowOpacity)
     property bool nativeChrome: false
     property bool autoPlaceOnShow: true
     property Component contentEffect: null
@@ -86,7 +87,7 @@ LauncherWindowBase {
             height: root._contentH
             radius: root.cornerRadius
             blur: root.shadowPadding
-            color: Qt.rgba(0, 0, 0, 0.3)
+            color: root.csdShadowColor
         }
 
         layer.enabled: root.shadowEnabled && !root.nativeChrome
