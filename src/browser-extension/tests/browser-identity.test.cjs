@@ -20,26 +20,55 @@ async function start(saved, browserInfo) {
       getManifest: () => ({ version: "1.2.3" }),
       connectNative: () => ({
         postMessage: (message) => sent.push(message),
-        onMessage: { addListener: (listener) => { onMessage = listener; } },
+        onMessage: {
+          addListener: (listener) => {
+            onMessage = listener;
+          },
+        },
         onDisconnect: event,
       }),
       sendMessage: async () => {},
-      onMessage: { addListener: (listener) => { onPopupMessage = listener; } },
+      onMessage: {
+        addListener: (listener) => {
+          onPopupMessage = listener;
+        },
+      },
     },
-    permissions: { getAll: (callback) => callback({ permissions: ["bookmarks"] }),
-      onAdded: event, onRemoved: event },
-    tabs: { query: (_, callback) => callback([]),
-      onCreated: event, onUpdated: event, onRemoved: event, onActivated: event, onMoved: event },
+    permissions: {
+      getAll: (callback) => callback({ permissions: ["bookmarks"] }),
+      onAdded: event,
+      onRemoved: event,
+    },
+    tabs: {
+      query: (_, callback) => callback([]),
+      onCreated: event,
+      onUpdated: event,
+      onRemoved: event,
+      onActivated: event,
+      onMoved: event,
+    },
   };
-  const context = vm.createContext({ chrome, browser: browserInfo && {
-    runtime: { getBrowserInfo: async () => browserInfo }, storage: { local: storage },
-  }, crypto: { randomUUID: () => "stable-id" },
-  navigator: { userAgent: "Mozilla/5.0 Chrome/100", userAgentData: { brands: [{ brand: "Google Chrome" }] } },
-  console: { log() {}, error() {} }, clearTimeout });
+  const context = vm.createContext({
+    chrome,
+    browser: browserInfo && {
+      runtime: { getBrowserInfo: async () => browserInfo },
+      storage: { local: storage },
+    },
+    crypto: { randomUUID: () => "stable-id" },
+    navigator: {
+      userAgent: "Mozilla/5.0 Chrome/100",
+      userAgentData: { brands: [{ brand: "Google Chrome" }] },
+    },
+    console: { log() {}, error() {} },
+    clearTimeout,
+  });
   vm.runInContext(script, context);
   await new Promise(setImmediate);
-  return { sent, onMessage: (message) => onMessage(message),
-    onPopupMessage: (message, reply) => onPopupMessage(message, {}, reply) };
+  return {
+    sent,
+    onMessage: (message) => onMessage(message),
+    onPopupMessage: (message, reply) => onPopupMessage(message, {}, reply),
+  };
 }
 
 (async () => {
@@ -47,15 +76,26 @@ async function start(saved, browserInfo) {
   const first = await start(saved);
   assert.equal(saved.browserId, "stable-id");
   assert.deepEqual(JSON.parse(JSON.stringify(first.sent[0].data)), {
-    id: "stable-id", name: "Google Chrome", engine: "chromium",
-    version: "1.2.3", permissions: ["bookmarks"],
+    id: "stable-id",
+    name: "Google Chrome",
+    engine: "chromium",
+    version: "1.2.3",
+    permissions: ["bookmarks"],
+    optionalPermissions: ["bookmarks", "history"],
+    protocolVersion: 2,
   });
   first.onMessage({ id: first.sent[0].id, result: {} });
   let response;
-  first.onPopupMessage({ type: "profile_name_changed", name: "Work" }, (value) => { response = value; });
+  first.onPopupMessage(
+    { type: "profile_name_changed", name: "Work" },
+    (value) => {
+      response = value;
+    },
+  );
   assert.equal(response.success, true);
   await new Promise(setImmediate);
   assert.equal(first.sent.at(-1).data.name, "Google Chrome · Work");
+  assert.equal(first.sent.at(-1).data.protocolVersion, 2);
   first.onMessage({ id: first.sent.at(-1).id, result: {} });
   assert.equal(first.sent.at(-1).method, "browser/tabs-changed");
 
@@ -67,4 +107,7 @@ async function start(saved, browserInfo) {
   const firefox = await start({}, { name: "Firefox", vendor: "Mozilla" });
   assert.equal(firefox.sent[0].data.name, "Firefox");
   assert.equal(firefox.sent[0].data.engine, "gecko");
-})().catch((error) => { console.error(error); process.exitCode = 1; });
+})().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});

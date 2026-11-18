@@ -1472,12 +1472,9 @@ set(VICINAE_QML_FILES
 	src/ui/qml/form/FormSeparator.qml
 	src/ui/qml/views/SnippetFormView.qml
 	src/ui/qml/views/AliasFormView.qml
-<<<<<<< HEAD
 	src/ui/qml/views/VocabularyFormView.qml
 	src/ui/qml/views/DictationStyleFormView.qml
-=======
 	src/ui/qml/views/BookmarkTabFormView.qml
->>>>>>> 45b2211 (feat(browser): edit tab bookmark title and URL)
 	src/ui/qml/views/ShortcutFormView.qml
 	src/ui/qml/form/PlaceholderCompleter.qml
 	src/ui/qml/form/PlaceholderHighlight.qml
@@ -1706,7 +1703,6 @@ target_include_directories(${TARGET} PRIVATE
 	${CMAKE_CURRENT_SOURCE_DIR}/src/script
 	${CMAKE_CURRENT_SOURCE_DIR}/src/extension/views
 	${CMAKE_CURRENT_SOURCE_DIR}/src/builtins/shortcut
-	${CMAKE_CURRENT_SOURCE_DIR}/src/builtins/browser
 	${CMAKE_CURRENT_SOURCE_DIR}/src/builtins/vicinae
 	${CMAKE_CURRENT_SOURCE_DIR}/src/builtins/clipboard/history
 	${CMAKE_CURRENT_SOURCE_DIR}/src/builtins/browser

@@ -29,7 +29,8 @@ AbstractBrowserPeer::Future<std::vector<ipc_gen::BrowserBookmarkInfo>> IpcBrowse
   return m_ipc.callbrowserGetBookmarks(FETCH_TIMEOUT);
 }
 
-AbstractBrowserPeer::Future<std::vector<ipc_gen::BrowserBookmarkFolderInfo>> IpcBrowserPeer::bookmarkFolders() {
+AbstractBrowserPeer::Future<std::vector<ipc_gen::BrowserBookmarkFolderInfo>>
+IpcBrowserPeer::bookmarkFolders() {
   return m_ipc.callbrowserGetBookmarkFolders(FETCH_TIMEOUT);
 }
 

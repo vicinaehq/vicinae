@@ -12,6 +12,7 @@
 #include <memory>
 #include <optional>
 #include <ranges>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -159,6 +160,7 @@ public:
       for (auto &browser : m_browsers) {
         browser.bookmarks.reset();
         browser.folders.clear();
+        browser.pendingFoldersRequest.reset();
       }
     });
   }
@@ -238,9 +240,8 @@ public:
   Future<void> closeTab(const BrowserTab &tab) { return closeTab(tab.browserId, tab.id); }
 
   Future<void> requestTabAction(const std::string &browserId, int tabId, TabAction action,
-                                                    std::optional<std::string> title = {},
-                                                    std::optional<std::string> url = {},
-                                                    std::optional<std::string> folderId = {}) {
+                                std::optional<std::string> title = {}, std::optional<std::string> url = {},
+                                std::optional<std::string> folderId = {}) {
     auto browser = findById(browserId);
     if (browser == m_browsers.end()) return Void::fail("No such browser");
     if (browser->isOutdated()) return Void::fail(OUTDATED_EXTENSION_ERROR);
@@ -257,14 +258,23 @@ public:
     }
 
     switch (action) {
-    case TabAction::Focus: return browser->peer->focusTab(tabId);
-    case TabAction::Close: return closeTab(browserId, tabId);
+    case TabAction::Focus:
+      return browser->peer->focusTab(tabId);
+    case TabAction::Close:
+      return closeTab(browserId, tabId);
     case TabAction::Pin:
-    case TabAction::Unpin: return browser->peer->setPinned(tabId, action == TabAction::Pin);
+    case TabAction::Unpin:
+      return browser->peer->setPinned(tabId, action == TabAction::Pin);
     case TabAction::Mute:
-    case TabAction::Unmute: return browser->peer->setMuted(tabId, action == TabAction::Mute);
-    case TabAction::Bookmark: return browser->peer->bookmarkTab({.tabId = tabId, .title = std::move(bookmarkTitle), .url = std::move(bookmarkUrl), .folderId = std::move(folderId)});
-    case TabAction::Duplicate: return browser->peer->duplicateTab(tabId);
+    case TabAction::Unmute:
+      return browser->peer->setMuted(tabId, action == TabAction::Mute);
+    case TabAction::Bookmark:
+      return browser->peer->bookmarkTab({.tabId = tabId,
+                                         .title = std::move(bookmarkTitle),
+                                         .url = std::move(bookmarkUrl),
+                                         .folderId = std::move(folderId)});
+    case TabAction::Duplicate:
+      return browser->peer->duplicateTab(tabId);
     }
     return Void::fail("Unknown tab action");
   }
@@ -322,6 +332,8 @@ public:
       auto previousPeer = std::exchange(it->peer, std::move(info.peer));
       it->version = std::move(info.version);
       setPermissions(it->id, std::move(info.permissions).value_or(std::vector<std::string>{}));
+      emit tabsChanged();
+      return;
     } else {
       m_browsers.emplace_back(std::move(info));
     }
@@ -338,6 +350,10 @@ public:
       emit historyChanged();
       emit browsersChanged();
     }
+  }
+
+  void unregisterBrowser(const std::string &id, const std::shared_ptr<AbstractBrowserPeer> &peer) {
+    if (const auto current = browser(id); current && current->peer == peer) unregisterBrowser(id);
   }
 
   std::span<const BrowserInfo> browsers() const { return m_browsers; }
@@ -377,7 +393,7 @@ public:
       browser.pendingBookmarksRequest = requestId;
       browser.pendingFoldersRequest = requestId;
       browser.peer->bookmarkFolders().then(
-          this, [this, browserId = browser.id, requestId](auto result) {
+          this, [this, browserId = browser.id, requestId](FoldersResult result) {
             auto it = findById(browserId);
             if (it == m_browsers.end() || it->pendingFoldersRequest != requestId) return;
             it->pendingFoldersRequest.reset();
@@ -391,7 +407,9 @@ public:
   }
 
   bool isFetchingBookmarks() const {
-    return std::ranges::any_of(m_browsers, [](auto &&b) { return b.pendingBookmarksRequest.has_value(); });
+    return std::ranges::any_of(m_browsers, [](auto &&b) {
+      return b.pendingBookmarksRequest.has_value() || b.pendingFoldersRequest.has_value();
+    });
   }
 
   Future<void> removeBookmark(const BrowserBookmark &bookmark) {
@@ -526,6 +544,7 @@ public:
 private:
   using Void = ipc_gen::Result<void>;
   using BookmarksResult = ipc_gen::Result<std::vector<ipc_gen::BrowserBookmarkInfo>>::Type;
+  using FoldersResult = ipc_gen::Result<std::vector<ipc_gen::BrowserBookmarkFolderInfo>>::Type;
   using HistoryResult = ipc_gen::Result<std::vector<ipc_gen::BrowserHistoryItemInfo>>::Type;
 
   void setBookmarks(const std::string &browserId, int requestId, BookmarksResult result) {

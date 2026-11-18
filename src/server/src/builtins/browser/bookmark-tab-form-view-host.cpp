@@ -104,9 +104,10 @@ void BookmarkTabFormViewHost::submit() {
 
   const std::optional<std::string> folderId =
       m_folderId.isEmpty() ? std::nullopt : std::optional(m_folderId.toStdString());
-  context()->services->browserExtension()->bookmarkTab(
-      m_browserId, m_tabId, m_title.toStdString(), url.toStdString(), folderId).then(
-      this, [this](const std::expected<void, std::string> &result) {
+  context()
+      ->services->browserExtension()
+      ->bookmarkTab(m_browserId, m_tabId, m_title.toStdString(), url.toStdString(), folderId)
+      .then(this, [this](const std::expected<void, std::string> &result) {
         if (!result) {
           context()->services->toastService()->failure(
               tr("Failed to bookmark tab: %1").arg(result.error().c_str()));

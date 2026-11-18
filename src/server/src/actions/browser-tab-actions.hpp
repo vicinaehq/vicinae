@@ -53,8 +53,9 @@ public:
         tab.pinned ? tr("Unpin tab") : tr("Pin tab"),
         tab.pinned ? BuiltinIcon::PinDisabled : BuiltinIcon::Pin, [tab](ApplicationContext *ctx) {
           const auto toast = ctx->services->toastService();
-          ctx->services->browserExtension()->setPinned(tab.browserId, tab.id, !tab.pinned).then(
-              toast, [toast](const std::expected<void, std::string> &result) {
+          ctx->services->browserExtension()
+              ->setPinned(tab.browserId, tab.id, !tab.pinned)
+              .then(toast, [toast](const std::expected<void, std::string> &result) {
                 if (!result) toast->failure(tr("Failed to update tab: %1").arg(result.error().c_str()));
               });
         });
@@ -63,8 +64,9 @@ public:
         tab.muted ? tr("Unmute tab") : tr("Mute tab"),
         tab.muted ? BuiltinIcon::SpeakerOn : BuiltinIcon::SpeakerOff, [tab](ApplicationContext *ctx) {
           const auto toast = ctx->services->toastService();
-          ctx->services->browserExtension()->setMuted(tab.browserId, tab.id, !tab.muted).then(
-              toast, [toast](const std::expected<void, std::string> &result) {
+          ctx->services->browserExtension()
+              ->setMuted(tab.browserId, tab.id, !tab.muted)
+              .then(toast, [toast](const std::expected<void, std::string> &result) {
                 if (!result) toast->failure(tr("Failed to update tab: %1").arg(result.error().c_str()));
               });
         });
@@ -83,8 +85,9 @@ public:
     section->addAction(
         new StaticAction(tr("Duplicate tab"), BuiltinIcon::Duplicate, [tab](ApplicationContext *ctx) {
           const auto toast = ctx->services->toastService();
-          ctx->services->browserExtension()->duplicateTab(tab.browserId, tab.id).then(
-              toast, [toast](const std::expected<void, std::string> &result) {
+          ctx->services->browserExtension()
+              ->duplicateTab(tab.browserId, tab.id)
+              .then(toast, [toast](const std::expected<void, std::string> &result) {
                 if (!result) toast->failure(tr("Failed to duplicate tab: %1").arg(result.error().c_str()));
               });
         }));

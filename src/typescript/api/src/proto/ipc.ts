@@ -199,6 +199,11 @@ export type BrowserHistoryItemInfo = {
   visitCount: number;
 };
 
+export type BrowserBookmarkFolderInfo = {
+  id: string;
+  path: string[];
+};
+
 export type SetPinnedRequest = {
   tabId: number;
   pinned: boolean;
@@ -333,22 +338,6 @@ class IpcService {
   mcpMessage(handler: (message: string) => void): EventSubscription {
     return this.transport.subscribe("Ipc/mcpMessage", (msg) =>
       handler(msg.message),
-    );
-  }
-  setPinned(handler: (req: SetPinnedRequest) => void): EventSubscription {
-    return this.transport.subscribe("Ipc/setPinned", (msg) => handler(msg.req));
-  }
-  setMuted(handler: (req: SetMutedRequest) => void): EventSubscription {
-    return this.transport.subscribe("Ipc/setMuted", (msg) => handler(msg.req));
-  }
-  bookmarkTab(handler: (req: BookmarkTabRequest) => void): EventSubscription {
-    return this.transport.subscribe("Ipc/bookmarkTab", (msg) =>
-      handler(msg.req),
-    );
-  }
-  duplicateTab(handler: (req: DuplicateTabRequest) => void): EventSubscription {
-    return this.transport.subscribe("Ipc/duplicateTab", (msg) =>
-      handler(msg.req),
     );
   }
 }

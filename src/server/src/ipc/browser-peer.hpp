@@ -9,7 +9,7 @@ class IpcService;
 
 /**
  * Browser extension connected to the IPC server: every action is a call the extension replies to.
- * Owned by the browser extension service, which drops it before the connection goes away.
+ * The connection retains its peer so metadata refreshes preserve its identity.
  */
 class IpcBrowserPeer : public AbstractBrowserPeer {
 public:
