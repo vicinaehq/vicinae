@@ -221,6 +221,7 @@ void SectionGridModel::rebuildRows() {
 
 bool SectionGridModel::resolveSelection(int section, int item, int &sourceIdx, int &itemIdx) const {
   if (section < 0 || std::cmp_greater_equal(section, m_sections.size())) return false;
+  if (item < 0 || item >= m_sections[section].count) return false;
   sourceIdx = m_sections[section].sourceIdx;
   itemIdx = item;
   return true;
