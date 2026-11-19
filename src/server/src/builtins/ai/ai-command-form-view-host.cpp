@@ -158,11 +158,11 @@ QVariantList AiCommandFormViewHost::outputItems() const {
   return {QVariantMap{
       {QStringLiteral("items"),
        QVariantList{
-           qml::makeDropdownItem(outputId(Paste), tr("Paste in Active App"),
+           qml::makeDropdownItem(outputId(Paste), AiCommands::outputLabel(Paste),
                                  qml::imageSourceFor(ImageURL::builtin(BuiltinIcon::TextCursor))),
-           qml::makeDropdownItem(outputId(Copy), tr("Copy to Clipboard"),
+           qml::makeDropdownItem(outputId(Copy), AiCommands::outputLabel(Copy),
                                  qml::imageSourceFor(ImageURL::builtin(BuiltinIcon::CopyClipboard))),
-           qml::makeDropdownItem(outputId(Chat), tr("Open in AI Chat"),
+           qml::makeDropdownItem(outputId(Chat), AiCommands::outputLabel(Chat),
                                  qml::imageSourceFor(ImageURL::builtin(BuiltinIcon::SpeechBubble))),
        }},
   }};

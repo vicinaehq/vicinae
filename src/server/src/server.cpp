@@ -30,6 +30,7 @@
 #include "root-search/apps/app-root-provider.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
 #include "root-search/shortcuts/shortcut-root-provider.hpp"
+#include "builtins/ai/ai-command-run.hpp"
 #include "root-search/ai-commands/ai-command-root-provider.hpp"
 #include "services/ai-commands/ai-command-store.hpp"
 #ifdef Q_OS_MACOS
@@ -518,6 +519,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
   ctx.settings = std::make_unique<SettingsController>(ctx);
   ctx.services = ServiceRegistry::instance();
   ctx.chat = std::make_unique<ChatWindowController>(ctx);
+  ctx.aiCommands = std::make_unique<AiCommandRunner>(ctx);
 
   IpcCommandServer commandServer(&ctx);
 

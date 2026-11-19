@@ -50,8 +50,6 @@ bool AttachmentModel::ready() const {
   return std::ranges::all_of(m_entries, [](const Entry &entry) { return entry.attachment.isValid(); });
 }
 
-bool AttachmentModel::loading() const { return std::ranges::any_of(m_entries, &Entry::loading); }
-
 bool AttachmentModel::hasImages() const {
   return std::ranges::any_of(m_entries, [](const Entry &entry) { return entry.attachment.isImage(); });
 }
@@ -123,15 +121,21 @@ bool AttachmentModel::paste() {
     addUrls(urls);
     return true;
   }
-  return pasteImage();
-}
-
-bool AttachmentModel::pasteImage() {
   auto image = readClipboardImage();
   if (!image) return false;
   if (!canAdd()) return true;
   load(Entry{.id = m_nextId++, .name = tr("Pasted image") + QStringLiteral(".png")}, std::move(*image));
   return true;
+}
+
+void AttachmentModel::add(FileAttachment attachment) {
+  if (!canAdd()) return;
+  auto name = QString::fromStdString(attachment.name);
+  m_entries.emplace_back(Entry{.id = m_nextId++,
+                               .name = std::move(name),
+                               .attachment = AttachmentContent(std::move(attachment), std::nullopt),
+                               .loading = false});
+  emit changed();
 }
 
 std::optional<QFuture<AttachmentModel::Result>> AttachmentModel::readClipboardImage() {

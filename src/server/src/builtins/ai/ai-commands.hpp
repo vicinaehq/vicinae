@@ -21,6 +21,7 @@ constexpr auto SELECTION_PLACEHOLDER = "selection";
 constexpr auto CLIPBOARD_PLACEHOLDER = "clipboard";
 
 ImageURL iconUrl(const AiCommandStore::Command &command);
+QString outputLabel(AiCommandStore::Output output);
 PlaceholderString parsePrompt(const AiCommandStore::Command &command);
 ArgumentList arguments(const PlaceholderString &prompt);
 std::vector<QString> completionValues(const ApplicationContext *ctx);

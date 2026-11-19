@@ -13,6 +13,18 @@
 #include "ui/settings/settings-controller.hpp"
 #include "ui/views/intro-view-host.hpp"
 
+QString AiCommands::outputLabel(AiCommandStore::Output output) {
+  switch (output) {
+  case AiCommandStore::Output::Paste:
+    return QCoreApplication::translate("AiCommands", "Paste in Active App");
+  case AiCommandStore::Output::Copy:
+    return QCoreApplication::translate("AiCommands", "Copy to Clipboard");
+  case AiCommandStore::Output::Chat:
+    return QCoreApplication::translate("AiCommands", "Open in AI Chat");
+  }
+  return {};
+}
+
 ImageURL AiCommands::iconUrl(const AiCommandStore::Command &command) {
   if (command.icon.empty()) return defaultIconUrl();
   ImageURL url(QString::fromStdString(command.icon));
@@ -67,8 +79,9 @@ void AiCommands::openCreateForm(const ApplicationContext *ctx) {
 }
 
 AbstractAction *AiCommands::runAction(const AiCommandStore::Command &command) {
-  return new StaticAction(QCoreApplication::translate("AiCommands", "Run Command"), iconUrl(command),
-                          [command](ApplicationContext *ctx) { run(ctx, command, completionValues(ctx)); });
+  return new StaticAction(
+      QCoreApplication::translate("AiCommands", "Run Command"), iconUrl(command),
+      [command](ApplicationContext *ctx) { ctx->aiCommands->run(command, completionValues(ctx)); });
 }
 
 AbstractAction *AiCommands::editAction(const AiCommandStore::Command &command) {

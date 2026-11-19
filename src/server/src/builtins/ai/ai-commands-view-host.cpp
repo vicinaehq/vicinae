@@ -52,6 +52,10 @@ std::optional<ListItemDetail> AiCommandsViewHost::displayDetail(const ItemType &
       {QStringLiteral("label"), tr("Model")},
       {QStringLiteral("value"), modelName(command).value_or(tr("Unavailable"))},
   });
+  meta.append(QVariantMap{
+      {QStringLiteral("label"), tr("Output")},
+      {QStringLiteral("value"), AiCommands::outputLabel(command.output)},
+  });
 
   return ListItemDetail{.metadata = std::move(meta),
                         .markdown = Dictation::escapeMarkdown(QString::fromStdString(command.prompt))};

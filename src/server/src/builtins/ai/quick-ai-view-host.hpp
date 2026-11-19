@@ -37,7 +37,6 @@ public:
 
 private:
   void openLastConversation();
-  void sendInitialQuery();
   void setOpening(bool value);
   void leaveWithError(const QString &message);
 

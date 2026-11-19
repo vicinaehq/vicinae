@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <QObject>
+#include <QPointer>
 #include <QString>
 #include "services/ai-commands/ai-command-store.hpp"
 #include "services/ai/text-rewrite.hpp"
@@ -49,12 +50,23 @@ private:
   bool m_finished = false;
 };
 
-namespace AiCommands {
-
 /**
- * Runs the command with the values of its argument fields, or cancels the one already running.
+ * Starts AI commands, one at a time.
  */
-void run(const ApplicationContext *ctx, const AiCommandStore::Command &command,
-         const std::vector<QString> &arguments);
+class AiCommandRunner : public QObject {
+  Q_OBJECT
 
-} // namespace AiCommands
+public:
+  explicit AiCommandRunner(ApplicationContext &ctx, QObject *parent = nullptr);
+
+  /**
+   * Runs the command with the values of its argument fields, or cancels the one already running.
+   */
+  void run(const AiCommandStore::Command &command, const std::vector<QString> &arguments);
+
+private:
+  void openInChat(const AiCommandStore::Command &command, const std::vector<QString> &arguments);
+
+  ApplicationContext &m_ctx;
+  QPointer<AiCommandRun> m_active;
+};

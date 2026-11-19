@@ -61,17 +61,7 @@ void QuickAIViewHost::loadInitialData() {
     openLastConversation();
     return;
   }
-  if (!m_initialQuery.isEmpty()) sendInitialQuery();
-}
-
-void QuickAIViewHost::sendInitialQuery() {
-  auto *attachments = m_session->attachments();
-  if (attachments->loading()) {
-    connect(attachments, &AttachmentModel::changed, this, &QuickAIViewHost::sendInitialQuery,
-            Qt::SingleShotConnection);
-    return;
-  }
-  if (!m_session->send(m_initialQuery)) m_session->setDraft(m_initialQuery);
+  if (!m_initialQuery.isEmpty() && !m_session->send(m_initialQuery)) m_session->setDraft(m_initialQuery);
 }
 
 QuickAIViewHost *QuickAIViewHost::forLastConversation(ServiceRegistry &services) {
