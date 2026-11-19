@@ -9,7 +9,7 @@ Item {
 
     property bool selected: false
     property PopupMaterialStyle popupStyle: null
-    readonly property bool hovered: mouseArea.containsMouse && HoverActivation.active
+    readonly property bool hovered: hoverHandler.hovered && HoverActivation.active
 
     required property string title
     required property string iconSource
@@ -30,11 +30,14 @@ Item {
     // launcher window itself matches for in-scene popups
     readonly property bool _nativeWindow: _win !== null && (_win.flags & Qt.WindowType_Mask) === Qt.Popup
 
-    MouseArea {
-        id: mouseArea
-        anchors.fill: parent
-        hoverEnabled: true
-        onClicked: root.clicked()
+    HoverHandler {
+        id: hoverHandler
+    }
+
+    // Not a MouseArea: its exclusive grab is cleared by QQuickPopupWindow (Qt 6.11) when it
+    // re-delivers moves to itself, cancelling the click on any jitter. See CompletionPopup.
+    TapHandler {
+        onTapped: root.clicked()
     }
 
     PopupItemBackground {
