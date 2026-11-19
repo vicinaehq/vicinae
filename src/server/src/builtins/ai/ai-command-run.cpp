@@ -6,6 +6,7 @@
 #include <QPointer>
 #include <QTimer>
 #include "builtins/ai/ai-commands.hpp"
+#include "common/enumerate.hpp"
 #include "common/context.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
@@ -97,9 +98,8 @@ void AiCommandRun::send(const std::optional<QString> &selection) {
 QString AiCommandRun::expandPrompt(const std::optional<QString> &selection) const {
   const auto arguments = m_prompt.arguments();
   const auto argumentValue = [&](const QString &name) -> QString {
-    for (const auto &[index, argument] : std::views::enumerate(arguments)) {
+    for (const auto &[i, argument] : vicinae::enumerate(arguments)) {
       if (argument.name != name) continue;
-      const auto i = static_cast<std::size_t>(index);
       const bool filled = i < m_arguments.size() && !m_arguments[i].isEmpty();
       return filled ? m_arguments[i] : argument.defaultValue;
     }
@@ -173,12 +173,12 @@ void AiCommands::run(const ApplicationContext *ctx, const AiCommandStore::Comman
   const bool fromLauncher = navigation->isWindowOpened();
 
   const auto prompt = parsePrompt(command);
-  const auto missingArgument =
-      std::ranges::any_of(std::views::enumerate(prompt.arguments()), [&](const auto &entry) {
-        const auto &[index, argument] = entry;
-        const auto i = static_cast<std::size_t>(index);
-        return argument.defaultValue.isEmpty() && (i >= arguments.size() || arguments[i].isEmpty());
-      });
+  bool missingArgument = false;
+  for (const auto &[i, argument] : vicinae::enumerate(prompt.arguments())) {
+    if (argument.defaultValue.isEmpty() && (i >= arguments.size() || arguments[i].isEmpty())) {
+      missingArgument = true;
+    }
+  }
 
   // Run from a hotkey, the launcher opens with the argument fields to fill in first.
   if (missingArgument) {
