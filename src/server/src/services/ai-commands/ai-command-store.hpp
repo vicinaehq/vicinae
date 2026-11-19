@@ -1,4 +1,5 @@
 #pragma once
+#include <cstdint>
 #include <filesystem>
 #include <span>
 #include <string>
@@ -19,7 +20,7 @@ signals:
   void changed();
 
 public:
-  enum class Output { Paste, Copy };
+  enum class Output { Paste, Copy, Chat };
 
   struct Command {
     std::string id;
@@ -29,6 +30,8 @@ public:
     std::string prompt;
     std::string model;
     Output output = Output::Paste;
+    std::uint64_t createdAt = 0;
+    std::uint64_t updatedAt = 0;
   };
 
   explicit AiCommandStore(std::filesystem::path path, QObject *parent = nullptr);
@@ -56,5 +59,5 @@ private:
 
 template <> struct glz::meta<AiCommandStore::Output> {
   using enum AiCommandStore::Output;
-  static constexpr auto value = glz::enumerate("paste", Paste, "copy", Copy);
+  static constexpr auto value = glz::enumerate("paste", Paste, "copy", Copy, "chat", Chat);
 };

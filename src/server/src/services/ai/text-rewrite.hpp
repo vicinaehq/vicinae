@@ -2,6 +2,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <vector>
 #include <QObject>
 #include <QString>
 #include <QTimer>
@@ -28,6 +29,7 @@ public:
     std::string model;
     std::string systemPrompt;
     std::string prompt;
+    std::vector<AI::ImagePart> images;
     /** A tag the prompt wraps the text in, stripped from the response if the model echoes it back. */
     std::optional<std::string> echoTag;
   };

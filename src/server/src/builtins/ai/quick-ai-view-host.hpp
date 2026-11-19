@@ -32,10 +32,12 @@ public:
   QString initialNavigationTitle() const override;
   ImageURL initialNavigationIcon() const override;
   ChatSession *session() const { return m_session; }
+  void setInitialQuery(QString query) { m_initialQuery = std::move(query); }
   bool opening() const { return m_opening; }
 
 private:
   void openLastConversation();
+  void sendInitialQuery();
   void setOpening(bool value);
   void leaveWithError(const QString &message);
 

@@ -1,7 +1,12 @@
 #include "ai-command-store.hpp"
 #include <algorithm>
 #include <utility>
+#include <QDateTime>
 #include <QUuid>
+
+namespace {
+std::uint64_t now() { return static_cast<std::uint64_t>(QDateTime::currentSecsSinceEpoch()); }
+} // namespace
 
 AiCommandStore::AiCommandStore(std::filesystem::path path, QObject *parent)
     : QObject(parent), m_file(std::move(path)) {}
@@ -20,6 +25,8 @@ const AiCommandStore::Command *AiCommandStore::findByName(std::string_view name)
 
 std::string AiCommandStore::add(Command command) {
   command.id = QUuid::createUuid().toString(QUuid::WithoutBraces).toStdString();
+  command.createdAt = now();
+  command.updatedAt = command.createdAt;
   auto id = command.id;
   m_file.data().commands.emplace_back(std::move(command));
   commit();
@@ -30,6 +37,8 @@ bool AiCommandStore::update(Command command) {
   auto &commands = m_file.data().commands;
   const auto it = std::ranges::find(commands, command.id, &Command::id);
   if (it == commands.end()) return false;
+  command.createdAt = it->createdAt;
+  command.updatedAt = now();
   *it = std::move(command);
   return commit();
 }

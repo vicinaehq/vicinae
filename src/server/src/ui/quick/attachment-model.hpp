@@ -37,6 +37,7 @@ public:
   QVariantList items() const;
   int count() const { return static_cast<int>(m_entries.size()); }
   bool ready() const;
+  bool loading() const;
   bool hasImages() const;
   QString error() const { return m_error; }
   std::vector<AttachmentContent> take();
@@ -44,6 +45,9 @@ public:
   using Result = std::expected<FileAttachment, QString>;
   // Reads an image or UTF-8 text file into an attachment, safe to call off the main thread
   static Result readFile(const QString &path);
+  // Decodes the image on the clipboard off the main thread, if it holds one
+  static std::optional<QFuture<Result>> readClipboardImage();
+  bool pasteImage();
 
 private:
   struct Entry {

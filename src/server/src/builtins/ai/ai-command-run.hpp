@@ -34,7 +34,6 @@ public:
 private:
   void handleSelection(const AbstractSelectionService::Result &result);
   void send(const std::optional<QString> &selection);
-  QString expandPrompt(const std::optional<QString> &selection) const;
   void deliver(const QString &text);
   void finish();
   void finishWithMessage(const QString &message);

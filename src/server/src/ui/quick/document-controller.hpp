@@ -94,6 +94,8 @@ private:
   SelectionAnchor anchorFor(int entry, int position) const;
   void applyCurrentSelection(bool force = false);
   void scheduleRestore();
+  QString selectedText();
+  void publishPrimarySelection();
   QPointer<DocumentModel> m_model;
   DocumentSearch m_search;
   bool m_restorePending = false;

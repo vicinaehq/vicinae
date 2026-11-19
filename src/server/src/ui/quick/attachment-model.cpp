@@ -50,6 +50,8 @@ bool AttachmentModel::ready() const {
   return std::ranges::all_of(m_entries, [](const Entry &entry) { return entry.attachment.isValid(); });
 }
 
+bool AttachmentModel::loading() const { return std::ranges::any_of(m_entries, &Entry::loading); }
+
 bool AttachmentModel::hasImages() const {
   return std::ranges::any_of(m_entries, [](const Entry &entry) { return entry.attachment.isImage(); });
 }
@@ -121,6 +123,20 @@ bool AttachmentModel::paste() {
     addUrls(urls);
     return true;
   }
+  return pasteImage();
+}
+
+bool AttachmentModel::pasteImage() {
+  auto image = readClipboardImage();
+  if (!image) return false;
+  if (!canAdd()) return true;
+  load(Entry{.id = m_nextId++, .name = tr("Pasted image") + QStringLiteral(".png")}, std::move(*image));
+  return true;
+}
+
+std::optional<QFuture<AttachmentModel::Result>> AttachmentModel::readClipboardImage() {
+  const auto *mime = QGuiApplication::clipboard()->mimeData();
+  if (!mime) return std::nullopt;
   QString rawMime;
   QByteArray raw;
   for (const auto &format : mime->formats()) {
@@ -130,25 +146,21 @@ bool AttachmentModel::paste() {
     rawMime = format;
     if (format == QLatin1String("image/png")) break;
   }
-  if (raw.isEmpty() && !mime->hasImage()) return false;
-  if (!canAdd()) return true;
-  const auto name = tr("Pasted image") + QStringLiteral(".png");
+  if (raw.isEmpty() && !mime->hasImage()) return std::nullopt;
+  const auto name = (tr("Pasted image") + QStringLiteral(".png")).toStdString();
   if (!raw.isEmpty()) {
-    load(Entry{.id = m_nextId++, .name = name}, QtConcurrent::run([raw, rawMime, name] {
-           auto result = prepareImage(ImageRendering::decodeImageData(raw, {MAX_IMAGE_EDGE, MAX_IMAGE_EDGE}),
-                                      name.toStdString());
-           if (result) {
-             result->originalBytes = raw;
-             result->originalMimeType = rawMime.toStdString();
-           }
-           return result;
-         }));
-    return true;
+    return QtConcurrent::run([raw, rawMime, name] {
+      auto result =
+          prepareImage(ImageRendering::decodeImageData(raw, {MAX_IMAGE_EDGE, MAX_IMAGE_EDGE}), name);
+      if (result) {
+        result->originalBytes = raw;
+        result->originalMimeType = rawMime.toStdString();
+      }
+      return result;
+    });
   }
   const auto image = qvariant_cast<QImage>(mime->imageData());
-  load(Entry{.id = m_nextId++, .name = name},
-       QtConcurrent::run([image, name] { return prepareImage(image, name.toStdString()); }));
-  return true;
+  return QtConcurrent::run([image, name] { return prepareImage(image, name); });
 }
 
 void AttachmentModel::remove(int id) {

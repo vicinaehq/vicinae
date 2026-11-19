@@ -1,17 +1,21 @@
 #include "ai-command-run.hpp"
 #include <ranges>
+#include <span>
 #include <utility>
 #include <QClipboard>
 #include <QGuiApplication>
+#include <QMimeData>
 #include <QPointer>
 #include <QTimer>
 #include "builtins/ai/ai-commands.hpp"
+#include "builtins/ai/quick-ai-view-host.hpp"
 #include "common/enumerate.hpp"
 #include "common/context.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include "services/clipboard/clipboard-service.hpp"
 #include "services/toast/toast-service.hpp"
+#include "ui/quick/attachment-model.hpp"
 #include "utils/environment.hpp"
 
 namespace {
@@ -29,11 +33,63 @@ QString wrap(QLatin1StringView tag, const QString &text) {
   return QStringLiteral("<%1>\n%2\n</%1>").arg(tag, text);
 }
 
-bool usesSelection(const PlaceholderString &prompt) {
+bool uses(const PlaceholderString &prompt, const char *id) {
   return std::ranges::any_of(prompt.placeholders(),
-                             [](const PlaceholderString::ParsedPlaceholder &placeholder) {
-                               return placeholder.id == QLatin1StringView(AiCommands::SELECTION_PLACEHOLDER);
+                             [id](const PlaceholderString::ParsedPlaceholder &placeholder) {
+                               return placeholder.id == QLatin1StringView(id);
                              });
+}
+
+bool usesSelection(const PlaceholderString &prompt) {
+  return uses(prompt, AiCommands::SELECTION_PLACEHOLDER);
+}
+
+bool wantsClipboardImage(const PlaceholderString &prompt) {
+  if (!uses(prompt, AiCommands::CLIPBOARD_PLACEHOLDER)) return false;
+  const auto *mime = QGuiApplication::clipboard()->mimeData();
+  qInfo() << "AI command: clipboard formats" << (mime ? mime->formats() : QStringList());
+  return QGuiApplication::clipboard()->text().isEmpty();
+}
+
+QString emptyClipboardMessage() {
+  return QCoreApplication::translate("AiCommands", "The clipboard is empty");
+}
+
+QString expandPrompt(const PlaceholderString &prompt, std::span<const QString> values,
+                     const std::optional<QString> &selection, bool clipboardImage) {
+  const auto arguments = prompt.arguments();
+  const auto argumentValue = [&](const QString &name) -> QString {
+    for (const auto &[i, argument] : vicinae::enumerate(arguments)) {
+      if (argument.name != name) continue;
+      const bool filled = i < values.size() && !values[i].isEmpty();
+      return filled ? values[i] : argument.defaultValue;
+    }
+    return {};
+  };
+
+  QString expanded;
+  for (const auto &part : prompt.parts()) {
+    if (const auto *text = std::get_if<QString>(&part)) {
+      expanded += *text;
+      continue;
+    }
+
+    const auto &placeholder = std::get<PlaceholderString::ParsedPlaceholder>(part);
+    if (placeholder.id == QLatin1StringView(AiCommands::SELECTION_PLACEHOLDER)) {
+      expanded += wrap(QLatin1StringView(AiCommands::SELECTION_PLACEHOLDER), selection.value_or(QString()));
+    } else if (placeholder.id == QLatin1StringView(AiCommands::CLIPBOARD_PLACEHOLDER)) {
+      const auto content =
+          clipboardImage ? QStringLiteral("(the attached image)") : QGuiApplication::clipboard()->text();
+      expanded += wrap(QLatin1StringView(AiCommands::CLIPBOARD_PLACEHOLDER), content);
+    } else if (placeholder.id == QLatin1StringView("argument")) {
+      const auto it = placeholder.args.find(QStringLiteral("name"));
+      expanded += argumentValue(it == placeholder.args.end() ? QString() : it->second);
+    } else {
+      expanded += argumentValue(placeholder.id);
+    }
+  }
+
+  return expanded;
 }
 
 } // namespace
@@ -91,43 +147,31 @@ void AiCommandRun::handleSelection(const AbstractSelectionService::Result &resul
 }
 
 void AiCommandRun::send(const std::optional<QString> &selection) {
-  m_rewrite.start(
-      {.model = m_model, .systemPrompt = SYSTEM_PROMPT, .prompt = expandPrompt(selection).toStdString()});
-}
-
-QString AiCommandRun::expandPrompt(const std::optional<QString> &selection) const {
-  const auto arguments = m_prompt.arguments();
-  const auto argumentValue = [&](const QString &name) -> QString {
-    for (const auto &[i, argument] : vicinae::enumerate(arguments)) {
-      if (argument.name != name) continue;
-      const bool filled = i < m_arguments.size() && !m_arguments[i].isEmpty();
-      return filled ? m_arguments[i] : argument.defaultValue;
-    }
-    return {};
-  };
-
-  QString expanded;
-  for (const auto &part : m_prompt.parts()) {
-    if (const auto *text = std::get_if<QString>(&part)) {
-      expanded += *text;
-      continue;
-    }
-
-    const auto &placeholder = std::get<PlaceholderString::ParsedPlaceholder>(part);
-    if (placeholder.id == QLatin1StringView(AiCommands::SELECTION_PLACEHOLDER)) {
-      expanded += wrap(QLatin1StringView(AiCommands::SELECTION_PLACEHOLDER), selection.value_or(QString()));
-    } else if (placeholder.id == QLatin1StringView(AiCommands::CLIPBOARD_PLACEHOLDER)) {
-      expanded +=
-          wrap(QLatin1StringView(AiCommands::CLIPBOARD_PLACEHOLDER), QGuiApplication::clipboard()->text());
-    } else if (placeholder.id == QLatin1StringView("argument")) {
-      const auto it = placeholder.args.find(QStringLiteral("name"));
-      expanded += argumentValue(it == placeholder.args.end() ? QString() : it->second);
-    } else {
-      expanded += argumentValue(placeholder.id);
-    }
+  const bool wantsImage = wantsClipboardImage(m_prompt);
+  auto image = wantsImage ? AttachmentModel::readClipboardImage() : std::nullopt;
+  if (wantsImage && !image) {
+    finishWithMessage(emptyClipboardMessage());
+    return;
+  }
+  if (!image) {
+    m_rewrite.start({.model = m_model,
+                     .systemPrompt = SYSTEM_PROMPT,
+                     .prompt = expandPrompt(m_prompt, m_arguments, selection, false).toStdString()});
+    return;
   }
 
-  return expanded;
+  image->then(this, [this, selection](AttachmentModel::Result result) {
+    if (m_finished) return;
+    if (!result) {
+      finishWithMessage(result.error());
+      return;
+    }
+    auto &data = std::get<FileAttachment::Image>(result->contents);
+    m_rewrite.start({.model = m_model,
+                     .systemPrompt = SYSTEM_PROMPT,
+                     .prompt = expandPrompt(m_prompt, m_arguments, selection, true).toStdString(),
+                     .images = {AI::ImagePart{std::move(data.mimeType), std::move(data.base64)}}});
+  });
 }
 
 void AiCommandRun::deliver(const QString &text) {
@@ -162,6 +206,46 @@ void AiCommandRun::finishWithMessage(const QString &message) {
   QTimer::singleShot(MESSAGE_DURATION_MS, this, &AiCommandRun::finish);
 }
 
+namespace {
+
+void openInChat(const ApplicationContext *ctx, const AiCommandStore::Command &command,
+                const std::vector<QString> &arguments) {
+  auto prompt = AiCommands::parsePrompt(command);
+  const bool needsSelection = usesSelection(prompt);
+  const auto open = [ctx, prompt = std::move(prompt), arguments,
+                     model = QString::fromStdString(command.model)](const std::optional<QString> &selection) {
+    auto *view = new QuickAIViewHost(*ctx->services);
+    view->session()->selectModel(model);
+    const bool wantsImage = wantsClipboardImage(prompt);
+    const bool image = wantsImage && view->session()->attachments()->pasteImage();
+    if (wantsImage && !image) {
+      view->deleteLater();
+      ctx->navigation->showHud(emptyClipboardMessage());
+      return;
+    }
+    view->setInitialQuery(expandPrompt(prompt, arguments, selection, image));
+    ctx->navigation->pushView(view);
+    ctx->navigation->showWindow();
+  };
+
+  if (!needsSelection) {
+    open(std::nullopt);
+    return;
+  }
+
+  ctx->services->selectionService()->selectedText().then(
+      ctx->navigation.get(), [ctx, open](const AbstractSelectionService::Result &result) {
+        if (!result || result->trimmed().isEmpty()) {
+          if (!result) qWarning() << "AI command: could not read the selection:" << result.error();
+          ctx->navigation->showHud(QCoreApplication::translate("AiCommands", "No text selected"));
+          return;
+        }
+        open(*result);
+      });
+}
+
+} // namespace
+
 void AiCommands::run(const ApplicationContext *ctx, const AiCommandStore::Command &command,
                      const std::vector<QString> &arguments) {
   if (activeRun && !activeRun->isFinished()) {
@@ -188,6 +272,11 @@ void AiCommands::run(const ApplicationContext *ctx, const AiCommandStore::Comman
     } else {
       navigation->showWindow();
     }
+    return;
+  }
+
+  if (command.output == AiCommandStore::Output::Chat) {
+    openInChat(ctx, command, arguments);
     return;
   }
 

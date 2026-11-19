@@ -21,6 +21,8 @@ QString outputId(AiCommandStore::Output output) {
     return QStringLiteral("paste");
   case AiCommandStore::Output::Copy:
     return QStringLiteral("copy");
+  case AiCommandStore::Output::Chat:
+    return QStringLiteral("chat");
   }
   return {};
 }
@@ -101,7 +103,7 @@ QVariantList AiCommandFormViewHost::promptCompletions() const {
       },
       QVariantMap{
           {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin(BuiltinIcon::CopyClipboard))},
-          {QStringLiteral("title"), tr("Clipboard Text")},
+          {QStringLiteral("title"), tr("Clipboard Text or Image")},
           {QStringLiteral("value"), QString::fromLatin1(AiCommands::CLIPBOARD_PLACEHOLDER)},
       },
       QVariantMap{
@@ -160,6 +162,8 @@ QVariantList AiCommandFormViewHost::outputItems() const {
                                  qml::imageSourceFor(ImageURL::builtin(BuiltinIcon::TextCursor))),
            qml::makeDropdownItem(outputId(Copy), tr("Copy to Clipboard"),
                                  qml::imageSourceFor(ImageURL::builtin(BuiltinIcon::CopyClipboard))),
+           qml::makeDropdownItem(outputId(Chat), tr("Open in AI Chat"),
+                                 qml::imageSourceFor(ImageURL::builtin(BuiltinIcon::SpeechBubble))),
        }},
   }};
 }
@@ -174,7 +178,10 @@ QVariantMap AiCommandFormViewHost::currentOutput() const {
 
 void AiCommandFormViewHost::selectOutput(const QVariantMap &item) {
   using enum AiCommandStore::Output;
-  m_output = item[QStringLiteral("id")].toString() == outputId(Copy) ? Copy : Paste;
+  const auto id = item[QStringLiteral("id")].toString();
+  for (const auto output : {Paste, Copy, Chat}) {
+    if (id == outputId(output)) m_output = output;
+  }
   emit formChanged();
 }
 

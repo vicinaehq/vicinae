@@ -49,13 +49,24 @@ void TextRewrite::start(const Request &request) {
     return;
   }
 
+  if (!request.images.empty() && !m_ai.isAvailable(*ref, AI::Capability::Vision)) {
+    QTimer::singleShot(0, this, [this] {
+      if (m_running) fail(tr("This model can't read images."));
+    });
+    return;
+  }
+
   const auto inputSize = static_cast<qsizetype>(request.prompt.size());
   AI::ChatCompletionPayload payload{.thinking = AI::ThinkingMode::None,
                                     .maxOutputTokens = std::max(MIN_OUTPUT_TOKENS, 2 * inputSize),
                                     .oneShot = true};
   payload.messages.reserve(2);
   payload.messages.emplace_back(AI::ChatMessage::fromText(AI::ChatRole::System, request.systemPrompt));
-  payload.messages.emplace_back(AI::ChatMessage::fromText(AI::ChatRole::User, request.prompt));
+  auto &message =
+      payload.messages.emplace_back(AI::ChatMessage::fromText(AI::ChatRole::User, request.prompt));
+  message.parts.reserve(1 + request.images.size());
+  for (const auto &image : request.images)
+    message.parts.emplace_back(image);
 
   m_stream = m_ai.createChatCompletion(*ref, payload);
   if (!m_stream) {
