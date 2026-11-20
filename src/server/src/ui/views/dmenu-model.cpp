@@ -8,12 +8,34 @@
 #include "utils/utils.hpp"
 #include <algorithm>
 #include <filesystem>
+#include <format>
 #include <ranges>
 #include <utility>
 
 namespace {
 bool isAbsolutePath(std::string_view entry) { return std::filesystem::path(entry).is_absolute(); }
 } // namespace
+
+std::expected<DMenuAction, std::string> DMenuAction::parse(std::string_view spec) {
+  const auto sep = spec.find(':');
+  if (sep == std::string_view::npos) {
+    return DMenuAction{.title = QString::fromUtf8(spec.data(), spec.size())};
+  }
+
+  const auto keys = spec.substr(0, sep);
+  const auto title = spec.substr(sep + 1);
+  DMenuAction action{.title = QString::fromUtf8(title.data(), title.size())};
+
+  if (!keys.empty()) {
+    const Keyboard::Shortcut shortcut(QString::fromUtf8(keys.data(), keys.size()));
+    if (!shortcut.isValid()) {
+      return std::unexpected(std::format("Invalid shortcut in action \"{}\"", spec));
+    }
+    action.shortcut = shortcut;
+  }
+
+  return action;
+}
 
 void DMenuSection::setRawEntries(std::vector<std::string_view> entries) {
   m_entries = std::move(entries);
@@ -82,8 +104,8 @@ std::optional<ImageURL> DMenuSection::itemIcon(int i) const {
   return std::nullopt;
 }
 
-void DMenuSection::selectEntry(const QString &text) const {
-  if (m_onEntryChosen) m_onEntryChosen(text);
+void DMenuSection::selectEntry(const QString &text, std::optional<int> action) const {
+  if (m_onEntryChosen) m_onEntryChosen(text, action);
   scope().closeWindow();
 }
 
@@ -123,7 +145,21 @@ std::unique_ptr<ActionPanelState> DMenuSection::actionPanel(int i) const {
   selectAndCopy->setShortcut(Keybind::CopyAction);
   main->addAction(selectAndCopy);
 
+  addCustomActions(*panel, m_outputFormat == Format::Data ? text : QString::number(idx));
+
   return panel;
+}
+
+void DMenuSection::addCustomActions(ActionPanelState &panel, const QString &entry) const {
+  if (m_actions.empty()) return;
+
+  auto *section = panel.createSection();
+  for (auto [idx, action] : vicinae::enumerate(m_actions)) {
+    auto *item = new StaticAction(action.title, std::nullopt,
+                                  [this, entry, idx]() { selectEntry(entry, static_cast<int>(idx)); });
+    if (action.shortcut) item->setShortcut(*action.shortcut);
+    section->addAction(item);
+  }
 }
 
 void DMenuSection::onSelected(int i) {

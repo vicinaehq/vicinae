@@ -70,10 +70,13 @@ struct DMenuRequest {
   height?: int;
   noFooter: bool;
   password: bool;
+  actions: string[];
 };
 
 struct DMenuResponse {
   output: string;
+  action?: int;
+  query: string;
 };
 
 struct BrowserInitRequest {
