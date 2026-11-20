@@ -59,7 +59,6 @@ Root: HKCU; Subkey: "Software\Classes\com.raycast\shell\open\command"; ValueType
 
 [Icons]
 Name: "{autoprograms}\Vicinae"; Filename: "{app}\bin\vicinae-server.exe"
-Name: "{userstartup}\Vicinae"; Filename: "{app}\bin\vicinae-server.exe"; Tasks: autostart
 
 [Run]
 Filename: "{app}\bin\vicinae-server.exe"; Description: "Launch Vicinae"; Flags: nowait postinstall skipifsilent
@@ -70,7 +69,53 @@ Filename: "{app}\bin\vicinae-server.exe"; Flags: nowait; Check: IsAutoUpdate
 Filename: "{sys}\taskkill.exe"; Parameters: "/f /im vicinae-server.exe"; Flags: runhidden; RunOnceId: "KillServer"
 
 [Code]
+const
+  AutostartTaskName = 'Vicinae';
+
 function IsAutoUpdate: Boolean;
 begin
   Result := ExpandConstant('{param:AUTOUPDATE|0}') = '1';
+end;
+
+procedure RemoveAutostart;
+var
+  ResultCode: Integer;
+begin
+  Exec(ExpandConstant('{sys}\schtasks.exe'),
+       '/Delete /F /TN "' + AutostartTaskName + '"',
+       '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+end;
+
+procedure CreateAutostart;
+var
+  User, Cmd, Server: string;
+  ResultCode: Integer;
+begin
+  Server := ExpandConstant('{app}\bin\vicinae-server.exe');
+
+  // schtasks.exe doesn't allow adding ONLOGON tasks without elevation, even for current user only.
+  User := GetUserNameString;
+  Cmd := '$ErrorActionPreference=''Stop''; Register-ScheduledTask -TaskName ''' + AutostartTaskName + ''' ' +
+         '-Action (New-ScheduledTaskAction -Execute ''' + Server + ''') ' +
+         '-Trigger (New-ScheduledTaskTrigger -AtLogOn -User ''' + User + ''') ' +
+         '-Principal (New-ScheduledTaskPrincipal -UserId ''' + User +
+         ''' -LogonType Interactive -RunLevel Limited) -Force';
+  Exec(ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe'),
+       '-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -Command "' + Cmd + '"',
+       '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+
+  if ResultCode <> 0 then
+    Log('Failed to create the autostart scheduled task (exit code ' + IntToStr(ResultCode) + ')');
+end;
+
+procedure CurStepChanged(CurStep: TSetupStep);
+begin
+  if (CurStep = ssPostInstall) and WizardIsTaskSelected('autostart') then
+    CreateAutostart;
+end;
+
+procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+begin
+  if CurUninstallStep = usPostUninstall then
+    RemoveAutostart;
 end;
