@@ -3,6 +3,7 @@
 #include <format>
 #include <fstream>
 #include <ios>
+#include <iterator>
 #include <sstream>
 #include <string>
 #include "pid-file.hpp"
@@ -12,7 +13,30 @@
 #include <windows.h>
 #endif
 
+#ifndef _WIN32
+#include <unistd.h>
+#endif
+
 namespace fs = std::filesystem;
+
+#ifndef _WIN32
+namespace {
+// The pid file outlives the process it refers to, and pids get recycled. Before signalling a pid
+// read from disk we make sure it still belongs to the program that wrote the file, otherwise we
+// could SIGINT an entirely unrelated process (a build, a package manager, ...).
+bool isProcessRelatedTo(int pid, const std::string &name) {
+  std::ifstream ifs(fs::path{"/proc"} / std::to_string(pid) / "cmdline", std::ios::binary);
+
+  if (!ifs) return false;
+
+  std::string cmdline((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
+
+  // the file is a sequence of NUL separated arguments; comparing against the basename only would
+  // not work for helpers started through an interpreter (the extension manager is a node process)
+  return cmdline.find(name) != std::string::npos;
+}
+} // namespace
+#endif
 
 bool PidFile::kill() {
   if (auto n = pid()) {
@@ -23,6 +47,8 @@ bool PidFile::kill() {
     CloseHandle(handle);
     return ok;
 #else
+    if (*n == ::getpid()) return false;
+    if (!isProcessRelatedTo(*n, m_name)) return false;
     return ::kill(*n, SIGINT) == 0;
 #endif
   }
