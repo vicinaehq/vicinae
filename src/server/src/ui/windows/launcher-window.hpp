@@ -140,7 +140,6 @@ public:
   Q_INVOKABLE void positionOnCursorScreen();
   Q_INVOKABLE bool restoreWindowPosition();
   Q_INVOKABLE void prepareShow();
-  Q_INVOKABLE void finalizeShow();
   Q_INVOKABLE void beginWindowDrag();
   Q_INVOKABLE void updateWindowDrag();
   Q_INVOKABLE void endWindowDrag();
