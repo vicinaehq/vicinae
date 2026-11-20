@@ -10,6 +10,7 @@
 #include "services/app-runtime/app-runtime.hpp"
 #include "vicinae.hpp"
 #include "actions/window-actions.hpp"
+#include "app-pinyin-keywords.hpp"
 
 double AppRootItem::baseScoreWeight() const { return 1; }
 
@@ -18,7 +19,11 @@ QString AppRootItem::typeDisplayName() const {
   return category.isEmpty() ? tr("Application") : category;
 }
 
-std::vector<QString> AppRootItem::keywords() const { return m_app->keywords(); }
+std::vector<QString> AppRootItem::keywords() const {
+  auto keywords = m_app->keywords();
+  appendAppPinyinKeywords(title(), keywords);
+  return keywords;
+}
 
 std::optional<QString> AppRootItem::unlocalizedTitle() const { return m_app->unlocalizedName(); }
 
