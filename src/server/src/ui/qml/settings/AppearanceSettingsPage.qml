@@ -143,6 +143,16 @@ Flickable {
             }
 
             SettingsRow {
+                visible: Style.selectableWindowStyle
+                label: qsTr("Standard window")
+                description: qsTr("Use the standard cross-platform window (Linux style) instead of the native macOS window (liquid glass). Requires fully reopening Vicinae to apply.")
+                SettingsToggle {
+                    checked: root.model.useStandardWindow
+                    onToggled: checked => root.model.useStandardWindow = checked
+                }
+            }
+
+            SettingsRow {
                 visible: Platform.supports("layerShell")
                 label: qsTr("Use layer shell")
                 description: qsTr("Anchor the launcher as a Wayland layer surface (wlr-layer-shell) instead of a regular window. May require reopening Vicinae to fully apply.")
