@@ -359,8 +359,10 @@ Popup {
                         cursorShape: Qt.PointingHandCursor
                     }
 
+                    // Keep the default DragThreshold policy: its passive grab survives the exclusive
+                    // grab reset QQuickPopupWindow (Qt 6.11) does when re-delivering moves to itself,
+                    // which otherwise cancels the tap on any sub-pixel jitter between press and release.
                     TapHandler {
-                        gesturePolicy: TapHandler.ReleaseWithinBounds
                         onTapped: {
                             root._highlightedIndex = del.index;
                             root.acceptHighlighted();
