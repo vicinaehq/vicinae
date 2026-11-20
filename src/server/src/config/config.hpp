@@ -302,10 +302,12 @@ template <> struct Partial<InputServer> {
 
 struct Tray {
   bool enabled = true;
+  bool watcherEnabled = true;
 };
 
 template <> struct Partial<Tray> {
   std::optional<bool> enabled;
+  std::optional<bool> watcherEnabled;
 };
 
 struct Updates {
@@ -511,6 +513,7 @@ SNAKE_CASIFY(config::TelemetryConfig);
 SNAKE_CASIFY(config::WindowCSD);
 SNAKE_CASIFY(config::ClockConfig);
 SNAKE_CASIFY(config::GlobalShortcuts);
+SNAKE_CASIFY(config::Tray);
 SNAKE_CASIFY(config::Updates);
 
 #undef SNAKE_CASIFY
