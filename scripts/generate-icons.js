@@ -80,10 +80,16 @@ const char* BuiltinIconService::nameForIcon(BuiltinIcon icon) {
 `;
 
 
+	const raycastAliases = enumNames
+		.map((name, i) => ({ name: name.replace(/01$/, ''), value: serializedFileNames[i], suffixed: /-01"$/.test(serializedFileNames[i]) }))
+		.filter(({ name, suffixed }) => suffixed && !enumNames.includes(name));
+
 	const tsEnum = `
 export enum Icon {
-${enumNames.map((name, i) => `${name} = ${serializedFileNames[i]}`)
-			.join(',\n\t')}
+${[
+		...enumNames.map((name, i) => `${name} = ${serializedFileNames[i]}`),
+		...raycastAliases.map(({ name, value }) => `${name} = ${value}`),
+	].join(',\n\t')}
 }
 `;
 
