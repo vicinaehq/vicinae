@@ -596,10 +596,9 @@ class DMenuCommand : public AbstractCommandLineCommand {
     app->add_flag("--password", m_req.password, "Redact the search bar input");
     app->add_option(
         "--action", m_req.actions,
-        std::format("Add a custom action, as [SHORTCUT:]TITLE (e.g. control+E:Edit). Repeatable, up to {} "
-                    "times. Running an action prints the entry, then the search text on its own "
-                    "line, and exits with code {} for the first action, {} for the second, etc.",
-                    MAX_ACTIONS, FIRST_ACTION_EXIT_CODE, FIRST_ACTION_EXIT_CODE + 1));
+        std::format(
+            "Add a custom action, as [SHORTCUT:]TITLE (e.g. control+E:Edit). Can be repeated multiple times.",
+            MAX_ACTIONS, FIRST_ACTION_EXIT_CODE, FIRST_ACTION_EXIT_CODE + 1));
   }
 
   bool run(CLI::App *) override {
