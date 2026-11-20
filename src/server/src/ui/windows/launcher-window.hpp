@@ -272,6 +272,7 @@ private:
   QObject *m_overlayHost = nullptr;
 
   bool m_closeOnFocusLoss = false;
+  bool m_cloakedWhileHidden = false;
   int m_lsLayer = 2;                 // LayerShellQt::Window::LayerTop
   int m_lsKeyboardInteractivity = 2; // LayerShellQt::Window::KeyboardInteractivityOnDemand
   bool m_hasCompleter = false;

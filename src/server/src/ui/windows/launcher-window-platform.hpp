@@ -35,10 +35,14 @@ void suppressHeldKeyReleases();
 // The selection service lends the foreground to the target app to send it a copy
 // chord; the deactivation that causes is not user focus loss.
 bool foregroundLent();
+void cloak(QQuickWindow *window);
+void uncloakAfterNextFrame(QQuickWindow *window);
 #else
 inline void grantForeground() {}
 inline void suppressHeldKeyReleases() {}
 inline bool foregroundLent() { return false; }
+inline void cloak(QQuickWindow *) {}
+inline void uncloakAfterNextFrame(QQuickWindow *) {}
 #endif
 
 } // namespace LauncherWindowPlatform

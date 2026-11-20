@@ -50,6 +50,7 @@
 #include <QScreen>
 #include <QWindow>
 #include <QKeyEvent>
+#include <utility>
 #include <qcoreevent.h>
 #include <qlogging.h>
 #include <algorithm>
@@ -130,6 +131,14 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
 
   connect(nav, &NavigationController::currentViewChanged, this,
           [this](const NavigationController::ViewState &) { handleCurrentViewChanged(); });
+
+  auto cloakIfHidden = [this]() {
+    if (!m_window || m_window->isVisible() || m_cloakedWhileHidden) return;
+    LauncherWindowPlatform::cloak(m_window);
+    m_cloakedWhileHidden = true;
+  };
+  connect(nav, &NavigationController::currentViewChanged, this, cloakIfHidden);
+  connect(nav, &NavigationController::searchTextTampered, this, cloakIfHidden);
 
   connect(nav, &NavigationController::loadingChanged, this, [this](bool loading) {
     if (m_isLoading != loading) {
@@ -474,6 +483,11 @@ void LauncherWindow::loadRoot() {
       // losing focus to our own file dialog or to a selection capture is not user focus loss
       if (m_pendingLauncherFileChoice || LauncherWindowPlatform::foregroundLent()) return;
       m_ctx.navigation->setWindowActivated(m_window->isActive());
+    });
+    connect(m_window, &QWindow::visibleChanged, this, [this](bool visible) {
+      if (visible && std::exchange(m_cloakedWhileHidden, false)) {
+        LauncherWindowPlatform::uncloakAfterNextFrame(m_window);
+      }
     });
     m_window->installEventFilter(this);
   }
