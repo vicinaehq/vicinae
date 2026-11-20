@@ -20,6 +20,20 @@ public:
 
   using MappedColor = std::variant<QColor, ColorRef>;
   using Semantics = std::unordered_map<SemanticColor, MappedColor>;
+
+  static constexpr std::size_t MAX_GRADIENT_STOPS = 8;
+
+  struct GradientDef {
+    std::vector<MappedColor> stops;
+    double angle = 0;
+  };
+
+  struct Gradient {
+    std::vector<QColor> stops;
+    double angle = 0;
+  };
+
+  using Gradients = std::unordered_map<SemanticColor, GradientDef>;
   using Icon = std::optional<std::filesystem::path>;
   using DiagnosticList = std::vector<std::string>;
 
@@ -32,6 +46,7 @@ public:
     std::optional<std::filesystem::path> path;
     ThemeVariant variant;
     Semantics semantics;
+    Gradients gradients;
   };
 
   struct ParseResult;
@@ -67,6 +82,8 @@ public:
   QColor resolve(SemanticColor color) const;
   QColor resolve(const ColorLike &color) const;
 
+  std::optional<Gradient> resolveGradient(SemanticColor color) const;
+
   /**
    * Resolve the color and convert it to a string representation
    * suitable for use in CSS stylesheets or general display.
@@ -91,6 +108,7 @@ private:
    */
   QColor deriveSemantic(SemanticColor color) const;
   QColor inherit(SemanticColor color) const;
+  QColor resolveMapped(SemanticColor key, const MappedColor &mapped) const;
 
   std::shared_ptr<ThemeFile> m_parent;
   InitData m_data;
