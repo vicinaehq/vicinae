@@ -201,6 +201,8 @@ set(SRCS
 	src/root-search/extensions/extension-root-provider.cpp
 	src/root-search/shortcuts/shortcut-root-provider.hpp
 	src/root-search/shortcuts/shortcut-root-provider.cpp
+	src/root-search/ai-commands/ai-command-root-provider.hpp
+	src/root-search/ai-commands/ai-command-root-provider.cpp
 	src/root-search/apps/app-root-provider.hpp
 	src/root-search/apps/app-root-provider.cpp
 
@@ -409,6 +411,14 @@ set(SRCS
 	src/builtins/ai/chat-document-model.hpp
 	src/builtins/ai/chat-conversation-model.hpp
 	src/builtins/ai/chat-conversation-model.cpp
+	src/builtins/ai/ai-commands.hpp
+	src/builtins/ai/ai-commands.cpp
+	src/builtins/ai/ai-command-run.hpp
+	src/builtins/ai/ai-command-run.cpp
+	src/builtins/ai/ai-command-form-view-host.hpp
+	src/builtins/ai/ai-command-form-view-host.cpp
+	src/builtins/ai/ai-commands-view-host.hpp
+	src/builtins/ai/ai-commands-view-host.cpp
 	src/builtins/dictation/dictation.hpp
 	src/builtins/dictation/dictation-preferences.hpp
 	src/builtins/dictation/dictation-extension.hpp
@@ -471,6 +481,8 @@ set(SRCS
 	src/services/dictation/dictation-styles.cpp
 	src/services/dictation/dictation-rewrite.hpp
 	src/services/dictation/dictation-rewrite.cpp
+	src/services/ai-commands/ai-command-store.hpp
+	src/services/ai-commands/ai-command-store.cpp
 	src/services/root-item-manager/visit-tracker.cpp
 	
 	src/services/app-service/app-service.hpp
@@ -652,6 +664,8 @@ set(SRCS
 	src/services/ai/ai-preferences.hpp
 	src/services/ai/ai-provider-types.hpp
 	src/services/ai/ai-service.cpp
+	src/services/ai/text-rewrite.hpp
+	src/services/ai/text-rewrite.cpp
 	src/services/ai/agentic-loop.hpp
 	src/services/ai/agentic-loop.cpp
 	src/services/ai/history-compaction.cpp
@@ -868,6 +882,7 @@ set(SRCS
 	src/ui/views/edit-keywords-view-host.cpp
 	src/ui/windows/hud-bridge.hpp
 	src/ui/windows/hud-bridge.cpp
+	src/ui/windows/hud-activity.hpp
 
 	src/ui/windows/chat-window.hpp
 	src/ui/windows/chat-window.cpp
@@ -1472,6 +1487,7 @@ set(VICINAE_QML_FILES
 	src/ui/qml/views/AliasFormView.qml
 	src/ui/qml/views/VocabularyFormView.qml
 	src/ui/qml/views/DictationStyleFormView.qml
+	src/ui/qml/views/AiCommandFormView.qml
 	src/ui/qml/views/ShortcutFormView.qml
 	src/ui/qml/form/PlaceholderCompleter.qml
 	src/ui/qml/form/PlaceholderHighlight.qml
