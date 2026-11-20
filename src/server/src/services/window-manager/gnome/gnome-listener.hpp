@@ -28,6 +28,7 @@ signals:
   void statewindow(const WindowAddress &addr, const QString &state) const;
   void workspacechanged(const QString &workspaceId) const;
   void monitorlayoutchanged() const;
+  void closerequested(const WindowAddress &addr) const;
 
 public:
   EventListener();
@@ -45,6 +46,7 @@ private slots:
   void onStateWindowSignal(const QString &windowAddress, const QString &state);
   void onWorkspaceChangedSignal(const QString &workspaceId);
   void onMonitorLayoutChangedSignal();
+  void onCloseRequestedSignal(const QString &windowAddress);
   void onReconnectTimer();
 
 private:

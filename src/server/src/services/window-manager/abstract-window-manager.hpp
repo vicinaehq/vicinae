@@ -28,6 +28,11 @@ signals:
    */
   void windowsChanged() const;
   void focusChanged() const;
+  /**
+   * The desktop asks to close the launcher, e.g. after a click outside it, in a way Qt's window activation
+   * does not report. The launcher only follows it when close_on_focus_loss is on.
+   */
+  void launcherDismissRequested() const;
 
 public:
   enum class Capability {
