@@ -101,6 +101,7 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
   connect(m_ctx.navigation.get(), &NavigationController::searchTextTampered, this,
           [this](const QString &text) { updateCanAskAI(text); });
   connect(this, &LauncherWindow::atRootChanged, this, [this] { updateCanAskAI(); });
+  connect(this, &LauncherWindow::completerChanged, this, [this] { updateCanAskAI(); });
   refreshQuickAIAvailability();
 
   m_commandHoldTimer.setSingleShot(true);
@@ -650,7 +651,8 @@ void LauncherWindow::refreshQuickAIAvailability() {
 void LauncherWindow::updateCanAskAI() { updateCanAskAI(m_ctx.navigation->searchText()); }
 
 void LauncherWindow::updateCanAskAI(const QString &searchText) {
-  const bool value = m_quickAIAvailable && m_atRoot && !searchText.isEmpty();
+  // Tab moves focus to the argument fields when the selected item has some.
+  const bool value = m_quickAIAvailable && m_atRoot && !m_hasCompleter && !searchText.isEmpty();
   if (value == m_canAskAI) return;
   m_canAskAI = value;
   emit canAskAIChanged();
