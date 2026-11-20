@@ -1,45 +1,17 @@
 #pragma once
-#include <memory>
-#include <string>
-#include <QObject>
+#include <span>
 #include <QString>
-#include <QTimer>
-#include "services/ai/ai-provider.hpp"
+#include "services/ai/text-rewrite.hpp"
 #include "services/dictation/dictation-styles.hpp"
+#include "services/dictation/dictation-vocabulary.hpp"
 
-namespace AI {
-class Service;
-}
-
-class DictationVocabulary;
+namespace Dictation {
 
 /**
- * Rewrites one transcript with a style. Emits exactly one of finished or failed per start, unless aborted.
+ * The request that rewrites one transcript with a style.
  */
-class DictationRewrite : public QObject {
-  Q_OBJECT
+TextRewrite::Request rewriteRequest(const DictationStyles::Style &style,
+                                    std::span<const DictationVocabulary::Entry> vocabulary,
+                                    const QString &transcript);
 
-signals:
-  void finished(const QString &text);
-  void failed(const QString &reason);
-
-public:
-  DictationRewrite(AI::Service &ai, const DictationVocabulary &vocabulary, QObject *parent = nullptr);
-  ~DictationRewrite() override;
-
-  void start(const DictationStyles::Style &style, const QString &transcript);
-  void abort();
-  bool running() const { return m_running; }
-
-private:
-  void complete();
-  void fail(const QString &reason);
-  void release();
-
-  AI::Service &m_ai;
-  const DictationVocabulary &m_vocabulary;
-  std::shared_ptr<AI::AbstractChatCompletionStream> m_stream;
-  std::string m_text;
-  QTimer m_timeout;
-  bool m_running = false;
-};
+} // namespace Dictation

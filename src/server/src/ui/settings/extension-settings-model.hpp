@@ -28,6 +28,7 @@ class ExtensionSettingsModel : public QAbstractListModel {
   Q_PROPERTY(QString selectedAlias READ selectedAlias NOTIFY selectedChanged)
   Q_PROPERTY(PreferenceFormModel *preferenceModel READ preferenceModel CONSTANT)
   Q_PROPERTY(PreferenceFormModel *commandPreferenceModel READ commandPreferenceModel CONSTANT)
+  Q_PROPERTY(PreferenceFormModel *toolPreferenceModel READ toolPreferenceModel CONSTANT)
   Q_PROPERTY(int selectedRow READ selectedRow NOTIFY selectedChanged)
   Q_PROPERTY(QString selectedProviderId READ selectedProviderId NOTIFY selectedChanged)
   Q_PROPERTY(QString selectedProvenance READ selectedProvenance NOTIFY selectedChanged)
@@ -75,6 +76,7 @@ public:
   int selectedRow() const { return m_selectedRow; }
   PreferenceFormModel *preferenceModel() const { return m_prefModel; }
   PreferenceFormModel *commandPreferenceModel() const { return m_cmdPrefModel; }
+  PreferenceFormModel *toolPreferenceModel() const { return m_toolPrefModel; }
   QString selectedProviderId() const;
   QString selectedProvenance() const;
   ProviderCommandModel *commandModel() const { return m_commandModel; }
@@ -97,6 +99,7 @@ public:
   Q_INVOKABLE void setShortcutByEntrypointId(const QString &id, const QString &shortcut);
   Q_INVOKABLE void clearShortcutByEntrypointId(const QString &id);
   Q_INVOKABLE void loadCommandPreferences(const QString &entrypointId);
+  Q_INVOKABLE void loadToolPreferences(const QString &toolId);
   Q_INVOKABLE void setToolPolicy(const QString &toolId, const QString &policy);
 
 private:
@@ -132,6 +135,7 @@ private:
   QString m_filter;
   PreferenceFormModel *m_prefModel;
   PreferenceFormModel *m_cmdPrefModel;
+  PreferenceFormModel *m_toolPrefModel;
   ProviderCommandModel *m_commandModel;
   std::set<QString> m_expandedProviders;
   AI::ToolRegistry &m_tools;

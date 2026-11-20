@@ -9,11 +9,16 @@ Column {
 
     function pickGreeting() {
         const hour = new Date().getHours();
-        const greetings = hour < 5 || hour >= 22 ? [qsTr("Still up? 🌙"), qsTr("Hello, night owl 🦉")] : hour < 12 ? [qsTr("Good morning ☀️"), qsTr("Morning ☕"), qsTr("Hello 👋")] : hour < 18 ? [qsTr("Good afternoon 👋"), qsTr("Afternoon!"), qsTr("Hello 👋")] : [qsTr("Good evening 👋"), qsTr("Evening!"), qsTr("Hello 👋")];
-        return greetings[Math.floor(Math.random() * greetings.length)];
+        if (hour < 5 || hour >= 22)
+            return qsTr("Hello");
+        if (hour < 12)
+            return qsTr("Good morning");
+        if (hour < 18)
+            return qsTr("Good afternoon");
+        return qsTr("Good evening");
     }
 
-    spacing: compact ? 12 : 16
+    spacing: compact ? 10 : 12
 
     Text {
         width: parent.width
@@ -29,7 +34,7 @@ Column {
     Text {
         width: parent.width
         visible: root.session.modelSelectorItems.length > 0
-        text: root.session.needsModel ? qsTr("Choose a model to start chatting.") : qsTr("Send a message to start a conversation.")
+        text: root.session.needsModel ? qsTr("Choose a model to start chatting.") : qsTr("What can I help with?")
         color: Theme.textMuted
         font.family: Theme.fontFamily
         font.pointSize: Theme.regularFontSize

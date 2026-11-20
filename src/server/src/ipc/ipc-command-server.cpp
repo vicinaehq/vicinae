@@ -14,6 +14,7 @@
 #include "services/ai/ai-preferences.hpp"
 #include "services/ai/ai-provider.hpp"
 #include "services/ai/ai-service.hpp"
+#include "services/ai/mcp/mcp-server.hpp"
 #include "ui/quick/attachment-model.hpp"
 #include "ui/views/dmenu-view-host.hpp"
 #include "utils.hpp"
@@ -183,6 +184,17 @@ ipc_gen::Result<ipc_gen::AiAskResponse>::Future IpcService::aiAsk(ipc_gen::AiAsk
       });
 
   return future;
+}
+
+ipc_gen::Result<void>::Future IpcService::mcpSend(std::string message) {
+  if (!m_mcp) {
+    m_mcp = new AI::McpServer(*m_ctx.services->tools(), this);
+    QObject::connect(m_mcp, &AI::McpServer::messageReady, this,
+                     [this](const std::string &message) { emitmcpMessage(message); });
+  }
+
+  m_mcp->receive(message);
+  return ipc_gen::Result<void>::ok();
 }
 
 // Runs from the stream's own signals, which can't destroy it before they return
@@ -406,6 +418,14 @@ ipc_gen::Result<ipc_gen::DMenuResponse>::Future IpcService::dmenu(ipc_gen::DMenu
   auto &nav = m_ctx.navigation;
   auto &cfg = m_ctx.services->config()->value();
 
+  std::vector<DMenuAction> actions;
+  actions.reserve(request.actions.size());
+  for (const auto &spec : request.actions) {
+    auto action = DMenuAction::parse(spec);
+    if (!action) return ipc_gen::Result<ipc_gen::DMenuResponse>::fail(action.error());
+    actions.emplace_back(std::move(*action));
+  }
+
   QPromise<ipc_gen::Result<ipc_gen::DMenuResponse>::Type> promise;
   auto future = promise.future();
 
@@ -417,7 +437,7 @@ ipc_gen::Result<ipc_gen::DMenuResponse>::Future IpcService::dmenu(ipc_gen::DMenu
 
   // Convert to the DMenu-specific request type used by the view host
   ipc_gen::DMenuRequest viewReq = std::move(request);
-  auto view = new DMenuViewHost(viewReq);
+  auto view = new DMenuViewHost(viewReq, std::move(actions));
 
   using Watcher = QFutureWatcher<ipc_gen::Result<ipc_gen::DMenuResponse>::Type>;
   auto watcher = new Watcher;
@@ -425,11 +445,13 @@ ipc_gen::Result<ipc_gen::DMenuResponse>::Future IpcService::dmenu(ipc_gen::DMenu
 
   QObject::connect(watcher, &Watcher::canceled, [nav = nav.get()]() { nav->closeWindow(); });
   QObject::connect(watcher, &Watcher::finished, [watcher]() { watcher->deleteLater(); });
-  QObject::connect(view, &DMenuViewHost::selected,
-                   [promise = std::move(promise)](const QString &text) mutable {
-                     promise.addResult(ipc_gen::DMenuResponse{.output = text.toStdString()});
-                     promise.finish();
-                   });
+  QObject::connect(
+      view, &DMenuViewHost::selected,
+      [promise = std::move(promise), view](const QString &text, std::optional<int> action) mutable {
+        promise.addResult(ipc_gen::DMenuResponse{
+            .output = text.toStdString(), .action = action, .query = view->searchText().toStdString()});
+        promise.finish();
+      });
 
   nav->popToRoot({.clearSearch = false});
   nav->pushView(view);

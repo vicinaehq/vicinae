@@ -31,7 +31,12 @@ Item {
     AIProviderPicker {
         id: picker
         model: root.model
-        onChosen: (type, label, icon, allowMultiple) => setupDialog.openFor(type, label, icon, allowMultiple)
+        onChosen: (type, label, icon, allowMultiple, needsSetup) => {
+            if (needsSetup)
+                setupDialog.openFor(type, label, icon, allowMultiple);
+            else
+                root.model.addProvider(type, {});
+        }
     }
 
     AIProviderView {

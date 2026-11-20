@@ -1,3 +1,4 @@
+#include <utility>
 #include <QTextBoundaryFinder>
 #include <QJsonDocument>
 #include <algorithm>
@@ -89,6 +90,43 @@ void ChatConversationModel::appendSavedResponse(std::string text) {
   const auto size = text.size();
   contents.reserve(contents.size() + 1);
   contents.emplace_back(Response{std::move(text), size, true});
+  emit contentAdded(rowCount() - 1, contents.size() - 1);
+}
+
+std::optional<int> ChatConversationModel::appendImage(QString source) {
+  if (m_exchanges.empty()) return std::nullopt;
+  flushResponse();
+  auto &contents = m_exchanges.back().contents;
+  contents.reserve(contents.size() + 1);
+  contents.emplace_back(Image{std::move(source)});
+  const int content = static_cast<int>(contents.size()) - 1;
+  emit contentAdded(rowCount() - 1, content);
+  return content;
+}
+
+void ChatConversationModel::setImageSource(int exchange, int content, QString source) {
+  if (exchange < 0 || std::cmp_greater_equal(exchange, m_exchanges.size())) return;
+  auto &contents = m_exchanges[exchange].contents;
+  if (content < 0 || std::cmp_greater_equal(content, contents.size())) return;
+  auto *image = std::get_if<Image>(&contents[content]);
+  if (!image) return;
+  image->source = std::move(source);
+  emit contentChanged(exchange, content);
+}
+
+void ChatConversationModel::appendAttachment(QVariantMap item) {
+  if (m_exchanges.empty()) return;
+  flushResponse();
+  auto &contents = m_exchanges.back().contents;
+  if (!contents.empty()) {
+    if (auto *attachments = std::get_if<Attachment>(&contents.back())) {
+      attachments->items.emplaceBack(std::move(item));
+      emit contentChanged(rowCount() - 1, contents.size() - 1);
+      return;
+    }
+  }
+  contents.reserve(contents.size() + 1);
+  contents.emplace_back(Attachment{{std::move(item)}});
   emit contentAdded(rowCount() - 1, contents.size() - 1);
 }
 
@@ -202,6 +240,11 @@ void ChatConversationModel::publishResponse() {
   emit dataChanged(last, last, {ResponseRole});
 }
 
+void ChatConversationModel::formatArguments(Tool &tool) {
+  const auto json = QJsonDocument::fromJson(tool.arguments.toUtf8());
+  if (!json.isNull()) tool.arguments = QString::fromUtf8(json.toJson()).trimmed();
+}
+
 void ChatConversationModel::addTool(Tool tool) {
   if (m_exchanges.empty()) return;
 
@@ -218,8 +261,7 @@ void ChatConversationModel::addTool(Tool tool) {
   auto &group = std::get<ToolGroup>(contents.back());
   if (group.calls.size() == 1 && group.calls.front().expanded) group.expanded = true;
 
-  const auto json = QJsonDocument::fromJson(tool.arguments.toUtf8());
-  if (!json.isNull()) tool.arguments = QString::fromUtf8(json.toJson()).trimmed();
+  formatArguments(tool);
 
   if (group.calls.size() == group.calls.capacity())
     group.calls.reserve(std::max<std::size_t>(4, group.calls.size() * 2));
@@ -231,8 +273,9 @@ void ChatConversationModel::addTool(Tool tool) {
     emit contentChanged(rowCount() - 1, contents.size() - 1);
 }
 
-void ChatConversationModel::updateTool(quint64 id, QString status, std::optional<QString> output,
-                                       std::optional<qint64> durationMs, std::optional<QString> statusText) {
+void ChatConversationModel::updateTool(Tool tool) {
+  formatArguments(tool);
+
   for (int row = 0; row < rowCount(); ++row) {
     auto &contents = m_exchanges[row].contents;
 
@@ -240,13 +283,11 @@ void ChatConversationModel::updateTool(quint64 id, QString status, std::optional
       auto *group = std::get_if<ToolGroup>(&contents[part]);
       if (!group) continue;
 
-      const auto tool = std::ranges::find(group->calls, id, &Tool::id);
-      if (tool == group->calls.end()) continue;
+      const auto current = std::ranges::find(group->calls, tool.id, &Tool::id);
+      if (current == group->calls.end()) continue;
 
-      tool->status = std::move(status);
-      tool->output = std::move(output);
-      tool->durationMs = durationMs;
-      tool->statusText = std::move(statusText);
+      tool.expanded = current->expanded;
+      *current = std::move(tool);
 
       emit contentChanged(row, part);
       return;

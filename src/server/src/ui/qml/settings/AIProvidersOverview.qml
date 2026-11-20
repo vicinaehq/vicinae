@@ -37,6 +37,7 @@ Flickable {
         property string title: ""
         property string subtitle: ""
         property string status: ""
+        property string health: ""
         property bool showSeparator: true
         signal clicked
 
@@ -97,7 +98,7 @@ Flickable {
                     implicitWidth: 6
                     implicitHeight: 6
                     radius: 3
-                    color: Theme.toastSuccess
+                    color: row.health === "error" ? Theme.toastDanger : row.health === "ready" ? Theme.toastSuccess : Theme.textPlaceholder
                 }
 
                 Text {
@@ -277,6 +278,7 @@ Flickable {
                             title: typeRow.allowMultiple ? instanceRow.modelData.name : typeRow.label
                             subtitle: typeRow.allowMultiple ? typeRow.label : ""
                             status: instanceRow.modelData.statusText
+                            health: instanceRow.modelData.health
                             showSeparator: typeRow.index < types.count - 1 || instanceRow.index < typeRow.instances.length - 1
                             onClicked: root.openProvider(instanceRow.modelData.id)
                         }

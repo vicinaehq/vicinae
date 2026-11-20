@@ -12,6 +12,7 @@
 #include <QLocalSocket>
 #include <glaze/glaze.hpp>
 #include "common/common.hpp"
+#include "common/frame-parser.hpp"
 #include "generated/browser-ipc-client.hpp"
 
 #ifdef _WIN32
@@ -23,39 +24,6 @@
 
 static constexpr int CONNECT_TIMEOUT_MS = 3000;
 static constexpr uint32_t MAX_MESSAGE_SIZE = 64 * 1024 * 1024;
-
-// Incremental parser for the length-prefixed socket stream (readyRead delivers arbitrary chunks)
-class Frame {
-public:
-  using Handler = std::function<void(std::string_view message)>;
-
-  void setHandler(Handler fn) { m_fn = std::move(fn); }
-
-  void feed(std::string_view chunk) {
-    m_data.append(chunk);
-
-    for (;;) {
-      if (m_size == 0 && m_data.size() >= sizeof(m_size)) {
-        std::memcpy(&m_size, m_data.data(), sizeof(m_size));
-        m_data.erase(0, sizeof(m_size));
-      }
-
-      if (m_size && m_size <= m_data.size()) {
-        if (m_fn) m_fn(std::string_view(m_data).substr(0, m_size));
-        m_data.erase(0, m_size);
-        m_size = 0;
-        continue;
-      }
-
-      break;
-    }
-  }
-
-private:
-  std::string m_data;
-  uint32_t m_size = 0;
-  Handler m_fn;
-};
 
 static void sendToExtension(std::string_view message) {
   uint32_t size = message.size();
@@ -303,7 +271,7 @@ int main(int ac, char **av) {
   };
 
   // Listen for incoming events from vicinae server
-  Frame vicinaeFrame;
+  vicinae::FrameParser vicinaeFrame;
 
   vicinaeFrame.setHandler([&](std::string_view message) {
     std::println(std::cerr, "got message from vicinae: {}", message);

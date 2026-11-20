@@ -44,20 +44,19 @@ class ExtensionManager extends manager.ManagerService {
 		return new extension.Client(transport);
 	}
 
-	async ready(sessionId: string): Promise<boolean> {
+	async ready(sessionId: string): Promise<manager.LaunchResult> {
 		const worker = this.workerMap.get(sessionId);
 
-		if (!worker) return false;
+		if (!worker) return { error: `No extension with session id ${sessionId}` };
 
 		worker.status = "running";
-		await worker.client.Lifecycle.launch(worker.payload);
 		worker.startedAt = process.hrtime.bigint();
 
 		logger.info(
 			`Started extension ${worker.payload.extension_name}:${worker.payload.command_name}`,
 		);
 
-		return true;
+		return worker.client.Lifecycle.launch(worker.payload);
 	}
 
 	async load(load: manager.LoadOptions): Promise<manager.LoadResponse> {
@@ -204,7 +203,7 @@ class ExtensionManager extends manager.ManagerService {
 		workerInfo.status = "unloading";
 		await workerInfo.client.Lifecycle.shutdown();
 
-		if (workerInfo.payload.mode === "NoView") {
+		if (workerInfo.payload.mode !== "View") {
 			workerInfo.worker.terminate();
 		} else {
 			// FIXME: we let view commands some time to execute their useEffect cleanup, if they need to.

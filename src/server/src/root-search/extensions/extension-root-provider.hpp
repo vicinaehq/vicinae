@@ -47,6 +47,7 @@ public:
   PreferenceList preferences() const override { return m_repo->preferences(); }
   std::vector<SettingsPage> settingsPages() const override { return m_repo->settingsPages(); }
   std::vector<AI::ToolContribution> tools() const override { return m_repo->tools(); }
+  QString toolNamespace() const override { return m_repo->toolNamespace(); }
   QString displayName() const override { return m_repo->displayName(); }
   QString description() const override { return m_repo->description(); }
   QString uniqueId() const override { return repositoryId(); }

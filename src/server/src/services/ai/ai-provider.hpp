@@ -1,6 +1,9 @@
 #pragma once
 #include "ai-capability.hpp"
 #include "ai-tool.hpp"
+#include "chat-image.hpp"
+#include "chat-resource.hpp"
+#include "ai-reasoning.hpp"
 #include <cstdint>
 #include <expected>
 #include <glaze/core/common.hpp>
@@ -110,11 +113,6 @@ struct TextPart {
   std::string text;
 };
 
-struct ImagePart {
-  std::string mimeType;
-  QByteArray base64;
-};
-
 struct ToolCallPart {
   std::string id;
   std::string name;
@@ -126,7 +124,7 @@ struct ToolResultPart {
   std::string content;
 };
 
-using ChatPart = std::variant<TextPart, ImagePart, ToolCallPart, ToolResultPart>;
+using ChatPart = std::variant<TextPart, ImagePart, ResourcePart, ToolCallPart, ToolResultPart>;
 
 /**
  * Tool calls live on assistant messages and their results on tool messages, paired by call id, so a
@@ -155,13 +153,31 @@ using ChatHistory = std::vector<ChatMessage>;
 
 enum class ResponseActivity { Waiting, Thinking, Responding, PreparingTool, AwaitingApproval, RunningTool };
 
+/**
+ * A tool the model runs on its own, such as the built-in tools of an agent. The conversation only records
+ * it. `call.name` is the kind of tool and `title` describes what it does.
+ */
+struct ToolActivity {
+  enum class Status : std::uint8_t { Running, Succeeded, Failed };
+
+  ToolCallPart call;
+  std::optional<std::string> title;
+  Status status = Status::Running;
+  std::optional<std::string> output;
+};
+
 class AbstractChatCompletionStream : public QObject {
   Q_OBJECT
 
 signals:
   void activityChanged(ResponseActivity activity) const;
   void toolCallRequested(const ToolCallPart &call) const;
+  void toolActivityChanged(const ToolActivity &activity) const;
+  // The model waits for the user to allow a tool reported through `toolActivityChanged`.
+  void approvalRequested(const std::string &callId) const;
   void dataAdded(const std::string &text) const;
+  void imageAdded(const ImagePart &image) const;
+  void resourceAdded(const ResourcePart &resource) const;
   void errorOccurred(const std::string &reason) const;
   void finished() const;
 
@@ -169,6 +185,7 @@ public:
   ~AbstractChatCompletionStream() override = default;
   virtual bool start() = 0;
   virtual bool abort() = 0;
+  virtual void resolveApproval(std::string_view callId, bool approved, bool always) {}
 
   const Model &model() const { return m_model; }
 
@@ -187,6 +204,7 @@ struct ChatCompletionPayload {
    * Some providers may not support this at all.
    */
   ThinkingMode thinking = ThinkingMode::Medium;
+  std::optional<std::string> reasoningEffort;
   ChatHistory messages;
   std::vector<AbstractTool *> tools;
   // A guard rather than a target: models that think may spend part of it before answering.
@@ -233,6 +251,16 @@ struct ManagedModel {
   std::string languages;
   State state = State::Absent;
   double progress = -1.0;
+};
+
+struct ProviderStatus {
+  enum class Kind : std::uint8_t { Busy, Error };
+
+  Kind kind = Kind::Error;
+  // one short sentence for the user
+  std::string message;
+  // raw output behind an error, such as what a process printed before it exited
+  std::optional<std::string> details;
 };
 
 class AbstractProvider : public QObject {
@@ -284,7 +312,7 @@ public:
   /**
    * Why the provider has no usable models, such as a missing sign-in, if it knows.
    */
-  virtual std::optional<std::string> statusMessage() const { return std::nullopt; }
+  virtual std::optional<ProviderStatus> status() const { return std::nullopt; }
 
   /**
    * An icon representing the provider, if applicable.
@@ -310,6 +338,10 @@ public:
    *
    */
   virtual void preloadModel(std::string_view modelId) {}
+  virtual void prepareReasoning(std::string_view modelId) {}
+  virtual std::optional<ReasoningOptions> reasoningOptions(std::string_view modelId) const {
+    return std::nullopt;
+  }
 
   /**
    * The use announced by `preloadModel` will not happen.

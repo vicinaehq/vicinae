@@ -430,6 +430,7 @@ void DocumentController::handleRelease(qreal x, qreal y) {
 
   m_pressLink.clear();
   m_dragging = false;
+  publishPrimarySelection();
 }
 
 void DocumentController::handleDoubleClick(qreal x, qreal y) {
@@ -473,6 +474,7 @@ void DocumentController::selectAll() {
     m_anchor = {-1, 0, m_model->index(first), 0};
     m_current = {-1, m_model->partLength(last, part), m_model->index(last), part};
     applyCurrentSelection();
+    publishPrimarySelection();
     return;
   }
   if (m_entries.empty()) return;
@@ -482,6 +484,7 @@ void DocumentController::selectAll() {
   const int lastIdx = static_cast<int>(m_entries.size()) - 1;
   m_current = {lastIdx, m_entries[lastIdx].selection->length()};
   applyCurrentSelection();
+  publishPrimarySelection();
 }
 
 void DocumentController::clearSelection() {
@@ -505,6 +508,16 @@ void DocumentController::clearSelection() {
 
 void DocumentController::copy() {
   if (!m_hasSelection) return;
+  if (const auto text = selectedText(); !text.isEmpty()) QGuiApplication::clipboard()->setText(text);
+}
+
+void DocumentController::publishPrimarySelection() {
+  auto *clipboard = QGuiApplication::clipboard();
+  if (!m_hasSelection || !clipboard->supportsSelection()) return;
+  if (const auto text = selectedText(); !text.isEmpty()) clipboard->setText(text, QClipboard::Selection);
+}
+
+QString DocumentController::selectedText() {
   restoreSelection();
   QStringList parts;
   if (m_model && validAnchor() && m_current.index.isValid()) {
@@ -534,8 +547,7 @@ void DocumentController::copy() {
       const auto text = entry.selection->selectedText();
       if (!text.isEmpty()) parts.append(text);
     }
-  const auto text = parts.join(QStringLiteral("\n\n"));
-  if (!text.isEmpty()) QGuiApplication::clipboard()->setText(text);
+  return parts.join(QStringLiteral("\n\n"));
 }
 
 void DocumentController::applySelection(int fromEntry, int fromPosition, int toEntry, int toPosition,

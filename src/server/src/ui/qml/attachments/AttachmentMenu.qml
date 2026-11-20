@@ -13,6 +13,11 @@ ViciMenu {
     Instantiator {
         model: [
             {
+                text: qsTr("Open"),
+                available: root.content.canOpen,
+                run: () => root.content.open()
+            },
+            {
                 text: qsTr("Preview Image"),
                 available: root.previewable && root.content.image,
                 run: () => root.previewRequested()
@@ -23,8 +28,18 @@ ViciMenu {
                 run: () => root.content.copyFile()
             },
             {
+                text: root.content.revealLabel,
+                available: root.content.hasFile,
+                run: () => root.content.reveal()
+            },
+            {
+                text: qsTr("Copy Link"),
+                available: root.content.hasLink,
+                run: () => root.content.copyLink()
+            },
+            {
                 text: root.content.image ? qsTr("Copy Image") : qsTr("Copy Text"),
-                available: root.content.valid,
+                available: root.content.canCopyContents,
                 run: () => root.content.copyContents()
             },
             {

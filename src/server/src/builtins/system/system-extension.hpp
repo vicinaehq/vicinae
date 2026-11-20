@@ -147,6 +147,7 @@ public:
                     .description = tr("Run shell commands on your computer."),
                     .icon = ImageURL::builtin(BuiltinIcon::Terminal),
                     .deferred = false,
+                    .mcp = false,
                     .create = [path = *executable] { return std::make_unique<BashTool>(path); }});
     }
     registerTool(
@@ -154,6 +155,7 @@ public:
          .title = tr("Open"),
          .description = tr("Open files, folders and links with their default application."),
          .icon = ImageURL::builtin(BuiltinIcon::ArrowNe),
+         .annotations = {.destructive = false, .openWorld = true},
          .create = [] { return std::make_unique<OpenTool>(*ServiceRegistry::instance()->appDb()); }});
 
 #ifdef Q_OS_LINUX

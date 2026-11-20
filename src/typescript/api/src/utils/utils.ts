@@ -1,5 +1,6 @@
 import * as os from "node:os";
 import * as path from "node:path";
+import type { BuildOptions } from "esbuild";
 
 export const dataDir = () => {
 	if (process.platform === "win32") {
@@ -22,3 +23,14 @@ export const supportDir = path.join(dataDir(), "support");
 
 export const extensionInternalSupportDir = (id: string) =>
 	path.join(supportDir, id, ".vicinae");
+
+export const BUILD_OPTIONS = {
+	bundle: true,
+	external: ["react", "react/jsx-runtime", "@vicinae/api", "@raycast/api"],
+	format: "cjs",
+	jsx: "automatic",
+	platform: "node",
+	loader: {
+		".node": "file",
+	},
+} satisfies BuildOptions;

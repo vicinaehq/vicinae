@@ -15,6 +15,7 @@ class QMovie;
 struct ImageStreamOptions {
   bool safetyMargins = false;
   bool cache = true;
+  bool fallback = true;
 };
 
 class ImageStream : public QObject {

@@ -43,7 +43,15 @@ public:
     bool expanded = false;
   };
 
-  using Content = std::variant<Response, ToolGroup>;
+  struct Image {
+    QString source;
+  };
+
+  struct Attachment {
+    QVariantList items;
+  };
+
+  using Content = std::variant<Response, ToolGroup, Image, Attachment>;
 
   enum Role { QueryRole = Qt::UserRole + 1, ResponseRole, ErrorRole, PendingRole, AttachmentsRole };
 
@@ -56,16 +64,20 @@ public:
   void beginExchange(const std::string &query, QVariantList attachments = {});
   void appendResponse(std::string_view text);
   void appendSavedResponse(std::string text);
+  std::optional<int> appendImage(QString source);
+  void setImageSource(int exchange, int content, QString source);
+  void appendAttachment(QVariantMap item);
   void finishExchange(const std::string &error = {});
 
   void addTool(Tool tool);
-  void updateTool(quint64 id, QString status, std::optional<QString> output,
-                  std::optional<qint64> durationMs = {}, std::optional<QString> statusText = {});
+  // Replaces everything the tool shows, keeping whether it is expanded.
+  void updateTool(Tool tool);
   void toggleTool(quint64 id);
   void toggleToolGroup(quint64 id);
   const std::vector<Content> &contents(int exchange) const { return m_exchanges[exchange].contents; }
 
 private:
+  static void formatArguments(Tool &tool);
   struct Exchange {
     std::string query;
     std::vector<Content> contents;

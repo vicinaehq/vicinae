@@ -1,4 +1,5 @@
 #pragma once
+#include <algorithm>
 #include <glaze/json/generic.hpp>
 #include <optional>
 #include <string>
@@ -146,3 +147,19 @@ public:
 };
 
 using PreferenceList = std::vector<Preference>;
+
+namespace preferences {
+
+inline PreferenceList merge(PreferenceList base, const PreferenceList &overrides) {
+  base.reserve(base.size() + overrides.size());
+  for (const auto &pref : overrides) {
+    const auto existing = std::ranges::find(base, pref.name(), &Preference::name);
+    if (existing != base.end())
+      *existing = pref;
+    else
+      base.emplace_back(pref);
+  }
+  return base;
+}
+
+} // namespace preferences

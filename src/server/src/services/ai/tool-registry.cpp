@@ -54,7 +54,7 @@ private:
 };
 
 bool validId(std::string_view id) {
-  return !id.empty() && id.find("__") == std::string_view::npos && std::ranges::all_of(id, [](char c) {
+  return !id.empty() && std::ranges::all_of(id, [](char c) {
     return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_' || c == '-';
   });
 }
@@ -74,13 +74,15 @@ void ToolRegistry::rebuild() {
 
   for (const auto *provider : m_rootItems.providers()) {
     const auto providerId = provider->uniqueId().toStdString();
+    const auto toolNamespace = provider->toolNamespace().toStdString();
     auto tools = provider->tools();
     entries.reserve(entries.size() + tools.size());
 
     for (auto &tool : tools) {
-      auto name = std::format("{}__{}", providerId, tool.id);
+      // "__" is how MCP clients join server and tool names, some refuse tools that already contain it
+      auto name = std::format("{}_{}", toolNamespace, tool.id);
 
-      if (!validId(providerId) || !validId(tool.id) || name.size() > 64 || !tool.create ||
+      if (!validId(toolNamespace) || !validId(tool.id) || name.size() > 64 || !tool.create ||
           std::ranges::find(entries, name, &Entry::name) != entries.end()) {
         invalid.emplace_back(std::move(name));
         continue;
@@ -90,9 +92,7 @@ void ToolRegistry::rebuild() {
     }
   }
 
-  const bool same = std::ranges::equal(entries, m_entries, {}, &Entry::name, &Entry::name);
   m_entries = std::move(entries);
-  if (same) return;
 
   for (const auto &name : invalid)
     qWarning() << "Invalid or duplicate tool contribution:" << name;
@@ -150,14 +150,18 @@ bool ToolRegistry::setToolPolicy(std::string_view providerId, std::string_view t
                                                          {std::string(toolId), {.policy = policy}}}});
 }
 
+std::unique_ptr<AbstractTool> ToolRegistry::createTool(const Entry &entry) const {
+  auto tool = entry.contribution.create();
+  if (!tool) return nullptr;
+  return std::make_unique<RegisteredTool>(*this, entry.name, entry.contribution.deferred, std::move(tool));
+}
+
 std::vector<std::unique_ptr<AbstractTool>> ToolRegistry::createTools() const {
   std::vector<std::unique_ptr<AbstractTool>> tools;
   tools.reserve(m_entries.size());
 
   for (const auto &entry : m_entries) {
-    if (auto tool = entry.contribution.create())
-      tools.emplace_back(
-          std::make_unique<RegisteredTool>(*this, entry.name, entry.contribution.deferred, std::move(tool)));
+    if (auto tool = createTool(entry)) tools.emplace_back(std::move(tool));
   }
 
   return tools;

@@ -1,6 +1,8 @@
 #include <QTimer>
+#include <QUuid>
 #include <algorithm>
 #include <format>
+#include <ranges>
 #include <utility>
 
 #include "agentic-loop.hpp"
@@ -212,6 +214,7 @@ void Agent::complete() {
 
   m_assistantMessage.reset();
   m_pendingCalls.clear();
+  m_externalCalls.clear();
   m_nextCall = 0;
 
   const auto generation = m_generation;
@@ -219,6 +222,7 @@ void Agent::complete() {
   if (!running() || generation != m_generation) return;
 
   ChatCompletionPayload payload{.thinking = m_options.thinking,
+                                .reasoningEffort = m_options.reasoningEffort,
                                 .maxOutputTokens = m_options.maxOutputTokens,
                                 .oneShot = m_options.oneShot};
   payload.messages.reserve(m_messages.size() + 1);
@@ -263,6 +267,26 @@ void Agent::complete() {
             if (running() && generation == m_generation) receiveToolCall(call);
           });
 
+  connect(m_completion.get(), &AbstractChatCompletionStream::imageAdded, this,
+          [this, generation](const ImagePart &image) {
+            if (running() && generation == m_generation) receiveImage(image);
+          });
+
+  connect(m_completion.get(), &AbstractChatCompletionStream::resourceAdded, this,
+          [this, generation](const ResourcePart &resource) {
+            if (running() && generation == m_generation) receiveResource(resource);
+          });
+
+  connect(m_completion.get(), &AbstractChatCompletionStream::toolActivityChanged, this,
+          [this, generation](const ToolActivity &activity) {
+            if (running() && generation == m_generation) receiveToolActivity(activity);
+          });
+
+  connect(m_completion.get(), &AbstractChatCompletionStream::approvalRequested, this,
+          [this, generation](const std::string &callId) {
+            if (running() && generation == m_generation) requestApproval(callId);
+          });
+
   connect(m_completion.get(), &AbstractChatCompletionStream::errorOccurred, this,
           [this, generation](const std::string &reason) {
             if (running() && generation == m_generation) finish(State::Failed, reason);
@@ -273,6 +297,8 @@ void Agent::complete() {
 
     disconnect(m_completion.get(), nullptr, this, nullptr);
     m_completion.reset();
+    endExternalCalls(ToolState::Succeeded);
+    if (!running() || generation != m_generation) return;
 
     // A provider may emit several calls in one response. Execute only after the response is complete.
     schedule([this] { executeNextTool(); });
@@ -302,6 +328,29 @@ void Agent::receiveText(const std::string &text) {
   }
 
   emit textAdded(message.id, text);
+}
+
+void Agent::receiveImage(const ImagePart &image) {
+  const auto generation = m_generation;
+  setActivity(ResponseActivity::Responding);
+  if (!running() || generation != m_generation) return;
+  auto &message = assistantMessage();
+  if (!running() || generation != m_generation) return;
+  message.content.parts.reserve(message.content.parts.size() + 1);
+  message.content.parts.emplace_back(image);
+  emit imageAdded(message.id, image);
+}
+
+void Agent::receiveResource(ResourcePart resource) {
+  const auto generation = m_generation;
+  setActivity(ResponseActivity::Responding);
+  if (!running() || generation != m_generation) return;
+  auto &message = assistantMessage();
+  if (!running() || generation != m_generation) return;
+  resource.id = QUuid::createUuid().toString(QUuid::WithoutBraces).toStdString();
+  message.content.parts.reserve(message.content.parts.size() + 1);
+  message.content.parts.emplace_back(std::move(resource));
+  emit resourceAdded(message.id, std::get<ResourcePart>(message.content.parts.back()));
 }
 
 void Agent::receiveToolCall(const ToolCallPart &call) {
@@ -334,6 +383,122 @@ void Agent::receiveToolCall(const ToolCallPart &call) {
   m_pendingCalls.emplace_back(id);
 
   emit toolAdded(id);
+}
+
+void Agent::receiveToolActivity(const ToolActivity &activity) {
+  if (activity.call.id.empty()) return;
+
+  const auto generation = m_generation;
+  const auto findExternal = [&] {
+    return std::ranges::find_if(m_externalCalls, [&](const ExternalCall &external) {
+      return toolCall(external.id)->call.id == activity.call.id;
+    });
+  };
+
+  auto external = findExternal();
+  bool changed = false;
+
+  if (external == m_externalCalls.end()) {
+    // a call that already finished
+    if (std::ranges::any_of(m_calls, [&](const ToolCall &call) { return call.call.id == activity.call.id; }))
+      return;
+
+    auto &message = assistantMessage();
+    if (!running() || generation != m_generation) return;
+    message.content.parts.reserve(message.content.parts.size() + 1);
+    message.content.parts.emplace_back(activity.call);
+
+    const auto id = m_nextId++;
+    if (m_calls.size() == m_calls.capacity()) m_calls.reserve(m_calls.size() * 2);
+    m_calls.emplace_back(
+        ToolCall{.id = id, .call = activity.call, .summary = activity.title, .state = ToolState::Running});
+    m_externalCalls.emplace_back(ExternalCall{id, std::chrono::steady_clock::now()});
+
+    setActivity(ResponseActivity::RunningTool);
+    if (!running() || generation != m_generation) return;
+    emit toolAdded(id);
+    if (!running() || generation != m_generation) return;
+    external = findExternal();
+    if (external == m_externalCalls.end()) return;
+    changed = true;
+  }
+
+  const auto id = external->id;
+  const auto start = external->start;
+  auto &call = *std::ranges::find(m_calls, id, &ToolCall::id);
+
+  if (activity.title && activity.title != call.summary) {
+    call.summary = activity.title;
+    changed = true;
+  }
+
+  if (!activity.call.arguments.empty() && activity.call.arguments != call.call.arguments) {
+    call.call.arguments = activity.call.arguments;
+    for (auto &message : m_messages | std::views::reverse) {
+      const auto part = std::ranges::find_if(message.content.parts, [&](const ChatPart &part) {
+        const auto *invocation = std::get_if<ToolCallPart>(&part);
+        return invocation && invocation->id == activity.call.id;
+      });
+      if (part == message.content.parts.end()) continue;
+      std::get<ToolCallPart>(*part).arguments = activity.call.arguments;
+      break;
+    }
+    changed = true;
+  }
+
+  if (activity.status == ToolActivity::Status::Running) {
+    if (changed) emit toolChanged(id);
+    return;
+  }
+
+  m_externalCalls.erase(external);
+  call.duration =
+      std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start);
+  recordToolResult(
+      id, activity.status == ToolActivity::Status::Succeeded ? ToolState::Succeeded : ToolState::Failed,
+      {.content = activity.output.value_or(std::string{})});
+  if (!running() || generation != m_generation) return;
+  // what the model says next follows the result
+  m_assistantMessage.reset();
+
+  if (m_pendingApproval == id) {
+    m_pendingApproval.reset();
+    emit approvalChanged();
+    if (!running() || generation != m_generation) return;
+  }
+
+  if (m_externalCalls.empty()) setActivity(ResponseActivity::Waiting);
+}
+
+void Agent::requestApproval(const std::string &callId) {
+  const auto external = std::ranges::find_if(m_externalCalls, [&](const ExternalCall &external) {
+    return toolCall(external.id)->call.id == callId;
+  });
+  if (external == m_externalCalls.end() || m_pendingApproval) return;
+
+  const auto generation = m_generation;
+  const auto id = external->id;
+  std::ranges::find(m_calls, id, &ToolCall::id)->state = ToolState::AwaitingApproval;
+  m_pendingApproval = id;
+  setActivity(ResponseActivity::AwaitingApproval);
+  if (!running() || generation != m_generation) return;
+  emit toolChanged(id);
+  if (!running() || generation != m_generation) return;
+  emit approvalChanged();
+}
+
+void Agent::endExternalCalls(ToolState state) {
+  const auto now = std::chrono::steady_clock::now();
+  for (const auto &external : std::exchange(m_externalCalls, {})) {
+    auto &call = *std::ranges::find(m_calls, external.id, &ToolCall::id);
+    call.duration = std::chrono::duration_cast<std::chrono::milliseconds>(now - external.start);
+    recordToolResult(external.id, state,
+                     {
+                         .content = state == ToolState::Cancelled
+                                        ? tr("Tool execution was cancelled.").toStdString()
+                                        : std::string{},
+                     });
+  }
 }
 
 void Agent::executeNextTool() {
@@ -379,13 +544,33 @@ AbstractTool *Agent::findTool(std::string_view name) const {
   return tool != m_tools.end() ? tool->get() : nullptr;
 }
 
-bool Agent::resolveApproval(Id id, bool approved) {
+bool Agent::resolveApproval(Id id, bool approved, bool always) {
   if (!running() || m_pendingApproval != id) return false;
 
   const auto generation = m_generation;
   m_pendingApproval.reset();
   emit approvalChanged();
   if (!running() || generation != m_generation) return true;
+
+  if (const auto external = std::ranges::find(m_externalCalls, id, &ExternalCall::id);
+      external != m_externalCalls.end()) {
+    const auto callId = toolCall(id)->call.id;
+    if (approved) {
+      std::ranges::find(m_calls, id, &ToolCall::id)->state = ToolState::Running;
+      setActivity(ResponseActivity::RunningTool);
+      if (!running() || generation != m_generation) return true;
+      emit toolChanged(id);
+    } else {
+      m_externalCalls.erase(external);
+      recordToolResult(id, ToolState::Declined,
+                       {.content = tr("The user declined to run this tool.").toStdString()});
+      m_assistantMessage.reset();
+      setActivity(ResponseActivity::Waiting);
+    }
+    if (running() && generation == m_generation && m_completion)
+      m_completion->resolveApproval(callId, approved, always);
+    return true;
+  }
 
   const auto &call = *toolCall(id);
   auto *tool = approved ? findTool(call.call.name) : nullptr;
@@ -460,7 +645,8 @@ void Agent::runTool(Id id, AbstractTool &tool) {
 
 void Agent::recordToolResult(Id id, ToolState state, ToolOutput output) {
   auto &call = *std::ranges::find(m_calls, id, &ToolCall::id);
-  if (call.state == ToolState::Running) call.duration = std::chrono::milliseconds(m_toolTimer.elapsed());
+  if (call.state == ToolState::Running && !call.duration)
+    call.duration = std::chrono::milliseconds(m_toolTimer.elapsed());
   call.state = state;
   output.failed = state == ToolState::Failed;
   call.output = std::move(output);
@@ -491,6 +677,7 @@ void Agent::finish(State state, std::optional<std::string> error) {
 
   m_finishing = true;
   stopWork();
+  endExternalCalls(ToolState::Cancelled);
 
   for (const auto id : m_pendingCalls) {
     if (!toolCall(id)->output)

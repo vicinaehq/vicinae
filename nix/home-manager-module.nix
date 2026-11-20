@@ -7,7 +7,10 @@ self: {
   cfg = config.programs.vicinae;
 
   inherit (pkgs.stdenv.hostPlatform) system;
-  basePkg = self.packages.${system}.default;
+  basePkg =
+    if cfg.localAI.enable
+    then self.packages.${system}.with-local-ai
+    else self.packages.${system}.default;
   soulverVicinaePkg = self.lib.${system}.withSoulver basePkg;
   vicinaePkg =
     if cfg.package != null
@@ -65,7 +68,24 @@ in {
       defaultText = lib.literalExpression "vicinae.packages.\${system}.default, or vicinae.packages.\${system}.with-soulver when enableSoulver is true";
       description = ''
         The vicinae package to use. When null, this will default to the flake's
-        `default` package, or `with-soulver` when `enableSoulver` is true.
+        `default` package, or `with-local-ai` when `localAI.enable` is true.
+        Wrapped with SoulverCore when `enableSoulver` is true.
+      '';
+    };
+
+    localAI.enable = lib.mkOption {
+      type = lib.types.bool;
+      default = let
+        model = lib.attrByPath ["providers" "dictation" "preferences" "model"] "" cfg.settings;
+      in
+        builtins.isString model && lib.hasPrefix "local:" model;
+      defaultText = lib.literalExpression ''lib.hasPrefix "local:" (settings.providers.dictation.preferences.model or "")'';
+      description = ''
+        Whether to enable local AI support.
+        Uses the flake's `with-local-ai` package.
+        Enabled by default when `settings.providers.dictation.preferences.model`
+        starts with `local:`. Models in `settingOverrides` files are not detected.
+        Ignored when `package` is set; custom packages must support local AI.
       '';
     };
 
@@ -298,7 +318,9 @@ in {
         }
       ];
 
-      warnings = lib.optional (cfg.enableSoulver && cfg.package != null) "programs.vicinae.enableSoulver is ignored because programs.vicinae.package is set; wrap your package with soulver-cpp yourself";
+      warnings =
+        lib.optional (cfg.enableSoulver && cfg.package != null) "programs.vicinae.enableSoulver is ignored because programs.vicinae.package is set; wrap your package with soulver-cpp yourself"
+        ++ lib.optional (cfg.localAI.enable && cfg.package != null) "programs.vicinae.localAI.enable is ignored because programs.vicinae.package is set; ensure your custom package supports local AI";
 
       home.packages = [wrappedVicinae];
 

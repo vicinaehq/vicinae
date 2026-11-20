@@ -73,12 +73,14 @@ Flickable {
             }
 
             SettingsRow {
-                label: qsTr("Pop to root on close")
-                description: qsTr("Reset the navigation state when the launcher window is closed.")
+                label: qsTr("Pop to root search")
+                description: qsTr("How long the launcher must stay closed before it resets to root search.")
                 showSeparator: false
-                SettingsToggle {
-                    checked: root.model.popToRootOnClose
-                    onToggled: checked => root.model.popToRootOnClose = checked
+                SearchableDropdown {
+                    width: parent.width
+                    model: root.model.popToRootModel
+                    currentItem: root.model.currentPopToRoot
+                    onActivated: item => root.model.selectPopToRoot(item.id)
                 }
             }
         }

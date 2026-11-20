@@ -41,6 +41,7 @@ signals:
 public:
   JsonLineProcess(const QString &program, const QStringList &arguments, QObject *parent = nullptr);
 
+  void unsetEnvironment(const QString &name);
   void start();
   void write(std::string_view line);
   bool running() const { return m_process.state() != QProcess::NotRunning; }

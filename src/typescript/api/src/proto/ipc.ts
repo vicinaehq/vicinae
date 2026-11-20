@@ -150,10 +150,13 @@ export type DMenuRequest = {
 	height?: number;
 	noFooter: boolean;
 	password: boolean;
+	actions: string[];
 }
 
 export type DMenuResponse = {
 	output: string;
+	action?: number;
+	query: string;
 }
 
 export type BrowserInitRequest = {
@@ -284,11 +287,18 @@ class IpcService {
 		return this.transport.request("Ipc/aiAsk", { req});	
 	}
 
+	mcpSend(message: string): Promise<void> {
+		return this.transport.request("Ipc/mcpSend", { message});	
+	}
+
 	aiData(handler: (completionId: string, data: string, done: boolean) => void): EventSubscription {
 		return this.transport.subscribe("Ipc/aiData", (msg) => handler(msg.completionId, msg.data, msg.done))
 	}
 	aiFailed(handler: (completionId: string, error: string) => void): EventSubscription {
 		return this.transport.subscribe("Ipc/aiFailed", (msg) => handler(msg.completionId, msg.error))
+	}
+	mcpMessage(handler: (message: string) => void): EventSubscription {
+		return this.transport.subscribe("Ipc/mcpMessage", (msg) => handler(msg.message))
 	}
 }
 

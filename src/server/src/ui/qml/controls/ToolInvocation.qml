@@ -25,9 +25,8 @@ Item {
         id: header
         width: parent.width
         title: root.name
-        subtitle: root.summary
         iconSource: root.iconSource
-        compactStatus: true
+        subtitle: root.summary
         status: root.status
         resultStatusText: root.statusText
         durationMs: root.durationMs
@@ -38,15 +37,16 @@ Item {
     Loader {
         id: details
         y: header.height + 4
-        width: parent.width
+        x: 20
+        width: parent.width - x
         active: root.expanded
         sourceComponent: Rectangle {
             id: panel
             property bool showArguments: false
             implicitHeight: Math.min(root.maximumDetailsHeight, scroll.contentHeight + 2)
-            radius: 6
+            radius: 8
             color: Config.withAlpha(Theme.foreground, 0.025)
-            border.color: Config.withAlpha(Theme.foreground, 0.1)
+            border.color: Config.withAlpha(Theme.foreground, 0.06)
             DocumentScope.document: selection
 
             ContextMenu.menu: DocumentSelectionMenu {
@@ -100,6 +100,15 @@ Item {
                     width: scroll.width - 24
                     spacing: 6
 
+                    Text {
+                        width: parent.width
+                        text: header.statusLabel
+                        textFormat: Text.PlainText
+                        wrapMode: Text.Wrap
+                        font.family: Theme.fontFamily
+                        font.pointSize: Theme.smallerFontSize
+                        color: root.status === "failed" ? Theme.danger : Theme.textMuted
+                    }
                     DocumentText {
                         width: parent.width
                         text: panel.showArguments || root.summary.length === 0 ? root.arguments : root.summary
@@ -111,7 +120,7 @@ Item {
                         width: parent.width
                         height: 1
                         visible: root.hasOutput
-                        color: Config.withAlpha(Theme.foreground, 0.1)
+                        color: Config.withAlpha(Theme.foreground, 0.06)
                     }
                     DocumentText {
                         width: parent.width

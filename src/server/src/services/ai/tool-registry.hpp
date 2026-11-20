@@ -31,6 +31,7 @@ public:
   const std::vector<Entry> &entries() const { return m_entries; }
   const Entry *find(std::string_view name) const;
   const Entry *find(std::string_view providerId, std::string_view toolId) const;
+  std::unique_ptr<AbstractTool> createTool(const Entry &entry) const;
   std::vector<std::unique_ptr<AbstractTool>> createTools() const;
   std::vector<std::string> enabledToolNames() const;
 

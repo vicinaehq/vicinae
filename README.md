@@ -22,6 +22,8 @@
 
 Out of the box, Vicinae can be your:
 
+- [Dictation](https://docs.vicinae.com/dictation)
+- [AI chat](https://docs.vicinae.com/ai)
 - app search
 - [clipboard history](https://docs.vicinae.com/clipboard)
 - [text expander (snippets)](https://docs.vicinae.com/snippets)

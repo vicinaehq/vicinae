@@ -5,8 +5,7 @@
 #include <qstring.h>
 #include "internal/glaze-qt.hpp"
 #include "services/ai/ai-provider-types.hpp"
-#include "services/ai/cli/claude-code-provider.hpp"
-#include "services/ai/cli/codex-provider.hpp"
+#include "services/ai/acp/acp-provider.hpp"
 #include "services/ai/mistral/mistral-provider.hpp"
 #include "services/ai/ollama/ollama-ai-provider.hpp"
 #include "services/ai/groq/groq-provider.hpp"
@@ -121,8 +120,8 @@ std::unique_ptr<AbstractProvider> Service::createProvider(const std::string &id,
   if (type == "openai") return std::make_unique<OpenAIProvider>(id);
   if (type == "groq") return std::make_unique<GroqProvider>(id);
   if (type == "openrouter") return std::make_unique<OpenRouterProvider>(id);
-  if (type == ClaudeCodeProvider::TYPE) return std::make_unique<ClaudeCodeProvider>(id);
-  if (type == CodexProvider::TYPE) return std::make_unique<CodexProvider>(id);
+  if (const auto *info = findProviderType(type); info && info->category == Category::Agent)
+    return std::make_unique<AcpProvider>(id, type);
   if (type == "openai-compatible") return std::make_unique<OpenAICompatibleProvider>(id, type, "");
   return nullptr;
 }

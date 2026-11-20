@@ -42,6 +42,7 @@ public:
 
   void load(const EntrypointId &id, const std::vector<Preference> &preferences);
   void loadProvider(const QString &providerId, const std::vector<Preference> &preferences);
+  void loadTool(const EntrypointId &id, const PreferenceList &preferences);
 
   Q_INVOKABLE void setFieldValue(int row, const QVariant &value);
   Q_INVOKABLE QUrl componentFor(const QString &fieldId) const;
@@ -76,6 +77,8 @@ private:
   PreferenceValues m_pendingValues;
   EntrypointId m_itemId;
   QString m_providerId;
-  bool m_isProvider = false;
+  enum class Scope { Item, Provider, Tool };
+  Scope m_scope = Scope::Item;
+  PreferenceList m_toolPreferences;
   QTimer m_saveTimer;
 };

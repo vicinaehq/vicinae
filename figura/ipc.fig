@@ -70,10 +70,13 @@ struct DMenuRequest {
   height?: int;
   noFooter: bool;
   password: bool;
+  actions: string[];
 };
 
 struct DMenuResponse {
   output: string;
+  action?: int;
+  query: string;
 };
 
 struct BrowserInitRequest {
@@ -174,6 +177,9 @@ service Ipc {
   fn aiAsk(req: AiAskRequest) => AiAskResponse;
   event aiData(completionId: string, data: string, done: bool);
   event aiFailed(completionId: string, error: string);
+
+  fn mcpSend(message: string) => void;
+  event mcpMessage(message: string);
 
   // implemented by the browser extension
   client fn browserFocusTab(tabId: int) => void;

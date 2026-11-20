@@ -13,6 +13,8 @@ class Agent : public QObject {
 
 signals:
   void textAdded(quint64 messageId, const std::string &text);
+  void imageAdded(quint64 messageId, const ImagePart &image);
+  void resourceAdded(quint64 messageId, const ResourcePart &resource);
   void toolAdded(quint64 id);
   void toolChanged(quint64 id);
   void activityChanged();
@@ -47,6 +49,7 @@ public:
     std::optional<ModelRef> model;
     std::vector<std::string> tools;
     ThinkingMode thinking = ThinkingMode::Medium;
+    std::optional<std::string> reasoningEffort;
     int maxSteps = 16;
     std::optional<int> maxOutputTokens;
     bool oneShot = false;
@@ -59,7 +62,8 @@ public:
 
   bool addTool(std::unique_ptr<AbstractTool> tool);
   bool send(ChatMessage message, Options options);
-  bool resolveApproval(Id id, bool approved);
+  // `always` is passed on to models that run their own tools, the others' policies belong to the caller.
+  bool resolveApproval(Id id, bool approved, bool always = false);
   void cancel();
 
   State state() const { return m_state; }
@@ -86,7 +90,12 @@ private:
   Message &assistantMessage();
   void complete();
   void receiveText(const std::string &text);
+  void receiveImage(const ImagePart &image);
+  void receiveResource(ResourcePart resource);
   void receiveToolCall(const ToolCallPart &call);
+  void receiveToolActivity(const ToolActivity &activity);
+  void requestApproval(const std::string &callId);
+  void endExternalCalls(ToolState state);
   void executeNextTool();
   void runTool(Id id, AbstractTool &tool);
   AbstractTool *findTool(std::string_view name) const;
@@ -107,6 +116,12 @@ private:
   std::function<void()> m_cancelTool;
   QElapsedTimer m_toolTimer;
   std::vector<Id> m_pendingCalls;
+  struct ExternalCall {
+    Id id;
+    std::chrono::steady_clock::time_point start;
+  };
+  // Calls the model runs itself, until they finish.
+  std::vector<ExternalCall> m_externalCalls;
   std::size_t m_nextCall = 0;
   std::optional<Id> m_pendingApproval;
   std::optional<Id> m_assistantMessage;

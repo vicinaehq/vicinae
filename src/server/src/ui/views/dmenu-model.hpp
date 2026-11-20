@@ -1,12 +1,23 @@
 #pragma once
 #include "fuzzy/scored.hpp"
 #include "generated/ipc-server.hpp"
+#include "internal/keyboard/keyboard.hpp"
 #include "ui/views/section-source.hpp"
 #include <QCoreApplication>
 #include <cstddef>
+#include <expected>
 #include <functional>
+#include <optional>
+#include <string>
 #include <string_view>
 #include <vector>
+
+struct DMenuAction {
+  QString title;
+  std::optional<Keyboard::Shortcut> shortcut;
+
+  static std::expected<DMenuAction, std::string> parse(std::string_view spec);
+};
 
 class DMenuSection : public SectionSource {
   Q_DECLARE_TR_FUNCTIONS(DMenuSection)
@@ -22,10 +33,14 @@ public:
   QString sectionName() const override;
   int count() const override { return static_cast<int>(m_filtered.size()); }
 
-  void setOnEntryChosen(std::function<void(const QString &)> cb) { m_onEntryChosen = std::move(cb); }
+  void setActions(std::vector<DMenuAction> actions) { m_actions = std::move(actions); }
+  void setOnEntryChosen(std::function<void(const QString &, std::optional<int>)> cb) {
+    m_onEntryChosen = std::move(cb);
+  }
   void setOnFileHighlighted(std::function<void(std::string_view)> cb) { m_onFileHighlighted = std::move(cb); }
 
   void onSelected(int i) override;
+  void addCustomActions(ActionPanelState &panel, const QString &entry) const;
 
 protected:
   QString itemTitle(int i) const override;
@@ -38,7 +53,7 @@ private:
 
   IndexedData entryAt(int i) const;
   QString expandSectionName(size_t count) const;
-  void selectEntry(const QString &text) const;
+  void selectEntry(const QString &text, std::optional<int> action = std::nullopt) const;
 
   std::vector<std::string_view> m_entries;
   std::vector<Scored<IndexedData>> m_filtered;
@@ -48,6 +63,7 @@ private:
   bool m_noQuickLook = false;
   ipc_gen::DMenuOutputFormat m_outputFormat = ipc_gen::DMenuOutputFormat::Data;
 
-  std::function<void(const QString &)> m_onEntryChosen;
+  std::vector<DMenuAction> m_actions;
+  std::function<void(const QString &, std::optional<int>)> m_onEntryChosen;
   std::function<void(std::string_view)> m_onFileHighlighted;
 };

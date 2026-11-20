@@ -58,6 +58,11 @@ Flickable {
         }
     }
 
+    AIProviderErrorDialog {
+        id: errorDialog
+        page: root.page
+    }
+
     AIModelDeleteDialog {
         id: deleteDialog
         onConfirmed: modelId => root.page.removeModel(modelId)
@@ -321,6 +326,62 @@ Flickable {
             }
         }
 
+        Rectangle {
+            visible: root.page.error.length > 0
+            Layout.fillWidth: true
+            Layout.leftMargin: column.sideMargin
+            Layout.rightMargin: column.sideMargin
+            Layout.bottomMargin: 16
+            implicitHeight: errorContent.implicitHeight + 24
+            radius: 8
+            color: Config.withAlpha(Theme.danger, 0.1)
+            border.color: Config.withAlpha(Theme.danger, 0.3)
+            border.width: 1
+
+            RowLayout {
+                id: errorContent
+                anchors.fill: parent
+                anchors.margins: 12
+                spacing: 10
+
+                ViciImage {
+                    Layout.preferredWidth: 18
+                    Layout.preferredHeight: 18
+                    Layout.alignment: Qt.AlignTop
+                    source: Img.icon(BuiltinIcon.XMarkCircle).withFillColor(Theme.danger)
+                }
+
+                TextEdit {
+                    Layout.fillWidth: true
+                    text: root.page.error
+                    color: Theme.foreground
+                    font.pointSize: Theme.smallerFontSize
+                    wrapMode: TextEdit.Wrap
+                    readOnly: true
+                    selectByMouse: true
+                    selectionColor: Theme.textSelectionBg
+                    selectedTextColor: Theme.textSelectionFg
+                }
+
+                Text {
+                    visible: root.page.errorDetails.length > 0
+                    Layout.alignment: Qt.AlignTop
+                    text: qsTr("Details")
+                    color: detailsHover.hovered ? Theme.foreground : Theme.textMuted
+                    font.pointSize: Theme.smallerFontSize
+
+                    HoverHandler {
+                        id: detailsHover
+                        cursorShape: Qt.PointingHandCursor
+                    }
+
+                    TapHandler {
+                        onTapped: errorDialog.open()
+                    }
+                }
+            }
+        }
+
         RowLayout {
             Layout.fillWidth: true
             Layout.leftMargin: column.sideMargin
@@ -336,6 +397,7 @@ Flickable {
             }
 
             Text {
+                visible: root.page.error.length === 0
                 text: root.page.statusText
                 color: Theme.textPlaceholder
                 font.pointSize: Theme.smallerFontSize

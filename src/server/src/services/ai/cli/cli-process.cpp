@@ -97,6 +97,12 @@ JsonLineProcess::JsonLineProcess(const QString &program, const QStringList &argu
   });
 }
 
+void JsonLineProcess::unsetEnvironment(const QString &name) {
+  auto environment = m_process.processEnvironment();
+  environment.remove(name);
+  m_process.setProcessEnvironment(environment);
+}
+
 void JsonLineProcess::start() { m_process.start(QIODevice::ReadWrite); }
 
 void JsonLineProcess::write(std::string_view line) {
