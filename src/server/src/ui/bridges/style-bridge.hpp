@@ -17,6 +17,7 @@ public:
 
 private:
   Q_PROPERTY(bool configurableStatusBar READ configurableStatusBar CONSTANT)
+  Q_PROPERTY(bool selectableWindowStyle READ selectableWindowStyle CONSTANT)
   // Space pages reserve for the overlaid window header.
   Q_PROPERTY(qreal contentTopInset READ contentTopInset CONSTANT)
   Q_PROPERTY(qreal switchKnobWidth READ switchKnobWidth CONSTANT)
@@ -34,6 +35,14 @@ public:
     return false;
 #else
     return true;
+#endif
+  }
+
+  bool selectableWindowStyle() const {
+#if defined(Q_OS_MACOS) || defined(Q_OS_LINUX)
+    return true;
+#else
+    return false;
 #endif
   }
 
