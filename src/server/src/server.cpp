@@ -521,11 +521,8 @@ int startServer(const ServerLaunchOptions &launchOpts) {
   ctx.settings = std::make_unique<SettingsController>(ctx);
   ctx.services = ServiceRegistry::instance();
   ctx.chat = std::make_unique<ChatWindowController>(ctx);
-<<<<<<< HEAD
   ctx.aiCommands = std::make_unique<AiCommandRunner>(ctx);
-=======
   ctx.notes = std::make_unique<NotesWindowManager>(ctx);
->>>>>>> 249b62fcc (feat: notes wip)
 
   IpcCommandServer commandServer(&ctx);
 
