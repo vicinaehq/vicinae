@@ -74,8 +74,12 @@ Completed snapshots keep appearing during continuous typing. Updates preserve
 unchanged preview blocks so editing does not reset the reading position or
 relayout the whole note.
 
-Notes use a normal, resizable top-level window. The window manager decides
-whether it floats or tiles; it is not a dialog or an always-on-top utility.
+Notes use a normal, resizable top-level window. On macOS and Windows, new note
+windows stay above ordinary windows by default. **Note Actions → Keep on Top**
+toggles this for the current window; reopening a note restores the default.
+This changes window stacking, not which desktops or Spaces contain the note.
+On Linux, the window manager decides whether notes float, tile, or stay on top;
+the Keep on Top action is hidden and notes do not use layer shell.
 
 The window title always starts with `Vicinae Notes — `, followed by the note's
 title. This prefix stays unchanged when switching notes or languages. Match

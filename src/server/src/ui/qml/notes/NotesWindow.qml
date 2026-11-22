@@ -9,6 +9,9 @@ Window {
     id: root
     property bool nativeChrome: false
     property bool translucentBackground: false
+    property bool supportsKeepOnTop: false
+    property bool keepOnTop: supportsKeepOnTop
+    readonly property int stayOnTopFlag: supportsKeepOnTop && keepOnTop ? Qt.WindowStaysOnTopHint : 0
     property real titlebarRightInset: 0
     property real headerHeight: 48
     property real toolbarCenterY: headerHeight / 2
@@ -25,7 +28,7 @@ Window {
     objectName: "vicinae-notes"
     // Keep the product prefix stable for window-manager rules, including across locales.
     title: "Vicinae Notes — %1".arg(NotesWindowHost.title || qsTr("Untitled Note"))
-    flags: Qt.Window | Qt.WindowTitleHint | Qt.WindowCloseButtonHint | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint
+    flags: Qt.Window | Qt.WindowTitleHint | Qt.WindowCloseButtonHint | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint | root.stayOnTopFlag
     WindowMaterial.enabled: Platform.supports("windowMaterial")
     onClosing: event => event.accepted = NotesWindowHost.requestClose()
 
@@ -193,6 +196,13 @@ Window {
                 ViciMenuItem {
                     text: qsTr("Search Notes…")
                     onTriggered: NotesWindowHost.search(moreButton)
+                }
+                ViciMenuItem {
+                    text: qsTr("Keep on Top")
+                    visible: root.supportsKeepOnTop
+                    checkable: true
+                    checked: root.keepOnTop
+                    onToggled: root.keepOnTop = checked
                 }
                 ViciMenuItem {
                     text: qsTr("Save")

@@ -4,6 +4,7 @@ import Vicinae
 NotesWindow {
     id: root
     nativeChrome: true
+    supportsKeepOnTop: true
     readonly property rect windowButtons: MacOSWindow.titlebarButtonsRect
     toolbarCenterY: windowButtons.height > 0 ? windowButtons.y + windowButtons.height / 2 : 20
     toolbarLeftInset: windowButtons.width > 0 ? windowButtons.x + windowButtons.width + 14 : 84
