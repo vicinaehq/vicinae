@@ -284,6 +284,7 @@ enum class BuiltinIcon : quint16 {
   Fastapi,
   Fastify,
   Faunadb,
+  Feather,
   Feathersjs,
   Fedora,
   Female,

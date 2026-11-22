@@ -276,6 +276,7 @@ const BuiltinIconService::Mapping &BuiltinIconService::mapping() {
       {BuiltinIcon::Fastapi, "fastapi"},
       {BuiltinIcon::Fastify, "fastify"},
       {BuiltinIcon::Faunadb, "faunadb"},
+      {BuiltinIcon::Feather, "feather"},
       {BuiltinIcon::Feathersjs, "feathersjs"},
       {BuiltinIcon::Fedora, "fedora"},
       {BuiltinIcon::Female, "female"},

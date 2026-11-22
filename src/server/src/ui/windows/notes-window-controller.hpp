@@ -58,6 +58,7 @@ public:
   }
   void loadNote();
   void present();
+  bool isEmptyDraft() const;
   Vicinae::Editor::EditorDocument *document() { return &m_document; }
   MarkdownModel *previewModel() { return &m_previewModel; }
   QString title() const { return QString::fromStdString(m_note.title); }

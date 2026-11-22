@@ -273,6 +273,7 @@ export enum Icon {
 	Fastapi = "fastapi",
 	Fastify = "fastify",
 	Faunadb = "faunadb",
+	Feather = "feather",
 	Feathersjs = "feathersjs",
 	Fedora = "fedora",
 	Female = "female",

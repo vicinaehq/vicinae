@@ -1,6 +1,5 @@
 #pragma once
 
-#include <QFileInfo>
 #include "fuzzy/fuzzy-searchable.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
@@ -41,11 +40,9 @@ public:
   QString displayTitle(const ItemType &note) const override {
     return note.title.empty() ? tr("Untitled Note") : QString::fromStdString(note.title);
   }
-  QString displaySubtitle(const ItemType &note) const override {
-    return QFileInfo(QString::fromStdString(note.path)).absolutePath();
-  }
+  QString displaySubtitle(const ItemType &) const override { return {}; }
   std::optional<ImageURL> displayIcon(const ItemType &) const override {
-    return ImageURL::builtin(BuiltinIcon::BlankDocument);
+    return ImageURL::builtin(BuiltinIcon::Feather).setBackgroundTint(SemanticColor::Yellow);
   }
   AccessoryList displayAccessories(const ItemType &) const override { return {}; }
   bool hasDetailPane() const override { return true; }
@@ -62,7 +59,7 @@ public:
   std::unique_ptr<ActionPanelState> buildActionPanel(const ItemType &note) const override {
     auto panel = std::make_unique<ListActionPanelState>();
     auto *section = panel->createSection();
-    section->addAction(new StaticAction(tr("Open Note"), ImageURL::builtin(BuiltinIcon::Pencil),
+    section->addAction(new StaticAction(tr("Open Note"), ImageURL::builtin(BuiltinIcon::Feather),
                                         [id = note.id](ApplicationContext *ctx) {
                                           ctx->navigation->closeWindow();
                                           ctx->notes->openNote(QString::fromStdString(id));
@@ -84,7 +81,10 @@ public:
 
 private:
   StaticAction *createAction() const {
-    auto *action = new StaticAction(tr("Create Note"), ImageURL::builtin(BuiltinIcon::Plus),
+    auto *action = new StaticAction(tr("Create Note"),
+                                    ImageURL::builtin(BuiltinIcon::Feather)
+                                        .setBackgroundTint(SemanticColor::Yellow)
+                                        .setBadge(BuiltinIcon::Plus),
                                     [](ApplicationContext *ctx) {
                                       ctx->navigation->closeWindow();
                                       ctx->notes->newNote();

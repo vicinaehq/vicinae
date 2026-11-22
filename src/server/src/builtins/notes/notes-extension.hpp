@@ -14,7 +14,9 @@ class CreateNoteCommand : public BuiltinCallbackCommand {
   QString name() const override { return tr("Create Note"); }
   QString description() const override { return tr("Write a Markdown note in a dedicated window."); }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin(BuiltinIcon::Pencil).setBackgroundTint(SemanticColor::Yellow);
+    return ImageURL::builtin(BuiltinIcon::Feather)
+        .setBackgroundTint(SemanticColor::Yellow)
+        .setBadge(BuiltinIcon::Plus);
   }
   std::vector<QString> keywords() const override { return {"new", "markdown", "write"}; }
   void execute(CommandController &controller) const override {
@@ -30,7 +32,9 @@ class SearchNotesCommand : public BuiltinViewCommand<NotesViewHost> {
   QString name() const override { return tr("Search Notes"); }
   QString description() const override { return tr("Find, edit, and manage your notes."); }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin(BuiltinIcon::BookAntique).setBackgroundTint(SemanticColor::Yellow);
+    return ImageURL::builtin(BuiltinIcon::Feather)
+        .setBackgroundTint(SemanticColor::Yellow)
+        .setBadge(BuiltinIcon::MagnifyingGlass);
   }
   std::vector<QString> keywords() const override { return {"markdown", "browse", "find"}; }
 };
@@ -40,7 +44,7 @@ class NotesExtension : public TypedCommandRepository<Notes::Preferences> {
   QString id() const override { return QStringLiteral("notes"); }
   QString displayName() const override { return tr("Notes"); }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin(BuiltinIcon::BookAntique).setBackgroundTint(SemanticColor::Yellow);
+    return ImageURL::builtin(BuiltinIcon::Feather).setBackgroundTint(SemanticColor::Yellow);
   }
 
 public:

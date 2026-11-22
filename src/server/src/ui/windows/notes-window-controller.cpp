@@ -133,6 +133,12 @@ void NotesWindowController::activate(Notes::Note note, bool persisted) {
 
 void NotesWindowController::newNote() { m_context.notes->newNote(); }
 
+bool NotesWindowController::isEmptyDraft() const {
+  const auto *document = m_document.textDocument();
+  return !m_persisted && !m_loading && !m_saving && !m_pasting && !m_closed && m_error.isEmpty() &&
+         m_note.title.empty() && document && document->textDocument()->isEmpty();
+}
+
 void NotesWindowController::loadNote() {
   const auto generation = ++m_loadGeneration;
   m_loading = true;
@@ -480,6 +486,14 @@ NotesWindowController *NotesWindowManager::createWindow(std::string id) {
 }
 
 void NotesWindowManager::newNote() {
+  QGuiApplication::inputMethod()->commit();
+  for (const auto &[id, window] : m_windows) {
+    if (window->isEmptyDraft()) {
+      window->setViewMode(NotesWindowController::Edit);
+      window->present();
+      return;
+    }
+  }
   createWindow(QUuid::createUuid().toString(QUuid::WithoutBraces).toStdString())->present();
 }
 
