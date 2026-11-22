@@ -104,6 +104,7 @@ Item {
     Component {
         id: defaultMarkdownContent
         MarkdownText {
+            baseUrl: root.host.detailBaseUrl
             markdown: root.host.detailContent
             contentPadding: 16
         }

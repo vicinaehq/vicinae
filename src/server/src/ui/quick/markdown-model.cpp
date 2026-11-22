@@ -716,6 +716,7 @@ void MarkdownModel::setMarkdown(const QString &markdown) {
 void MarkdownModel::applyBlocks(const QString &markdown, std::vector<Block> blocks, bool incremental) {
   const bool appended = !m_renderedMarkdown.isEmpty() && markdown.startsWith(m_renderedMarkdown);
   m_renderedMarkdown = markdown;
+  if (appended) emit blocksAppended();
   if (incremental) {
     const int oldCount = static_cast<int>(m_blocks.size());
     const int newCount = static_cast<int>(blocks.size());
@@ -753,7 +754,6 @@ void MarkdownModel::applyBlocks(const QString &markdown, std::vector<Block> bloc
   if (appended) {
     const int oldCount = static_cast<int>(m_blocks.size());
     const int newCount = static_cast<int>(blocks.size());
-    emit blocksAppended();
 
     int common = 0;
     while (common < std::min(oldCount, newCount) && m_blocks[common].type == blocks[common].type) {
@@ -800,6 +800,7 @@ void MarkdownModel::setMarkdownAsync(QString markdown, bool incremental) {
 void MarkdownModel::setBaseUrl(const QUrl &url) {
   if (m_styles.baseUrl == url) return;
   m_styles.baseUrl = url;
+  emit baseUrlChanged();
   ++m_styleGeneration;
   if (!m_markdown.isEmpty()) setMarkdownAsync(m_markdown, true);
 }

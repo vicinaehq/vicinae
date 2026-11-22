@@ -105,10 +105,13 @@ QByteArray fileHash(const QString &path) {
 } // namespace
 
 bool canImportAttachments(const QMimeData *mime) {
-  return mime && (hasLocalFiles(mime) || mime->hasImage() ||
-                  std::ranges::any_of(IMAGE_FORMATS, [mime](const auto &format) {
-                    return mime->hasFormat(QLatin1String(format.first));
-                  }));
+  if (!mime) return false;
+  if (hasLocalFiles(mime)) return true;
+  // Spreadsheets and rich text editors offer a rendering of the copied text as an image.
+  if (mime->hasFormat(QStringLiteral("text/plain"))) return false;
+  return mime->hasImage() || std::ranges::any_of(IMAGE_FORMATS, [mime](const auto &format) {
+           return mime->hasFormat(QLatin1String(format.first));
+         });
 }
 
 std::vector<Attachment> attachmentsFromMimeData(const QMimeData *mime) {
@@ -209,6 +212,7 @@ void copyAttachments(const Note &note, const QString &directory) {
   });
   for (const auto &relative : paths) {
     const auto from = source.filePath(relative);
+    if (!QFileInfo(from).isFile()) continue;
     const auto to = destination.filePath(relative);
     ensureDirectory(QFileInfo(to).absolutePath());
     if (QFileInfo(to).isSymLink()) fail(Store::tr("An attachment with this name already exists."));

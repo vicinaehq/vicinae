@@ -1,5 +1,0 @@
-<RCC>
-    <qresource prefix="database/notes">
-        <file>migrations/001_init.sql</file>
-    </qresource>
-</RCC>

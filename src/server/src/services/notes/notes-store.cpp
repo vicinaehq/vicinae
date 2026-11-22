@@ -2,19 +2,17 @@
 #include <QDateTime>
 #include <QDirIterator>
 #include <QFileSystemWatcher>
-#include <QJsonDocument>
-#include <QJsonObject>
 #include <QPromise>
 #include <QRegularExpression>
 #include <QSaveFile>
 #include <QTimer>
 #include <QUuid>
 #include <algorithm>
+#include <filesystem>
 #include <set>
 #include <stdexcept>
 #include <unordered_map>
 #include "notes-store.hpp"
-#include "db/database.hpp"
 
 namespace Notes {
 namespace {
@@ -75,9 +73,16 @@ QString filename(const std::string &title) {
   if (reserved.match(name).hasMatch()) name.prepend(u'_');
   return name;
 }
-QString availablePath(const QString &directory, const QString &name) {
+// A note renamed to a name differing only by case still owns its file on case-insensitive filesystems.
+QString availablePath(const QString &directory, const QString &name, const QString &own = {}) {
+  const auto taken = [&own](const QString &path) {
+    if (!QFileInfo::exists(path)) return false;
+    std::error_code error;
+    return own.isEmpty() || !std::filesystem::equivalent(QFileInfo(path).filesystemAbsoluteFilePath(),
+                                                         QFileInfo(own).filesystemAbsoluteFilePath(), error);
+  };
   auto path = QDir(directory).filePath(name + QStringLiteral(".md"));
-  for (int suffix = 2; QFileInfo::exists(path); ++suffix)
+  for (int suffix = 2; taken(path); ++suffix)
     path = QDir(directory).filePath(QStringLiteral("%1 (%2).md").arg(name).arg(suffix));
   return path;
 }
@@ -93,7 +98,6 @@ public:
   void initialize() {
     if (m_ready) return;
     std::filesystem::create_directories(m_directory);
-    migrate();
     m_watcher = new QFileSystemWatcher(this);
     m_debounce = new QTimer(this);
     m_debounce->setSingleShot(true);
@@ -220,8 +224,8 @@ public:
             "This note changed outside Vicinae. Save a copy to keep your changes, or reload the file."));
     }
     const auto bytes = QByteArray::fromStdString(note.markdown);
-    if (!create && QString::fromStdString(note.title) != QFileInfo(path).completeBaseName()) {
-      const auto renamed = availablePath(QFileInfo(path).absolutePath(), filename(note.title));
+    if (const auto name = filename(note.title); !create && name != QFileInfo(path).completeBaseName()) {
+      const auto renamed = availablePath(QFileInfo(path).absolutePath(), name, path);
       if (!QFile::rename(path, renamed)) fail(Store::tr("Could not rename this note."));
       try {
         write(renamed, bytes);
@@ -254,9 +258,10 @@ public:
   void remove(const std::string &id) {
     initialize();
     const auto path = pathFor(id);
-    if (readOnly(QFileInfo(path))) fail(Store::tr("This note is read-only."));
-    QFile file(path);
-    if (file.exists() && !file.remove()) fail(file.errorString());
+    if (QFile file(path); file.exists()) {
+      if (readOnly(QFileInfo(path))) fail(Store::tr("This note is read-only."));
+      if (!file.remove()) fail(file.errorString());
+    }
     m_paths.erase(id);
     m_ids.erase(path.toStdString());
   }
@@ -266,63 +271,6 @@ private:
     const auto it = m_paths.find(id);
     if (it == m_paths.end()) fail(Store::tr("This note no longer exists."));
     return it->second;
-  }
-
-  void migrate() {
-    const auto databasePath = m_directory / "notes.db";
-    if (!std::filesystem::exists(databasePath)) return;
-    const auto journalPath = QString::fromStdString((m_directory / ".database-import.json").string());
-    QJsonObject journal;
-    if (QFileInfo::exists(journalPath)) {
-      QJsonParseError error;
-      const auto document = QJsonDocument::fromJson(read(journalPath), &error);
-      if (error.error != QJsonParseError::NoError || !document.isObject())
-        fail(Store::tr(
-            "Could not read the notes migration record. The original database has been preserved."));
-      journal = document.object();
-    }
-    if (journal.value(QStringLiteral("complete")).toBool()) return;
-    auto database = db::Database::open(databasePath);
-    if (!database) throw std::runtime_error(database.error());
-    auto query = database->prepare("SELECT id, title, markdown, updated_at FROM note ORDER BY id");
-    if (!query) throw std::runtime_error(database->lastError());
-    const auto destination = QString::fromStdString(m_defaultDirectory);
-    if (!QFileInfo(destination).isDir() || !QFileInfo(destination).isWritable())
-      fail(Store::tr("Choose an available, writable default directory to import your existing notes."));
-    auto imported = journal.value(QStringLiteral("notes")).toObject();
-    while (query.step()) {
-      const auto id = QString::fromStdString(query.columnText(0));
-      auto entry = imported.value(id).toObject();
-      if (entry.value(QStringLiteral("complete")).toBool()) continue;
-      const auto bytes = QByteArray::fromStdString(query.columnText(2));
-      auto path = entry.value(QStringLiteral("path")).toString();
-      if (path.isEmpty()) {
-        path = availablePath(destination, filename(query.columnText(1)));
-        entry.insert(QStringLiteral("path"), path);
-        imported.insert(id, entry);
-        journal.insert(QStringLiteral("notes"), imported);
-        write(journalPath, QJsonDocument(journal).toJson());
-      }
-      if (QFileInfo::exists(path)) {
-        if (read(path) != bytes)
-          fail(Store::tr("An imported note was changed before migration finished. The original database has "
-                         "been preserved."));
-      } else {
-        write(path, bytes);
-        QFile file(path);
-        if (file.open(QIODevice::ReadWrite))
-          file.setFileTime(QDateTime::fromMSecsSinceEpoch(query.columnInt64(3)),
-                           QFileDevice::FileModificationTime);
-      }
-      entry.insert(QStringLiteral("complete"), true);
-      imported.insert(id, entry);
-      journal.insert(QStringLiteral("notes"), imported);
-      write(journalPath, QJsonDocument(journal).toJson());
-    }
-    const auto code = sqlite3_errcode(database->handle());
-    if (code != SQLITE_OK && code != SQLITE_DONE) throw std::runtime_error(database->lastError());
-    journal.insert(QStringLiteral("complete"), true);
-    write(journalPath, QJsonDocument(journal).toJson());
   }
 
   std::filesystem::path m_directory;

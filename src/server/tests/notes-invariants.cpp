@@ -20,7 +20,6 @@
 #include <QTextCursor>
 #include <QTextLayout>
 #include "editor-document.hpp"
-#include "db/database.hpp"
 #include "services/notes/notes-store.hpp"
 #include "ui/quick/syntax-highlighter.hpp"
 
@@ -32,7 +31,7 @@ class NotesInvariantsTest : public QObject {
 private slots:
   void nativeDropsFollowThePointerAndRespectReadOnly() {
     QQmlEngine engine;
-    Vicinae::Editor::EditorDocument editor;
+    Vicinae::Editor::EditorDocument editor(m_repository);
     QQuickWindow window;
     window.resize(800, 600);
     QQmlComponent component(&engine, QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/Editor/MarkdownEditor.qml")));
@@ -230,6 +229,25 @@ private slots:
     QVERIFY(Notes::attachmentsFromMimeData(&text).empty());
     text.setUrls({QUrl("https://example.com/image.png")});
     QVERIFY(!Notes::canImportAttachments(&text));
+    QMimeData cells;
+    cells.setText("1\t2");
+    cells.setImageData(image);
+    QVERIFY(!Notes::canImportAttachments(&cells));
+  }
+
+  void saveCopySkipsMissingAttachments() {
+    QTemporaryDir directory;
+    QTemporaryDir destination;
+    Notes::Store store(directory.path().toStdString());
+    const auto saved = store.save({"id", "Note", "[gone](Note.assets/gone.png)"}, true).result();
+    QVERIFY(saved);
+    store.configure({.defaultDirectory = destination.path().toStdString()});
+    auto copy = *saved;
+    copy.id = "copy";
+    const auto copied = store.save(copy, true).result();
+    QVERIFY(copied);
+    QCOMPARE(copied->markdown, saved->markdown);
+    QVERIFY(!QFileInfo::exists(destination.filePath("Note.assets")));
   }
 
   void cursorReappearsAfterScrollingAndClicking() {
@@ -238,7 +256,7 @@ private slots:
     styleHints->setCursorFlashTime(0);
     const auto restoreFlashTime = qScopeGuard([&] { styleHints->setCursorFlashTime(flashTime); });
     QQmlEngine engine;
-    Vicinae::Editor::EditorDocument editor;
+    Vicinae::Editor::EditorDocument editor(m_repository);
     QQuickWindow window;
     window.resize(800, 600);
     window.setColor(Qt::white);
@@ -326,7 +344,7 @@ private slots:
     });
 
     QQmlEngine engine;
-    Vicinae::Editor::EditorDocument editor;
+    Vicinae::Editor::EditorDocument editor(m_repository);
     QQmlComponent component(&engine);
     component.setData(R"(
       import QtQuick
@@ -378,7 +396,7 @@ private slots:
 
   void largeEditorKeepsRenderingWithinTheViewport() {
     QQmlEngine engine;
-    Vicinae::Editor::EditorDocument editor;
+    Vicinae::Editor::EditorDocument editor(m_repository);
     QQuickWindow window;
     window.resize(800, 600);
     QQmlComponent component(&engine, QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/Editor/MarkdownEditor.qml")));
@@ -416,7 +434,7 @@ private slots:
 
   void highlightingPreservesSourceAndUndo() {
     QTextDocument text;
-    Vicinae::Editor::EditorDocument editor;
+    Vicinae::Editor::EditorDocument editor(m_repository);
     editor.attach(&text);
     const QString source =
         QStringLiteral("# Heading\n\n**bold** and *italic*\n\n```cpp\nint value = 42;\n```\n- [x] Done\n");
@@ -444,7 +462,7 @@ private slots:
   void markdownUsesSemanticRolesAndPreservesEmbeddedCode() {
     using namespace Vicinae;
     QTextDocument text;
-    Editor::EditorDocument editor;
+    Editor::EditorDocument editor(m_repository);
     editor.attach(&text);
     const QString source = QStringLiteral(
         "# Heading\n\n**bold** and *italic* and ~~removed~~ and `inline`\n\n"
@@ -599,7 +617,7 @@ private slots:
 
   void replacementsAreUndoableAndRejectStaleSelections() {
     QTextDocument text;
-    Vicinae::Editor::EditorDocument editor;
+    Vicinae::Editor::EditorDocument editor(m_repository);
     editor.attach(&text);
     editor.load("note-a", QStringLiteral("👋 hello\nworld"));
     const auto selected = editor.snapshot(3, 8);
@@ -619,9 +637,18 @@ private slots:
     QVERIFY(!editor.replace({}, "invalid"));
   }
 
+  void textKeepsNonBreakingSpaces() {
+    QTextDocument text;
+    Vicinae::Editor::EditorDocument editor(m_repository);
+    editor.attach(&text);
+    const auto source = QStringLiteral("mot\u00a0: 10\u00a0km\nnext");
+    editor.load("nbsp", source);
+    QCOMPARE(editor.text(), source);
+  }
+
   void listContinuationHasOneUndoStep() {
     QTextDocument text;
-    Vicinae::Editor::EditorDocument editor;
+    Vicinae::Editor::EditorDocument editor(m_repository);
     editor.attach(&text);
     editor.load("note", "- [x] Complete");
     const auto position = editor.continueLine(text.characterCount() - 1);
@@ -639,7 +666,7 @@ private slots:
 
   void formattingTogglesWithoutLosingTheSelection() {
     QTextDocument text;
-    Vicinae::Editor::EditorDocument editor;
+    Vicinae::Editor::EditorDocument editor(m_repository);
     editor.attach(&text);
     editor.load("note", "hello");
     QSignalSpy selections(&editor, &Vicinae::Editor::EditorDocument::selectionRequested);
@@ -665,6 +692,12 @@ private slots:
                                   << QString("hello **👋**") << QString("👋");
     QTest::newRow("italic") << QString("hello") << 0 << 5 << int(Editor::Italic) << QString("*hello*")
                             << QString("hello");
+    QTest::newRow("italic-inside-bold") << QString("**hello**") << 2 << 7 << int(Editor::Italic)
+                                        << QString("***hello***") << QString("hello");
+    QTest::newRow("bold-inside-italic")
+        << QString("*hello*") << 1 << 6 << int(Editor::Bold) << QString("***hello***") << QString("hello");
+    QTest::newRow("italic-around-bold") << QString("**hello**") << 0 << 9 << int(Editor::Italic)
+                                        << QString("***hello***") << QString("**hello**");
     QTest::newRow("strike") << QString("hello") << 0 << 5 << int(Editor::StrikeThrough)
                             << QString("~~hello~~") << QString("hello");
     QTest::newRow("bold-line-selection") << QString("hello\nnext line") << 0 << 6 << int(Editor::Bold)
@@ -719,7 +752,7 @@ private slots:
     QFETCH(QString, selected);
     using Editor = Vicinae::Editor::EditorDocument;
     QTextDocument text;
-    Editor editor;
+    Editor editor(m_repository);
     editor.attach(&text);
     editor.load("format", source);
     QSignalSpy selections(&editor, &Editor::selectionRequested);
@@ -742,7 +775,7 @@ private slots:
   void formattingLinksAndMixedBlocks() {
     using Editor = Vicinae::Editor::EditorDocument;
     QTextDocument text;
-    Editor editor;
+    Editor editor(m_repository);
     editor.attach(&text);
     QSignalSpy selections(&editor, &Editor::selectionRequested);
     editor.load("link", "a [label]");
@@ -784,7 +817,7 @@ private slots:
 
   void selectionToolbarPreservesFocusAndUndo() {
     QQmlEngine engine;
-    Vicinae::Editor::EditorDocument editor;
+    Vicinae::Editor::EditorDocument editor(m_repository);
     QQuickWindow window;
     window.resize(800, 600);
     QQmlComponent component(&engine, QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/Editor/MarkdownEditor.qml")));
@@ -935,11 +968,27 @@ private slots:
       QCOMPARE(loaded->title, note.title);
       QCOMPARE(loaded->markdown, note.markdown);
       QVERIFY(QFileInfo::exists(directory.filePath("A title.md")));
-      QVERIFY(!QFileInfo::exists(directory.filePath("notes.db")));
       QVERIFY(store.remove(loaded->id).result());
       QVERIFY(!store.save(*loaded, false).result());
       QVERIFY(store.list().result()->empty());
     }
+  }
+
+  void sanitizedTitlesKeepTheirFileAndMissingFilesCanBeRemoved() {
+    QTemporaryDir directory;
+    Notes::Store store(directory.path().toStdString());
+    auto saved = store.save({"id", "Q/A", "body"}, true).result();
+    QVERIFY(saved);
+    for (const auto *title : {"Q/A", "Q-A ", "Q-A."}) {
+      saved->title = title;
+      saved = store.save(*saved, false).result();
+      QVERIFY(saved);
+      QCOMPARE(saved->title, std::string("Q-A"));
+    }
+    QCOMPARE(QDir(directory.path()).entryList(QDir::Files), QStringList{"Q-A.md"});
+    QVERIFY(QFile::remove(directory.filePath("Q-A.md")));
+    QVERIFY(store.remove(saved->id).result());
+    QVERIFY(!store.load(saved->id).result());
   }
 
   void directoryPreferencesUseNativePickers() {
@@ -994,29 +1043,6 @@ private slots:
     store.configure({.defaultDirectory = first.filePath("missing").toStdString()});
     QVERIFY(!store.save({"four", "Unsaved", "hello"}, true).result());
     QVERIFY(!QFileInfo::exists(first.filePath("missing")));
-  }
-
-  void importsDatabaseOnceAndKeepsBackup() {
-    QTemporaryDir directory;
-    const auto path = directory.filePath("notes.db").toStdString();
-    {
-      auto database = db::Database::open(path);
-      QVERIFY(database);
-      QVERIFY(database->exec(
-          "CREATE TABLE note(id TEXT PRIMARY KEY, title TEXT, markdown TEXT, updated_at INTEGER)"));
-      QVERIFY(database->exec("INSERT INTO note VALUES('one','Title','Original "
-                             "content',1234),('two','Title','Second content',2345)"));
-    }
-    {
-      Notes::Store store(directory.path().toStdString());
-      const auto notes = store.list().result();
-      QVERIFY(notes);
-      QCOMPARE(notes->size(), std::size_t(2));
-      QVERIFY(store.remove(notes->front().id).result());
-    }
-    Notes::Store store(directory.path().toStdString());
-    QCOMPARE(store.list().result()->size(), std::size_t(1));
-    QVERIFY(QFileInfo::exists(QString::fromStdString(path)));
   }
 
   void observesExternalFilesAndProtectsReadOnlyNotes() {
@@ -1080,6 +1106,9 @@ private slots:
     QVERIFY(!store.save({"id", "title", "body", 1, 1}, true).result());
     QVERIFY(!store.list().result());
   }
+
+private:
+  KSyntaxHighlighting::Repository m_repository;
 };
 
 QTEST_MAIN(NotesInvariantsTest)

@@ -17,6 +17,7 @@ class ImageStream;
 class MarkdownModel : public DocumentModel {
   Q_OBJECT
   QML_NAMED_ELEMENT(MarkdownModel)
+  Q_PROPERTY(QUrl baseUrl READ baseUrl WRITE setBaseUrl NOTIFY baseUrlChanged)
 
 public:
   Q_INVOKABLE void copyImage(const QString &source);
@@ -25,6 +26,7 @@ public:
 signals:
   void blocksAppended();
   void loadingChanged();
+  void baseUrlChanged();
 
 public:
   enum Role {
@@ -44,6 +46,7 @@ public:
 
   Q_INVOKABLE void setMarkdown(const QString &markdown);
   void setMarkdownAsync(QString markdown, bool incremental = false);
+  const QUrl &baseUrl() const { return m_styles.baseUrl; }
   void setBaseUrl(const QUrl &url);
   bool loading() const { return m_loading; }
   Q_INVOKABLE void openLink(const QString &url);

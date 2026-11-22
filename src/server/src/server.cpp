@@ -304,7 +304,6 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     const auto clipboardDbPath = Omnicast::dataDir() / "clipboard.db";
     const auto notesDirectory = Omnicast::dataDir() / "notes";
     auto keys = db::prepareEncryption(currentConfig.encryptSensitiveData, {vicinaeDbPath, clipboardDbPath});
-    db::prepareEncryption(false, {notesDirectory / "notes.db"});
 
     auto omniDb = std::make_unique<OmniDatabase>(vicinaeDbPath, keys.database);
     auto localStorage = std::make_unique<LocalStorageService>(*omniDb);

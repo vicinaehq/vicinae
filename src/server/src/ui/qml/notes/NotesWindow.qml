@@ -496,12 +496,8 @@ Window {
         findInput.selectAll();
     }
     Shortcut {
-        sequences: [StandardKey.Close]
+        sequences: [StandardKey.Close, StandardKey.Quit]
         onActivated: root.close()
-    }
-    Shortcut {
-        sequences: [StandardKey.Quit]
-        onActivated: Qt.quit()
     }
     Shortcut {
         sequences: [StandardKey.Preferences]

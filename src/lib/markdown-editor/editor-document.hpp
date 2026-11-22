@@ -12,6 +12,10 @@
 
 class QMimeData;
 
+namespace KSyntaxHighlighting {
+class Repository;
+}
+
 namespace Vicinae::Editor {
 
 class MarkdownHighlighter;
@@ -19,6 +23,7 @@ class MarkdownHighlighter;
 class EditorDocument : public QObject {
   Q_OBJECT
   QML_NAMED_ELEMENT(MarkdownEditorDocument)
+  QML_UNCREATABLE("")
   Q_PROPERTY(
       QQuickTextDocument *textDocument READ textDocument WRITE setTextDocument NOTIFY textDocumentChanged)
   Q_PROPERTY(QString documentId READ documentId NOTIFY documentChanged)
@@ -61,7 +66,7 @@ signals:
   void selectionRequested(int start, int end);
 
 public:
-  explicit EditorDocument(QObject *parent = nullptr);
+  explicit EditorDocument(const KSyntaxHighlighting::Repository &repository, QObject *parent = nullptr);
   QQuickTextDocument *textDocument() const { return m_quickDocument; }
   void setTextDocument(QQuickTextDocument *document);
   void attach(QTextDocument *document);

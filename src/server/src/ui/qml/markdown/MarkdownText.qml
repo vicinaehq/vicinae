@@ -6,6 +6,7 @@ Item {
     id: root
 
     property string markdown: ""
+    property url baseUrl
     property int contentPadding: 12
     property int topPadding: contentPadding
     property string fontFamily: ""
@@ -21,6 +22,7 @@ Item {
 
     MarkdownModel {
         id: mdModel
+        baseUrl: root.baseUrl
     }
 
     MarkdownView {

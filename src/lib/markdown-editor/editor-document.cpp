@@ -41,8 +41,9 @@ bool EditorDocument::drop(const QMimeData *mime, int position) {
 
 class MarkdownHighlighter : public KSyntaxHighlighting::SyntaxHighlighter {
 public:
-  explicit MarkdownHighlighter(QObject *parent) : SyntaxHighlighter(parent) {
-    setDefinition(repository().definitionForName(QStringLiteral("Markdown")));
+  MarkdownHighlighter(const KSyntaxHighlighting::Repository &repository, QObject *parent)
+      : SyntaxHighlighter(parent) {
+    setDefinition(repository.definitionForName(QStringLiteral("Markdown")));
     const auto formats = definition().formats();
     m_markdownFormats.reserve(formats.size());
     for (const auto &format : formats)
@@ -155,10 +156,6 @@ protected:
   }
 
 private:
-  static KSyntaxHighlighting::Repository &repository() {
-    static KSyntaxHighlighting::Repository instance;
-    return instance;
-  }
   std::unordered_set<int> m_markdownFormats;
   Syntax::Palette m_palette;
   Syntax::StyleMap m_styles;
@@ -171,8 +168,8 @@ private:
   QStringView m_line;
 };
 
-EditorDocument::EditorDocument(QObject *parent)
-    : QObject(parent), m_highlighter(new MarkdownHighlighter(this)) {}
+EditorDocument::EditorDocument(const KSyntaxHighlighting::Repository &repository, QObject *parent)
+    : QObject(parent), m_highlighter(new MarkdownHighlighter(repository, this)) {}
 
 void EditorDocument::setPalette(const Syntax::Palette &palette) { m_highlighter->setPalette(palette); }
 
@@ -220,7 +217,13 @@ void EditorDocument::load(const QString &id, const QString &text) {
   emit documentChanged();
 }
 
-QString EditorDocument::text() const { return m_document ? m_document->toPlainText() : m_pendingText; }
+QString EditorDocument::text() const {
+  if (!m_document) return m_pendingText;
+  // toPlainText() would also replace non-breaking spaces with regular ones.
+  auto text = m_document->toRawText();
+  text.replace(QChar::ParagraphSeparator, u'\n').replace(QChar::LineSeparator, u'\n');
+  return text;
+}
 
 bool EditorDocument::validRange(int start, int end) const {
   return m_document && start >= 0 && end >= start && end < m_document->characterCount();
@@ -263,14 +266,30 @@ void EditorDocument::wrap(int start, int end, const QString &marker) {
   const auto selection = snapshot(start, end);
   if (selection.isEmpty()) return;
   const auto selected = selection.value("text").toString();
-  const auto surrounding = snapshot(start - marker.size(), end + marker.size());
-  if (!surrounding.isEmpty() && surrounding.value("text").toString() == marker + selected + marker) {
-    replace(surrounding, selected);
-  } else if (selected.startsWith(marker) && selected.endsWith(marker) &&
-             selected.size() >= marker.size() * 2) {
-    replace(selection, selected.mid(marker.size(), selected.size() - marker.size() * 2));
+  const auto size = static_cast<int>(marker.size());
+  const auto fill = marker.front();
+  // "**word**" is bold only and "***word***" is both, so the whole run decides whether a marker applies.
+  const auto applied = [size](int run) { return size == 1 ? run % 2 == 1 : run >= size; };
+  int before = 0;
+  int after = 0;
+  while (m_document->characterAt(start - before - 1) == fill)
+    ++before;
+  while (m_document->characterAt(end + after) == fill)
+    ++after;
+  if (applied(std::min(before, after))) {
+    replace(snapshot(start - size, end + size), selected);
+    return;
+  }
+  int leading = 0;
+  int trailing = 0;
+  while (leading < selected.size() && selected.at(leading) == fill)
+    ++leading;
+  while (trailing < selected.size() - leading && selected.at(selected.size() - trailing - 1) == fill)
+    ++trailing;
+  if (applied(std::min(leading, trailing))) {
+    replace(selection, selected.mid(size, selected.size() - size * 2));
   } else if (replace(selection, marker + selected + marker)) {
-    emit selectionRequested(start + marker.size(), end + marker.size());
+    emit selectionRequested(start + size, end + size);
   }
 }
 

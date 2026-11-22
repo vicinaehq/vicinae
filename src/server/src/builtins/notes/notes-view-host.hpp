@@ -47,7 +47,8 @@ public:
   AccessoryList displayAccessories(const ItemType &) const override { return {}; }
   bool hasDetailPane() const override { return true; }
   std::optional<ListItemDetail> displayDetail(const ItemType &note) const override {
-    return ListItemDetail{{}, QString::fromStdString(note.markdown)};
+    return ListItemDetail{.markdown = QString::fromStdString(note.markdown),
+                          .baseUrl = QUrl::fromLocalFile(QString::fromStdString(note.path))};
   }
 
   std::unique_ptr<ActionPanelState> emptyActionPanel() override {

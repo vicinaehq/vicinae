@@ -25,7 +25,7 @@
 #endif
 
 NotesWindowController::NotesWindowController(ApplicationContext &context, std::string id, QObject *parent)
-    : QObject(parent), m_context(context) {
+    : QObject(parent), m_context(context), m_document(syntax::repository()) {
   auto applyTheme = [this](const ThemeFile &theme) { m_document.setPalette(syntax::paletteForTheme(theme)); };
   applyTheme(ThemeService::instance().theme());
   connect(&ThemeService::instance(), &ThemeService::themeChanged, this, applyTheme);
@@ -75,7 +75,6 @@ bool NotesWindowController::eventFilter(QObject *object, QEvent *event) {
 void NotesWindowController::ensureWindow() {
   if (m_engine) return;
   m_engine = std::make_unique<QQmlApplicationEngine>();
-  connect(m_engine.get(), &QQmlEngine::quit, qApp, &QCoreApplication::quit);
   QmlEngineScope::set(m_engine.get(), this);
   QmlEngineScope::set(m_engine.get(), new ConfigBridge(ConfigBridge::OpaqueSurfaces, this));
   const auto component =
