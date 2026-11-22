@@ -197,14 +197,14 @@ FocusScope {
         readonly property bool hasSelection: edit.selectionStart !== edit.selectionEnd
         readonly property real selectionTop: edit.y + startRect.y - viewport.contentY
         readonly property real selectionBottom: edit.y + endRect.y + endRect.height - viewport.contentY
-        readonly property bool above: selectionTop >= height + 8 && selectionTop < root.height
-        readonly property real anchorX: edit.x + (startRect.y === endRect.y ? (startRect.x + endRect.x) / 2 : above ? startRect.x : endRect.x)
+        readonly property bool above: selectionTop >= height + 8
+        readonly property real anchorX: edit.x + startRect.x
 
         width: Math.min(implicitWidth, root.width - 12)
         height: implicitHeight
         x: Math.max(6, Math.min(root.width - width - 6, anchorX - width / 2))
-        y: above ? selectionTop - height - 8 : Math.min(root.height - height - 6, Math.max(6, selectionBottom + 8))
-        visible: hasSelection && root.Window.active && !root._formattingDismissed && !edit.inputMethodComposing && !selectionPointer.active && !viewport.moving && !editMenu.visible && root.activeFocus && (above || (selectionBottom > 0 && selectionBottom <= root.height))
+        y: Math.max(6, Math.min(root.height - height - 6, above ? selectionTop - height - 8 : selectionTop + startRect.height + 8))
+        visible: hasSelection && root.Window.active && !root._formattingDismissed && !edit.inputMethodComposing && !selectionPointer.active && !viewport.moving && !editMenu.visible && root.activeFocus && selectionTop < root.height && selectionBottom > 0
         onFormatRequested: format => root.applyFormat(format)
         onDismissed: {
             root._formattingDismissed = true;
