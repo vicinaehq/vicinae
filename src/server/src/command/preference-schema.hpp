@@ -98,6 +98,9 @@ template <typename M> Preference make(const QString &key, const M &value, const 
     pref.setDefaultValue(enumName(value));
   } else if constexpr (std::is_same_v<M, std::string> || std::is_same_v<M, std::optional<std::string>>) {
     switch (meta.kind) {
+    case Kind::Directories:
+      pref = Preference::directory(key);
+      break;
     case Kind::Password:
       pref = Preference::makePassword(key);
       break;

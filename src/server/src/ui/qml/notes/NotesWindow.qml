@@ -47,12 +47,17 @@ Window {
         spacing: 6
         TextField {
             id: titleInput
+            readOnly: NotesWindowHost.readOnly || NotesWindowHost.loading
             Layout.fillWidth: true
             Layout.minimumWidth: 60
             Layout.maximumWidth: Math.max(120, implicitWidth)
             Layout.fillHeight: true
             padding: 6
-            text: NotesWindowHost.title
+            Binding on text {
+                value: NotesWindowHost.title
+                when: !titleInput.activeFocus
+                restoreMode: Binding.RestoreNone
+            }
             placeholderText: qsTr("Untitled Note")
             placeholderTextColor: Theme.textPlaceholder
             color: Theme.foreground
@@ -86,12 +91,12 @@ Window {
             id: searchButton
             implicitHeight: root.toolbarButtonSize
             iconSource: Img.icon(BuiltinIcon.MagnifyingGlass)
-            accessibleName: qsTr("Search Notes")
+            accessibleName: qsTr("Find in Note")
             activeFocusOnTab: true
-            onClicked: NotesWindowHost.search(searchButton)
+            onClicked: root.openFind()
             ToolTip.visible: hovered
             ToolTip.delay: 600
-            ToolTip.text: qsTr("Search Notes")
+            ToolTip.text: accessibleName
         }
         ViciButton {
             id: newButton
@@ -186,16 +191,25 @@ Window {
             ViciMenu {
                 id: actions
                 ViciMenuItem {
-                    text: qsTr("Find in Note…")
-                    onTriggered: root.openFind()
+                    text: qsTr("Search Notes…")
+                    onTriggered: NotesWindowHost.search(moreButton)
                 }
                 ViciMenuItem {
                     text: qsTr("Save")
+                    enabled: !NotesWindowHost.readOnly
                     onTriggered: NotesWindowHost.save()
                 }
                 ViciMenuItem {
+                    text: qsTr("Save a Copy")
+                    onTriggered: NotesWindowHost.saveCopy()
+                }
+                ViciMenuItem {
                     text: qsTr("Delete Note…")
-                    onTriggered: deleteDialog.open()
+                    enabled: !NotesWindowHost.readOnly
+                    onTriggered: {
+                        noteActionDialog.reloadFile = false;
+                        noteActionDialog.open();
+                    }
                 }
             }
         }
@@ -218,18 +232,41 @@ Window {
             Rectangle {
                 visible: NotesWindowHost.error.length > 0
                 Layout.fillWidth: true
-                implicitHeight: errorText.implicitHeight + 24
+                implicitHeight: errorContent.implicitHeight + 24
                 color: Config.withAlpha(Theme.danger, 0.1)
-                Text {
-                    id: errorText
-                    anchors.fill: parent
+                ColumnLayout {
+                    id: errorContent
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.top: parent.top
                     anchors.margins: 12
-                    text: NotesWindowHost.error
-                    wrapMode: Text.Wrap
-                    color: Theme.foreground
-                    font.pointSize: Theme.regularFontSize
+                    Text {
+                        Layout.fillWidth: true
+                        text: NotesWindowHost.error
+                        wrapMode: Text.Wrap
+                        color: Theme.foreground
+                        font.pointSize: Theme.regularFontSize
+                    }
+                    RowLayout {
+                        ViciButton {
+                            text: qsTr("Save a Copy")
+                            onClicked: NotesWindowHost.saveCopy()
+                        }
+                        ViciButton {
+                            text: qsTr("Reload…")
+                            onClicked: {
+                                noteActionDialog.reloadFile = true;
+                                noteActionDialog.open();
+                            }
+                        }
+                        ViciButton {
+                            text: qsTr("Settings")
+                            onClicked: NotesWindowHost.openSettings()
+                        }
+                    }
                 }
             }
+
             SplitView {
                 id: panes
                 Layout.fillWidth: true
@@ -256,6 +293,7 @@ Window {
                         anchors.fill: parent
                         anchors.bottomMargin: findBar.visible ? findBar.height + 8 : 0
                         document: NotesWindowHost.document
+                        readOnly: NotesWindowHost.readOnly || NotesWindowHost.loading
                         foreground: Theme.foreground
                         mutedForeground: Theme.textPlaceholder
                         selectionColor: Theme.textSelectionBg
@@ -368,6 +406,7 @@ Window {
             RowLayout {
                 Layout.fillWidth: true
                 Layout.margins: 14
+                spacing: 6
                 Text {
                     text: NotesWindowHost.status
                     color: Theme.textMuted
@@ -386,7 +425,8 @@ Window {
     }
 
     ViciModal {
-        id: deleteDialog
+        id: noteActionDialog
+        property bool reloadFile: false
         parent: Overlay.overlay
         width: Math.min(parent.width - 40, 400)
         padding: 24
@@ -394,14 +434,14 @@ Window {
             spacing: 16
             Text {
                 Layout.fillWidth: true
-                text: qsTr("Delete Note?")
+                text: noteActionDialog.reloadFile ? qsTr("Reload Note?") : qsTr("Delete Note?")
                 color: Theme.foreground
                 font.pointSize: Theme.regularFontSize + 2
                 font.bold: true
             }
             Text {
                 Layout.fillWidth: true
-                text: qsTr("This note will be permanently deleted.")
+                text: noteActionDialog.reloadFile ? qsTr("Discard your unsaved changes and reload the file?") : qsTr("This note will be permanently deleted.")
                 wrapMode: Text.Wrap
                 color: Theme.textMuted
                 font.pointSize: Theme.regularFontSize
@@ -413,17 +453,20 @@ Window {
                     variant: "secondary"
                     focus: true
                     activeFocusOnTab: true
-                    onClicked: deleteDialog.close()
+                    onClicked: noteActionDialog.close()
                 }
                 ViciButton {
                     Layout.fillWidth: true
-                    text: qsTr("Delete")
+                    text: noteActionDialog.reloadFile ? qsTr("Reload") : qsTr("Delete")
                     foreground: Theme.danger
                     variant: "tinted"
                     activeFocusOnTab: true
                     onClicked: {
-                        deleteDialog.close();
-                        NotesWindowHost.deleteCurrent();
+                        noteActionDialog.close();
+                        if (noteActionDialog.reloadFile)
+                            NotesWindowHost.reload();
+                        else
+                            NotesWindowHost.deleteCurrent();
                     }
                 }
             }
@@ -445,6 +488,14 @@ Window {
         onActivated: root.close()
     }
     Shortcut {
+        sequences: [StandardKey.Quit]
+        onActivated: Qt.quit()
+    }
+    Shortcut {
+        sequences: [StandardKey.Preferences]
+        onActivated: NotesWindowHost.openSettings()
+    }
+    Shortcut {
         sequences: [StandardKey.New]
         onActivated: NotesWindowHost.newNote()
     }
@@ -458,7 +509,7 @@ Window {
     }
     Shortcut {
         sequence: "Ctrl+Shift+F"
-        onActivated: NotesWindowHost.search(searchButton)
+        onActivated: NotesWindowHost.search(moreButton)
     }
     Shortcut {
         sequence: "Ctrl+Shift+P"

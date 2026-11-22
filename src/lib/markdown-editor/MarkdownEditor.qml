@@ -24,9 +24,12 @@ FocusScope {
     readonly property alias cursorPosition: edit.cursorPosition
     readonly property alias composing: edit.inputMethodComposing
     readonly property alias flickable: viewport
+    property bool readOnly: false
     property bool _formattingDismissed: false
 
     function applyFormat(format) {
+        if (root.readOnly)
+            return;
         root.document.format(edit.selectionStart, edit.selectionEnd, format);
         edit.forceActiveFocus();
     }
@@ -103,6 +106,7 @@ FocusScope {
 
         TextEdit {
             id: edit
+            readOnly: root.readOnly
             // Accessibility can query sibling geometry during construction. A zero-size
             // lookup enables TextEdit's expensive implicit-width measurement on every edit.
             visible: false
@@ -152,7 +156,7 @@ FocusScope {
                 root._formattingDismissed = true;
             }
             Keys.onReturnPressed: event => {
-                if (inputMethodComposing || selectionStart !== selectionEnd || event.modifiers !== Qt.NoModifier) {
+                if (root.readOnly || inputMethodComposing || selectionStart !== selectionEnd || event.modifiers !== Qt.NoModifier) {
                     event.accepted = false;
                     return;
                 }
@@ -204,7 +208,7 @@ FocusScope {
         height: implicitHeight
         x: Math.max(6, Math.min(root.width - width - 6, anchorX - width / 2))
         y: Math.max(6, Math.min(root.height - height - 6, above ? selectionTop - height - 8 : selectionTop + startRect.height + 8))
-        visible: hasSelection && root.Window.active && !root._formattingDismissed && !edit.inputMethodComposing && !selectionPointer.active && !viewport.moving && !editMenu.visible && root.activeFocus && selectionTop < root.height && selectionBottom > 0
+        visible: !root.readOnly && hasSelection && root.Window.active && !root._formattingDismissed && !edit.inputMethodComposing && !selectionPointer.active && !viewport.moving && !editMenu.visible && root.activeFocus && selectionTop < root.height && selectionBottom > 0
         onFormatRequested: format => root.applyFormat(format)
         onDismissed: {
             root._formattingDismissed = true;
@@ -213,12 +217,12 @@ FocusScope {
     }
     Shortcut {
         sequence: StandardKey.Bold
-        enabled: root.activeFocus && !edit.inputMethodComposing
+        enabled: !root.readOnly && root.activeFocus && !edit.inputMethodComposing
         onActivated: root.applyFormat(MarkdownEditorDocument.Bold)
     }
     Shortcut {
         sequence: StandardKey.Italic
-        enabled: root.activeFocus && !edit.inputMethodComposing
+        enabled: !root.readOnly && root.activeFocus && !edit.inputMethodComposing
         onActivated: root.applyFormat(MarkdownEditorDocument.Italic)
     }
     Menu {
@@ -226,18 +230,18 @@ FocusScope {
         popupType: Popup.Native
         MenuItem {
             text: qsTr("Undo")
-            enabled: edit.canUndo
+            enabled: !root.readOnly && edit.canUndo
             onTriggered: edit.undo()
         }
         MenuItem {
             text: qsTr("Redo")
-            enabled: edit.canRedo
+            enabled: !root.readOnly && edit.canRedo
             onTriggered: edit.redo()
         }
         MenuSeparator {}
         MenuItem {
             text: qsTr("Cut")
-            enabled: edit.selectedText.length > 0
+            enabled: !root.readOnly && edit.selectedText.length > 0
             onTriggered: edit.cut()
         }
         MenuItem {
@@ -247,7 +251,7 @@ FocusScope {
         }
         MenuItem {
             text: qsTr("Paste")
-            enabled: edit.canPaste
+            enabled: !root.readOnly && edit.canPaste
             onTriggered: edit.paste()
         }
         MenuItem {

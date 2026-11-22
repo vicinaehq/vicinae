@@ -21,6 +21,7 @@ class NotesWindowController : public QObject {
   Q_PROPERTY(MarkdownModel *previewModel READ previewModel CONSTANT)
   Q_PROPERTY(QString title READ title WRITE setTitle NOTIFY titleChanged)
   Q_PROPERTY(QString status READ status NOTIFY stateChanged)
+  Q_PROPERTY(bool readOnly READ readOnly NOTIFY stateChanged)
   Q_PROPERTY(QString error READ error NOTIFY stateChanged)
   Q_PROPERTY(bool loading READ loading NOTIFY stateChanged)
   Q_PROPERTY(ViewMode viewMode READ viewMode WRITE setViewMode NOTIFY viewModeChanged)
@@ -30,6 +31,9 @@ public:
   Q_INVOKABLE void search(QQuickItem *anchor = nullptr);
   Q_INVOKABLE void deleteCurrent();
   Q_INVOKABLE void save();
+  Q_INVOKABLE void saveCopy();
+  Q_INVOKABLE void reload();
+  Q_INVOKABLE void openSettings();
   Q_INVOKABLE bool requestClose();
 
 signals:
@@ -55,6 +59,7 @@ public:
   QString title() const { return QString::fromStdString(m_note.title); }
   void setTitle(const QString &title);
   QString status() const;
+  bool readOnly() const { return m_note.readOnly; }
   QString error() const { return m_error; }
   bool loading() const { return m_loading; }
   ViewMode viewMode() const { return m_viewMode; }
@@ -65,6 +70,7 @@ private:
   void ensureWindow();
   void activate(Notes::Note note, bool persisted);
   void edited();
+  void refreshFromDisk();
   void refreshPreview();
   void finishSave();
   bool flush();
@@ -74,7 +80,7 @@ private:
   Vicinae::Editor::EditorDocument m_document;
   MarkdownModel m_previewModel;
   Notes::Note m_note;
-  QFutureWatcher<Notes::Result<void>> m_save;
+  QFutureWatcher<Notes::Result<Notes::Note>> m_save;
   QTimer m_idleSave;
   QTimer m_maxSave;
   QTimer m_previewUpdate;

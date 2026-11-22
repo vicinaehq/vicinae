@@ -1,5 +1,43 @@
 # Notes window
 
+Notes are ordinary UTF-8 `.md` files. The filename is the title; renaming a note
+renames its file, with a numeric suffix when that name is already taken. There is
+no required frontmatter or proprietary format. Notes are not encrypted by Vicinae.
+
+**Settings → Notes → Preferences** uses the extension preferences system.
+**Default directory** chooses where new notes are saved; **Additional directories**
+adds other folders to search.
+Search includes Markdown files in all configured directories and their subdirectories.
+The default directory is always included in search. Changing it does not move existing
+notes; add the previous location to Additional directories to keep searching it.
+Removing a directory from preferences does not delete its files. A missing
+or read-only default produces a save error instead of silently using another location.
+Read-only files (including symlinked files) can be viewed, searched, and copied.
+
+By default, notes live in `notes/` inside Vicinae's data directory. Files are written
+atomically. External changes refresh unedited notes automatically; if a file changes
+while you are editing, saving stops and offers **Save a Copy** or **Reload**.
+
+Existing `notes/notes.db` content is imported automatically on first use into the
+default directory. The database is retained as a backup. A hidden
+`notes/.database-import.json` record makes migration resumable and prevents deleted
+imports from reappearing. Previously encrypted notes databases are decrypted using
+the existing keychain key before import.
+
+Directories can also be configured declaratively, including through Home Manager:
+
+```nix
+programs.vicinae.settings.providers.notes.preferences = {
+  defaultDirectory = "/home/me/Notes";
+  directories = [ "/home/me/reference-notes" ];
+};
+```
+
+Use an existing writable directory for `defaultDirectory`. Read-only Nix-managed
+files can live in the additional directories. Without an explicit default, Vicinae
+uses its built-in notes directory.
+`~` is supported in paths. No app-specific files are needed alongside normal notes.
+
 The toolbar offers Edit, Side by side, and Preview. Side by side keeps the
 native editor on the left and a live preview on the right, with a draggable
 divider and independent scrolling. Find stays in the editor pane. Switching

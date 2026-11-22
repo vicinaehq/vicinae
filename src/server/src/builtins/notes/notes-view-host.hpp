@@ -1,7 +1,6 @@
 #pragma once
 
-#include <QDateTime>
-#include <QLocale>
+#include <QFileInfo>
 #include "fuzzy/fuzzy-searchable.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
@@ -43,7 +42,7 @@ public:
     return note.title.empty() ? tr("Untitled Note") : QString::fromStdString(note.title);
   }
   QString displaySubtitle(const ItemType &note) const override {
-    return QLocale().toString(QDateTime::fromMSecsSinceEpoch(note.updatedAt), QLocale::ShortFormat);
+    return QFileInfo(QString::fromStdString(note.path)).absolutePath();
   }
   std::optional<ImageURL> displayIcon(const ItemType &) const override {
     return ImageURL::builtin(BuiltinIcon::BlankDocument);
@@ -69,6 +68,7 @@ public:
                                           ctx->notes->openNote(QString::fromStdString(id));
                                         }));
     section->addAction(createAction());
+    if (note.readOnly) return panel;
     auto *remove =
         new StaticAction(tr("Delete Note"), ImageURL::builtin(BuiltinIcon::Trash),
                          [id = note.id, title = displayTitle(note)](ApplicationContext *ctx) {
@@ -103,7 +103,8 @@ private:
           if (result)
             setItems(std::move(*result));
           else
-            context()->services->toastService()->failure(tr("Could not load notes."));
+            context()->services->toastService()->failure(
+                tr("Could not load notes. %1").arg(QString::fromStdString(result.error())));
         });
   }
   std::uint64_t m_generation = 0;

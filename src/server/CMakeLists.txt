@@ -343,6 +343,7 @@ set(SRCS
 	./database/clipboard/migrations.qrc
 	./database/conversations/migrations.qrc
 	./database/notes/migrations.qrc
+	src/services/notes/notes-preferences.hpp
 	src/services/notes/notes-store.hpp
 	src/services/notes/notes-store.cpp
 	src/ui/windows/notes-window-controller.cpp
@@ -1859,6 +1860,7 @@ if(BUILD_TESTS)
 		src/theme/theme-file.cpp
 		src/theme/theme-parser.cpp
 		src/utils/utils.cpp
+		src/services/notes/notes-preferences.hpp
 		src/services/notes/notes-store.hpp
 		src/services/notes/notes-store.cpp
 		src/utils/migration-manager/migration-manager.cpp

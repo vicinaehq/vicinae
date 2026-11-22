@@ -6,6 +6,7 @@
 #include "command/single-view-command-context.hpp"
 #include "command/typed-command.hpp"
 #include "notes-view-host.hpp"
+#include "vicinae.hpp"
 
 class CreateNoteCommand : public BuiltinCallbackCommand {
   Q_DECLARE_TR_FUNCTIONS(CreateNoteCommand)
@@ -34,7 +35,7 @@ class SearchNotesCommand : public BuiltinViewCommand<NotesViewHost> {
   std::vector<QString> keywords() const override { return {"markdown", "browse", "find"}; }
 };
 
-class NotesExtension : public BuiltinCommandRepository {
+class NotesExtension : public TypedCommandRepository<Notes::Preferences> {
   Q_DECLARE_TR_FUNCTIONS(NotesExtension)
   QString id() const override { return QStringLiteral("notes"); }
   QString displayName() const override { return tr("Notes"); }
@@ -43,6 +44,15 @@ class NotesExtension : public BuiltinCommandRepository {
   }
 
 public:
+  std::vector<Preference> preferences() const override {
+    return describePreferences<Notes::Preferences>(
+        {.defaultDirectory = (Omnicast::dataDir() / "notes").string()});
+  }
+  void initialized(const Notes::Preferences &preferences) const override { preferencesChanged(preferences); }
+  void preferencesChanged(const Notes::Preferences &preferences) const override {
+    ServiceRegistry::instance()->notes()->configure(preferences);
+  }
+
   NotesExtension() {
     registerCommand<CreateNoteCommand>();
     registerCommand<SearchNotesCommand>();

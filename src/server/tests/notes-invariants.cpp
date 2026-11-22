@@ -15,6 +15,7 @@
 #include <QTextCursor>
 #include <QTextLayout>
 #include "editor-document.hpp"
+#include "db/database.hpp"
 #include "services/notes/notes-store.hpp"
 #include "ui/quick/syntax-highlighter.hpp"
 
@@ -710,26 +711,157 @@ private slots:
     Notes::Note note{"id", "A title", "# Unicode\n你好 👋\n```cpp\nint x;\n```\n", 100, 200};
     {
       Notes::Store store(directory.path().toStdString());
-      QVERIFY(store.save(note, true).result());
+      auto saved = store.save(note, true).result();
+      QVERIFY(saved);
+      note = *saved;
       QVERIFY(!store.save(note, true).result());
       note.markdown += "A final edit";
-      note.updatedAt = 300;
       QVERIFY(store.save(note, false).result());
     }
     {
       Notes::Store store(directory.path().toStdString());
-      const auto loaded = store.load(note.id).result();
-      QVERIFY(loaded);
-      QCOMPARE(loaded->title, note.title);
-      QCOMPARE(loaded->markdown, note.markdown);
-      QCOMPARE(loaded->createdAt, note.createdAt);
       const auto list = store.list().result();
       QVERIFY(list);
       QCOMPARE(list->size(), std::size_t(1));
-      QVERIFY(store.remove(note.id).result());
-      QVERIFY(!store.save(note, false).result());
+      const auto loaded = store.load(list->front().id).result();
+      QVERIFY(loaded);
+      QCOMPARE(loaded->title, note.title);
+      QCOMPARE(loaded->markdown, note.markdown);
+      QVERIFY(QFileInfo::exists(directory.filePath("A title.md")));
+      QVERIFY(!QFileInfo::exists(directory.filePath("notes.db")));
+      QVERIFY(store.remove(loaded->id).result());
+      QVERIFY(!store.save(*loaded, false).result());
       QVERIFY(store.list().result()->empty());
     }
+  }
+
+  void directoryPreferencesUseNativePickers() {
+    const auto schema = describePreferences<Notes::Preferences>();
+    QCOMPARE(schema.size(), std::size_t(2));
+    QVERIFY(!std::get<Preference::DirectoryPickerData>(schema[0].data()).multiple);
+    QVERIFY(std::get<Preference::DirectoryPickerData>(schema[1].data()).multiple);
+
+    const auto preferences = readPreferences<Notes::Preferences>(
+        {{"defaultDirectory", "/notes"}, {"directories", glz::generic::array_t{"/reference", "/shared"}}});
+    QCOMPARE(preferences.defaultDirectory, std::optional<std::string>("/notes"));
+    QCOMPARE(preferences.directories, (std::vector<std::string>{"/reference", "/shared"}));
+  }
+
+  void directoriesAndExternalEdits() {
+    QTemporaryDir data;
+    QTemporaryDir first;
+    QTemporaryDir second;
+    Notes::Store store(data.path().toStdString(), {.defaultDirectory = second.path().toStdString(),
+                                                   .directories = {first.path().toStdString()}});
+    auto saved = store.save({"one", "Same title", "original"}, true).result();
+    QVERIFY(saved);
+    QCOMPARE(saved->path,
+             (std::filesystem::path(Notes::Store::normalizeDirectory(second.path().toStdString())) /
+              "Same title.md")
+                 .string());
+    QFile file(QString::fromStdString(saved->path));
+    QVERIFY(file.open(QIODevice::WriteOnly));
+    file.write("external edit");
+    file.close();
+    QVERIFY(!store.save(*saved, false).result());
+    auto loaded = store.load(saved->id).result();
+    QVERIFY(loaded);
+    QCOMPARE(loaded->markdown, std::string("external edit"));
+    loaded->title = "Renamed";
+    loaded = store.save(*loaded, false).result();
+    QVERIFY(loaded);
+    QVERIFY(!file.exists());
+    QVERIFY(QFileInfo::exists(second.filePath("Renamed.md")));
+    auto duplicate = store.save({"two", "Renamed", "another note"}, true).result();
+    QVERIFY(duplicate);
+    QVERIFY(duplicate->path != loaded->path);
+    store.configure({.defaultDirectory = first.path().toStdString()});
+    QVERIFY(store.list().result()->empty());
+    QVERIFY(QFileInfo::exists(QString::fromStdString(loaded->path)));
+    auto next = store.save({"three", "New note", "hello"}, true).result();
+    QVERIFY(next);
+    QCOMPARE(
+        next->path,
+        (std::filesystem::path(Notes::Store::normalizeDirectory(first.path().toStdString())) / "New note.md")
+            .string());
+    store.configure({.defaultDirectory = first.filePath("missing").toStdString()});
+    QVERIFY(!store.save({"four", "Unsaved", "hello"}, true).result());
+    QVERIFY(!QFileInfo::exists(first.filePath("missing")));
+  }
+
+  void importsDatabaseOnceAndKeepsBackup() {
+    QTemporaryDir directory;
+    const auto path = directory.filePath("notes.db").toStdString();
+    {
+      auto database = db::Database::open(path);
+      QVERIFY(database);
+      QVERIFY(database->exec(
+          "CREATE TABLE note(id TEXT PRIMARY KEY, title TEXT, markdown TEXT, updated_at INTEGER)"));
+      QVERIFY(database->exec("INSERT INTO note VALUES('one','Title','Original "
+                             "content',1234),('two','Title','Second content',2345)"));
+    }
+    {
+      Notes::Store store(directory.path().toStdString());
+      const auto notes = store.list().result();
+      QVERIFY(notes);
+      QCOMPARE(notes->size(), std::size_t(2));
+      QVERIFY(store.remove(notes->front().id).result());
+    }
+    Notes::Store store(directory.path().toStdString());
+    QCOMPARE(store.list().result()->size(), std::size_t(1));
+    QVERIFY(QFileInfo::exists(QString::fromStdString(path)));
+  }
+
+  void observesExternalFilesAndProtectsReadOnlyNotes() {
+    QTemporaryDir directory;
+    Notes::Store store(directory.path().toStdString());
+    QVERIFY(store.list().result());
+    QSignalSpy changed(&store, &Notes::Store::changed);
+    QFile file(directory.filePath("External.md"));
+    QVERIFY(file.open(QIODevice::WriteOnly));
+    file.write("external");
+    file.close();
+    QTRY_VERIFY(!changed.empty());
+    auto notes = store.list().result();
+    QVERIFY(notes);
+    QCOMPARE(notes->size(), std::size_t(1));
+    QVERIFY(file.setPermissions(QFileDevice::ReadOwner));
+    auto loaded = store.load(notes->front().id).result();
+    QVERIFY(loaded);
+    QVERIFY(loaded->readOnly);
+    QVERIFY(!store.save(*loaded, false).result());
+    QVERIFY(!store.remove(loaded->id).result());
+    QVERIFY(file.setPermissions(QFileDevice::ReadOwner | QFileDevice::WriteOwner));
+  }
+
+  void followsReplacedDirectorySymlinks() {
+    QTemporaryDir directory;
+    QDir().mkpath(directory.filePath("first"));
+    QDir().mkpath(directory.filePath("second"));
+    for (const auto &name : {QStringLiteral("first"), QStringLiteral("second")}) {
+      QFile file(directory.filePath(name + "/Note.md"));
+      QVERIFY(file.open(QIODevice::WriteOnly));
+      file.write(name.toUtf8());
+    }
+    const auto link = directory.filePath("selected").toStdString();
+    std::error_code error;
+    std::filesystem::create_directory_symlink(directory.filePath("first").toStdString(), link, error);
+    if (error) QSKIP("Directory symlinks are unavailable");
+    Notes::Store store(directory.filePath("data").toStdString(), {.defaultDirectory = link});
+    const auto before = store.list().result();
+    QVERIFY(before);
+    QCOMPARE(before->size(), std::size_t(1));
+    QCOMPARE(before->front().markdown, std::string("first"));
+    QSignalSpy changed(&store, &Notes::Store::changed);
+    QVERIFY(std::filesystem::remove(link));
+    std::filesystem::create_directory_symlink(directory.filePath("second").toStdString(), link);
+    QTRY_VERIFY(!changed.empty());
+    const auto after = store.list().result();
+    QVERIFY(after);
+    QCOMPARE(after->size(), std::size_t(1));
+    QCOMPARE(after->front().id, before->front().id);
+    QCOMPARE(after->front().markdown, std::string("second"));
+    QVERIFY(!store.save(before->front(), false).result());
   }
 
   void storageErrorsRemainErrors() {

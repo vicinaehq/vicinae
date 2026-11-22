@@ -8,6 +8,7 @@
 #include <filesystem>
 #include <string>
 #include <vector>
+#include "notes-preferences.hpp"
 
 namespace Notes {
 
@@ -17,6 +18,9 @@ struct Note {
   std::string markdown;
   std::int64_t createdAt = 0;
   std::int64_t updatedAt = 0;
+  std::string path;
+  std::string revision;
+  bool readOnly = false;
 };
 
 template <typename T> using Result = std::expected<T, std::string>;
@@ -29,15 +33,21 @@ signals:
   void removed(const QString &id);
 
 public:
-  explicit Store(std::filesystem::path directory);
+  explicit Store(std::filesystem::path directory, Preferences preferences = {});
   ~Store() override;
+  void configure(Preferences preferences);
+  static std::string normalizeDirectory(const std::string &path);
+  std::vector<std::string> directories() const;
+  std::string defaultDirectory() const;
   QFuture<Result<std::vector<Note>>> list();
   QFuture<Result<Note>> load(std::string id);
-  QFuture<Result<void>> save(Note note, bool create);
+  QFuture<Result<Note>> save(Note note, bool create);
   QFuture<Result<void>> remove(std::string id);
 
 private:
   class Worker;
+  std::filesystem::path m_directory;
+  Preferences m_preferences;
   QThread m_thread;
   Worker *m_worker;
 };

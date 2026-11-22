@@ -302,7 +302,9 @@ int startServer(const ServerLaunchOptions &launchOpts) {
 
     const auto vicinaeDbPath = Omnicast::dataDir() / "vicinae.db";
     const auto clipboardDbPath = Omnicast::dataDir() / "clipboard.db";
+    const auto notesDirectory = Omnicast::dataDir() / "notes";
     auto keys = db::prepareEncryption(currentConfig.encryptSensitiveData, {vicinaeDbPath, clipboardDbPath});
+    db::prepareEncryption(false, {notesDirectory / "notes.db"});
 
     auto omniDb = std::make_unique<OmniDatabase>(vicinaeDbPath, keys.database);
     auto localStorage = std::make_unique<LocalStorageService>(*omniDb);
@@ -432,7 +434,9 @@ int startServer(const ServerLaunchOptions &launchOpts) {
         std::make_unique<DictationService>(Omnicast::dataDir(), *ai, *registry->mediaControl(), *registry));
     registry->setAI(std::move(ai));
     registry->setAiCommands(std::make_unique<AiCommandStore>(Omnicast::dataDir() / "ai-commands.json"));
-    registry->setNotes(std::make_unique<Notes::Store>(Omnicast::dataDir() / "notes"));
+    registry->setNotes(std::make_unique<Notes::Store>(
+        notesDirectory, readPreferences<Notes::Preferences>(
+                            currentConfig.providerPreferences("notes").value_or(PreferenceValues{}))));
     registry->setConversations(
         std::make_unique<AI::ConversationStore>(Omnicast::dataDir() / "conversations"));
     QObject::connect(registry->conversations(), &AI::ConversationStore::errorOccurred,
