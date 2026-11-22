@@ -45,6 +45,19 @@ The component also provides native clipboard operations, formatting shortcuts,
 list continuation, and literal in-note find. Launcher search remains the host's
 responsibility and uses Vicinae's fuzzy search.
 
+Hosts can supply `pasteHandler(start, end)`, returning true when they handle a
+paste or false to use native text paste. Keyboard and context-menu paste use the
+same hook. `canPasteAttachment` enables the context-menu action for clipboard
+content that the plain-text editor cannot insert itself. Attachment persistence
+and clipboard interpretation remain the host's responsibility.
+
+Native drops insert at the pointer, with an insertion caret and edge scrolling.
+Plain text is supported by default. Hosts can register `setDropHandler(accepts, insert)`
+on the document to accept file or image MIME data; returning false from `insert`
+falls back to text insertion. MIME data is only valid during the callback, so
+asynchronous handlers must snapshot it before returning. Drops always copy and
+never remove content from the source. Read-only editors reject drops.
+
 Selecting text reveals a formatting toolbar after the pointer is released.
 Inline, code, list, and quote actions are directly accessible, with groups wrapping
 onto a second row in narrow panes. The heading button reveals H1–H6 inside the

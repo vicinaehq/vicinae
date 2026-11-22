@@ -125,6 +125,9 @@ public:
         const auto path = it.next();
         const auto info = it.fileInfo();
         if (info.suffix().compare(QStringLiteral("md"), Qt::CaseInsensitive) != 0) continue;
+        const auto relative = QDir(QString::fromStdString(directory)).relativeFilePath(path).split(u'/');
+        if (std::ranges::any_of(relative, [](const auto &part) { return part.endsWith(u".assets"); }))
+          continue;
         if (seen.emplace(info.canonicalFilePath()).second) result.emplace_back(path);
       }
     }
@@ -237,6 +240,7 @@ public:
         reservation.close();
       }
       try {
+        if (create) copyAttachments(note, QFileInfo(path).absolutePath());
         write(path, bytes);
       } catch (...) {
         if (create) QFile::remove(path);
@@ -395,6 +399,18 @@ QFuture<Result<Note>> Store::save(Note note, bool create) {
     auto saved = m_worker->save(note, create);
     QMetaObject::invokeMethod(this, &Store::changed, Qt::QueuedConnection);
     return saved;
+  });
+}
+QFuture<Result<AttachmentResult>> Store::attach(Note note, bool create, std::vector<Attachment> attachments) {
+  return submit(m_worker, [this, note = std::move(note), create, attachments = std::move(attachments)] {
+    auto saved = m_worker->save(note, create);
+    QMetaObject::invokeMethod(this, &Store::changed, Qt::QueuedConnection);
+    try {
+      auto markdown = importAttachments(saved, attachments);
+      return AttachmentResult{std::move(saved), std::move(markdown)};
+    } catch (const std::exception &error) {
+      return AttachmentResult{std::move(saved), std::unexpected(std::string(error.what()))};
+    }
   });
 }
 QFuture<Result<void>> Store::remove(std::string id) {

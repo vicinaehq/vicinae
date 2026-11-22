@@ -3,6 +3,7 @@
 #include <QPointer>
 #include <QVariantList>
 #include <QVariantMap>
+#include <QUrl>
 #include <QtQml/qqmlregistration.h>
 #include <string>
 #include <vector>
@@ -19,6 +20,7 @@ class MarkdownModel : public DocumentModel {
 
 public:
   Q_INVOKABLE void copyImage(const QString &source);
+  Q_INVOKABLE void dragImage(const QString &source, QObject *dragSource);
 
 signals:
   void blocksAppended();
@@ -42,6 +44,7 @@ public:
 
   Q_INVOKABLE void setMarkdown(const QString &markdown);
   void setMarkdownAsync(QString markdown, bool incremental = false);
+  void setBaseUrl(const QUrl &url);
   bool loading() const { return m_loading; }
   Q_INVOKABLE void openLink(const QString &url);
   Q_INVOKABLE QString copyCodeBlock(int blockIndex);
@@ -61,6 +64,7 @@ private:
     QString monoFamily;
     syntax::StyleMap syntax;
     bool dark = false;
+    QUrl baseUrl;
   };
 
   void rebuildInlineStyles();
@@ -78,6 +82,7 @@ private:
   quint64 m_styleGeneration = 0;
   bool m_parseRunning = false;
   QPointer<ImageStream> m_copyStream;
+  QPointer<ImageStream> m_dragStream;
   bool m_loading = false;
   bool m_async = false;
   bool m_incremental = false;

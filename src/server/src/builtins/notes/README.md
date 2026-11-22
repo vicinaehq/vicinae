@@ -4,6 +4,31 @@ Notes are ordinary UTF-8 `.md` files. The filename is the title; renaming a note
 renames its file, with a numeric suffix when that name is already taken. There is
 no required frontmatter or proprietary format. Notes are not encrypted by Vicinae.
 
+Pasting a screenshot saves an image beside the note in `<title>.assets/` and
+inserts a standard Markdown image with a relative path. Copied files are copied
+into the same folder and inserted as images or file links. Existing PNG, JPEG,
+GIF, and WebP clipboard data is preserved; native clipboard images are encoded
+as PNG. Text and web URLs retain normal text paste behavior. File copying and
+image encoding run on the notes worker thread.
+
+Dropping images or local files into the editor uses the same attachment flow,
+inserting at the pointer with a visible caret and automatic scrolling near the
+edges. Text and web URLs can also be dropped. Dragging a rendered image from the
+preview or enlarged image viewer copies it into another note or app. Local images offer both the original
+file and native image data, so file managers retain the original file format.
+These drags never move or delete the source image.
+
+Attachment folders are created when adding the first attachment. Their names remain stable when
+a note is renamed, and later attachments reuse the folder referenced by the note.
+Copy the Markdown file and its referenced attachment folder together to move a
+note. **Save a Copy** carries referenced attachments to the destination directory
+without overwriting different existing files. Attachment Markdown files are not
+indexed as notes. Removing a link, undoing a paste, or deleting a note leaves its
+attachments on disk, preserving redo and links from other notes.
+
+Existing frontmatter is kept as ordinary source text; Vicinae does not add,
+interpret, or rewrite YAML properties. The filename remains the note's title.
+
 **Settings → Notes → Preferences** uses the extension preferences system.
 **Default directory** chooses where new notes are saved; **Additional directories**
 adds other folders to search.

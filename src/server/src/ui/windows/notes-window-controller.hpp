@@ -4,6 +4,7 @@
 #include <QPointer>
 #include <QQmlApplicationEngine>
 #include <QTimer>
+#include <QTextCursor>
 #include <unordered_map>
 #include "common/context.hpp"
 #include "editor-document.hpp"
@@ -24,6 +25,7 @@ class NotesWindowController : public QObject {
   Q_PROPERTY(bool readOnly READ readOnly NOTIFY stateChanged)
   Q_PROPERTY(QString error READ error NOTIFY stateChanged)
   Q_PROPERTY(bool loading READ loading NOTIFY stateChanged)
+  Q_PROPERTY(bool canPasteAttachments READ canPasteAttachments NOTIFY clipboardChanged)
   Q_PROPERTY(ViewMode viewMode READ viewMode WRITE setViewMode NOTIFY viewModeChanged)
 
 public:
@@ -35,6 +37,7 @@ public:
   Q_INVOKABLE void reload();
   Q_INVOKABLE void openSettings();
   Q_INVOKABLE bool requestClose();
+  Q_INVOKABLE bool paste(int start, int end);
 
 signals:
   void titleChanged();
@@ -42,6 +45,7 @@ signals:
   void viewModeChanged();
   void focusRequested();
   void closed();
+  void clipboardChanged();
 
 public:
   enum ViewMode { Edit, Split, Preview };
@@ -62,6 +66,7 @@ public:
   bool readOnly() const { return m_note.readOnly; }
   QString error() const { return m_error; }
   bool loading() const { return m_loading; }
+  bool canPasteAttachments() const;
   ViewMode viewMode() const { return m_viewMode; }
   void setViewMode(ViewMode mode);
 
@@ -73,6 +78,10 @@ private:
   void refreshFromDisk();
   void refreshPreview();
   void finishSave();
+  void applySavedNote(const Notes::Note &note, std::uint64_t serial);
+  bool insertAttachments(const QMimeData *mime, int start, int end);
+  void startPaste();
+  void finishPaste();
   bool flush();
   Notes::Note snapshot() const;
   bool dirty() const { return m_serial != m_savedSerial; }
@@ -81,6 +90,13 @@ private:
   MarkdownModel m_previewModel;
   Notes::Note m_note;
   QFutureWatcher<Notes::Result<Notes::Note>> m_save;
+  QFutureWatcher<Notes::Result<Notes::AttachmentResult>> m_attachmentSave;
+  std::vector<Notes::Attachment> m_pendingAttachments;
+  QTextCursor m_pasteCursor;
+  QString m_pasteSelection;
+  std::uint64_t m_attachmentSerial = 0;
+  bool m_pasting = false;
+  bool m_attachmentError = false;
   QTimer m_idleSave;
   QTimer m_maxSave;
   QTimer m_previewUpdate;

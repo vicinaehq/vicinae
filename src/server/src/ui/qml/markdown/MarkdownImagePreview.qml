@@ -20,6 +20,8 @@ Loader {
 
     sourceComponent: ImageViewer {
         id: viewer
+        dragEnabled: true
+        onDragRequested: (source, item) => root.actions.dragImage(source, item)
         contextMenu: MarkdownImageMenu {
             source: root.imageSource
             link: root.link

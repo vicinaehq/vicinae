@@ -346,6 +346,8 @@ set(SRCS
 	src/services/notes/notes-preferences.hpp
 	src/services/notes/notes-store.hpp
 	src/services/notes/notes-store.cpp
+	src/services/notes/notes-attachments.hpp
+	src/services/notes/notes-attachments.cpp
 	src/ui/windows/notes-window-controller.cpp
 
 
@@ -1863,11 +1865,14 @@ if(BUILD_TESTS)
 		src/services/notes/notes-preferences.hpp
 		src/services/notes/notes-store.hpp
 		src/services/notes/notes-store.cpp
+		src/services/notes/notes-attachments.hpp
+		src/services/notes/notes-attachments.cpp
 		src/utils/migration-manager/migration-manager.cpp
 		database/notes/migrations.qrc
 	)
 	target_include_directories(vicinae-notes-tests PRIVATE src src/internal src/utils)
 	target_link_libraries(vicinae-notes-tests PRIVATE vicinae::editor vicinae-editorplugin vicinae::common Qt6::Test sqlcipher glaze::glaze)
+	target_link_libraries(vicinae-notes-tests PRIVATE ${CMARK_LIBRARY})
 	target_compile_definitions(vicinae-notes-tests PRIVATE THEME_DIR="${EXTRA_DIR}/themes")
 	target_compile_features(vicinae-notes-tests PRIVATE cxx_std_23)
 	qt_add_executable(vicinae-document-tests

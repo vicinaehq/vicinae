@@ -8,6 +8,7 @@
 #include <filesystem>
 #include <string>
 #include <vector>
+#include "notes-attachments.hpp"
 #include "notes-preferences.hpp"
 
 namespace Notes {
@@ -21,6 +22,11 @@ struct Note {
   std::string path;
   std::string revision;
   bool readOnly = false;
+};
+
+struct AttachmentResult {
+  Note note;
+  std::expected<std::string, std::string> markdown;
 };
 
 template <typename T> using Result = std::expected<T, std::string>;
@@ -42,6 +48,7 @@ public:
   QFuture<Result<std::vector<Note>>> list();
   QFuture<Result<Note>> load(std::string id);
   QFuture<Result<Note>> save(Note note, bool create);
+  QFuture<Result<AttachmentResult>> attach(Note note, bool create, std::vector<Attachment> attachments);
   QFuture<Result<void>> remove(std::string id);
 
 private:

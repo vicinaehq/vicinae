@@ -17,6 +17,8 @@ Popup {
     property var sources: []
     property int currentIndex: 0
     property Menu contextMenu: null
+    property bool dragEnabled: false
+    signal dragRequested(string source, Item item)
 
     component CircleButton: Rectangle {
         property alias icon: btnIcon.source
@@ -109,9 +111,10 @@ Popup {
             fillMode: Image.PreserveAspectFit
             fallbackEnabled: false
 
-            MouseArea {
+            DraggableMouseArea {
                 anchors.fill: parent
-                onClicked: event => event.accepted = true
+                draggable: root.dragEnabled && image.status === ViciImage.Ready
+                onDragRequested: root.dragRequested(root.sources[root.currentIndex] ?? "", image)
             }
         }
 

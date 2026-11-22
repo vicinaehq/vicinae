@@ -1,9 +1,12 @@
 #include <QDateTime>
+#include <QClipboard>
 #include <QEvent>
 #include <QGuiApplication>
 #include <QInputMethod>
+#include <QMimeData>
 #include <QQuickWindow>
 #include <QUuid>
+#include <utility>
 #include "notes-window-controller.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
@@ -41,6 +44,16 @@ NotesWindowController::NotesWindowController(ApplicationContext &context, std::s
   connect(&m_maxSave, &QTimer::timeout, this, &NotesWindowController::save);
   connect(&m_save, &QFutureWatcher<Notes::Result<Notes::Note>>::finished, this,
           &NotesWindowController::finishSave);
+  connect(&m_attachmentSave, &QFutureWatcher<Notes::Result<Notes::AttachmentResult>>::finished, this,
+          &NotesWindowController::finishPaste);
+  connect(QGuiApplication::clipboard(), &QClipboard::dataChanged, this,
+          &NotesWindowController::clipboardChanged);
+  m_document.setDropHandler(
+      [this](const QMimeData *mime) {
+        return !m_loading && !m_closed && !readOnly() && !m_pasting &&
+               (Notes::canImportAttachments(mime) || mime->hasText());
+      },
+      [this](const QMimeData *mime, int position) { return insertAttachments(mime, position, position); });
   connect(qApp, &QCoreApplication::aboutToQuit, this, [this] { flush(); });
   connect(m_context.services->notes(), &Notes::Store::changed, this, &NotesWindowController::refreshFromDisk);
   qApp->installEventFilter(this);
@@ -105,9 +118,11 @@ void NotesWindowController::present() {
 
 void NotesWindowController::activate(Notes::Note note, bool persisted) {
   m_note = std::move(note);
+  m_previewModel.setBaseUrl(QUrl::fromLocalFile(QString::fromStdString(m_note.path)));
   m_persisted = persisted;
   m_serial = m_savedSerial = 0;
   m_loading = false;
+  m_attachmentError = false;
   m_error.clear();
   m_document.load(QString::fromStdString(m_note.id), QString::fromStdString(m_note.markdown));
   m_viewMode = Edit;
@@ -147,6 +162,10 @@ void NotesWindowController::setTitle(const QString &title) {
 
 void NotesWindowController::edited() {
   if (m_loading || readOnly()) return;
+  if (m_attachmentError) {
+    m_attachmentError = false;
+    m_error.clear();
+  }
   ++m_serial;
   m_idleSave.start();
   if (!m_maxSave.isActive()) m_maxSave.start();
@@ -161,7 +180,7 @@ Notes::Note NotesWindowController::snapshot() const {
 }
 
 void NotesWindowController::save() {
-  if (!dirty() || m_saving || readOnly() || m_note.id.empty()) return;
+  if (!dirty() || m_saving || m_pasting || readOnly() || m_note.id.empty()) return;
   m_idleSave.stop();
   m_maxSave.stop();
   auto note = snapshot();
@@ -181,21 +200,101 @@ void NotesWindowController::finishSave() {
   m_saving = false;
   const auto result = m_save.result();
   if (result) {
-    m_persisted = true;
-    m_note.path = result->path;
-    m_note.revision = result->revision;
-    m_note.updatedAt = result->updatedAt;
-    if (m_serial == m_savingSerial) {
-      m_note.title = result->title;
-      emit titleChanged();
-    }
-    m_savedSerial = m_savingSerial;
-    m_error.clear();
+    applySavedNote(*result, m_savingSerial);
+    if (!m_attachmentError) m_error.clear();
     if (dirty()) m_idleSave.start();
+    if (m_pasting) startPaste();
   } else {
+    m_pasting = false;
+    m_attachmentError = false;
+    m_pendingAttachments.clear();
     qWarning() << "Save note:" << result.error();
     m_error = tr("Could not save this note. %1").arg(QString::fromStdString(result.error()));
   }
+  emit stateChanged();
+}
+
+void NotesWindowController::applySavedNote(const Notes::Note &note, std::uint64_t serial) {
+  m_persisted = true;
+  m_note.path = note.path;
+  m_note.revision = note.revision;
+  m_note.updatedAt = note.updatedAt;
+  m_previewModel.setBaseUrl(QUrl::fromLocalFile(QString::fromStdString(note.path)));
+  if (m_serial == serial) {
+    m_note.title = note.title;
+    emit titleChanged();
+  }
+  m_savedSerial = serial;
+}
+
+bool NotesWindowController::canPasteAttachments() const {
+  return Notes::canImportAttachments(QGuiApplication::clipboard()->mimeData());
+}
+
+bool NotesWindowController::paste(int start, int end) {
+  return insertAttachments(QGuiApplication::clipboard()->mimeData(), start, end);
+}
+
+bool NotesWindowController::insertAttachments(const QMimeData *mime, int start, int end) {
+  if (m_loading || m_closed || readOnly()) return false;
+  if (!Notes::canImportAttachments(mime)) return false;
+  if (m_pasting) return true;
+  auto *quickDocument = m_document.textDocument();
+  if (!quickDocument || start < 0 || end < start || end >= quickDocument->textDocument()->characterCount())
+    return true;
+  m_pendingAttachments = Notes::attachmentsFromMimeData(mime);
+  if (m_pendingAttachments.empty()) return false;
+  m_pasteCursor = QTextCursor(quickDocument->textDocument());
+  m_pasteCursor.setPosition(start);
+  m_pasteCursor.setPosition(end, QTextCursor::KeepAnchor);
+  m_pasteCursor.setKeepPositionOnInsert(true);
+  m_pasteSelection = m_pasteCursor.selectedText();
+  m_pasting = true;
+  m_attachmentError = false;
+  m_error.clear();
+  if (!m_saving) startPaste();
+  emit stateChanged();
+  return true;
+}
+
+void NotesWindowController::startPaste() {
+  m_idleSave.stop();
+  m_maxSave.stop();
+  m_attachmentSerial = m_serial;
+  m_attachmentSave.setFuture(
+      m_context.services->notes()->attach(snapshot(), !m_persisted, std::exchange(m_pendingAttachments, {})));
+}
+
+void NotesWindowController::finishPaste() {
+  if (!m_pasting || !m_pendingAttachments.empty() || !m_attachmentSave.isFinished()) return;
+  m_pasting = false;
+  const auto result = m_attachmentSave.result();
+  // Qt can move the anchor when typing at a cursor whose position is held fixed.
+  if (m_pasteSelection.isEmpty()) m_pasteCursor.clearSelection();
+  if (!result) {
+    m_error = tr("Could not add the attachment. %1").arg(QString::fromStdString(result.error()));
+  } else {
+    applySavedNote(result->note, m_attachmentSerial);
+    if (!result->markdown) {
+      m_attachmentError = true;
+      m_error = tr("Could not add the attachment. %1").arg(QString::fromStdString(result->markdown.error()));
+    } else if (m_pasteCursor.selectedText() != m_pasteSelection) {
+      m_attachmentError = true;
+      m_error = tr("The selected text changed while adding the attachment. Try adding it again.");
+    } else {
+      auto *item = m_document.textDocument()->parent();
+      const bool restoreCursor = item->property("selectionStart").toInt() == m_pasteCursor.selectionStart() &&
+                                 item->property("selectionEnd").toInt() == m_pasteCursor.selectionEnd();
+      m_pasteCursor.setKeepPositionOnInsert(false);
+      m_pasteCursor.beginEditBlock();
+      m_pasteCursor.insertText(QString::fromStdString(*result->markdown));
+      m_pasteCursor.endEditBlock();
+      if (restoreCursor)
+        emit m_document.selectionRequested(m_pasteCursor.position(), m_pasteCursor.position());
+      m_error.clear();
+    }
+  }
+  if (dirty()) m_idleSave.start();
   emit stateChanged();
 }
 
@@ -207,6 +306,11 @@ bool NotesWindowController::flush() {
   if (m_saving) {
     m_save.waitForFinished();
     finishSave();
+    if (!m_save.result()) return false;
+  }
+  if (m_pasting) {
+    m_attachmentSave.waitForFinished();
+    finishPaste();
     if (!m_error.isEmpty()) return false;
   }
   save();
@@ -219,6 +323,7 @@ bool NotesWindowController::flush() {
 
 QString NotesWindowController::status() const {
   if (m_loading) return tr("Opening…");
+  if (m_pasting) return tr("Adding attachment…");
   if (m_saving) return tr("Saving…");
   if (dirty()) return tr("Unsaved changes");
   if (readOnly()) return tr("Read-only");
@@ -226,31 +331,34 @@ QString NotesWindowController::status() const {
 }
 
 void NotesWindowController::refreshFromDisk() {
-  if (!m_persisted || m_closed || m_loading || m_saving || dirty()) return;
+  if (!m_persisted || m_closed || m_loading || m_saving || m_pasting || dirty()) return;
   const auto serial = m_serial;
   const auto generation = ++m_loadGeneration;
-  m_context.services->notes()->load(m_note.id).then(this, [this, serial,
-                                                           generation](Notes::Result<Notes::Note> result) {
-    if (m_closed || m_loading || m_saving || dirty() || serial != m_serial || generation != m_loadGeneration)
-      return;
-    if (!result) {
-      m_error = tr("The file is unavailable. Save a copy to keep this note.");
-      emit stateChanged();
-      return;
-    }
-    if (result->revision == m_note.revision && result->title == m_note.title) {
-      m_note.readOnly = result->readOnly;
-      m_error.clear();
-      emit stateChanged();
-      return;
-    }
-    const auto mode = m_viewMode;
-    activate(std::move(*result), true);
-    setViewMode(mode);
-  });
+  m_context.services->notes()->load(m_note.id).then(
+      this, [this, serial, generation](Notes::Result<Notes::Note> result) {
+        if (m_closed || m_loading || m_saving || m_pasting || dirty() || serial != m_serial ||
+            generation != m_loadGeneration)
+          return;
+        if (!result) {
+          m_attachmentError = false;
+          m_error = tr("The file is unavailable. Save a copy to keep this note.");
+          emit stateChanged();
+          return;
+        }
+        if (result->revision == m_note.revision && result->title == m_note.title) {
+          m_note.readOnly = result->readOnly;
+          if (!m_attachmentError) m_error.clear();
+          emit stateChanged();
+          return;
+        }
+        const auto mode = m_viewMode;
+        activate(std::move(*result), true);
+        setViewMode(mode);
+      });
 }
 
 void NotesWindowController::reload() {
+  if (m_pasting && !flush()) return;
   m_idleSave.stop();
   m_maxSave.stop();
   if (m_saving) {
@@ -274,6 +382,7 @@ void NotesWindowController::reload() {
 }
 
 void NotesWindowController::saveCopy() {
+  if (m_pasting && !flush()) return;
   m_idleSave.stop();
   m_maxSave.stop();
   if (m_saving) {
@@ -332,6 +441,7 @@ void NotesWindowController::search(QQuickItem *anchor) {
 
 void NotesWindowController::deleteCurrent() {
   if (readOnly()) return;
+  if (m_pasting && !flush()) return;
   if (!m_persisted) {
     m_closed = true;
     if (m_window) m_window->close();

@@ -6,7 +6,7 @@ qt_add_qml_module(vicinae-editor
     RESOURCE_PREFIX /qt/qml
     OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/qml/Vicinae/Editor
     QML_FILES MarkdownEditor.qml SelectionToolbar.qml
-    SOURCES editor-document.hpp editor-document.cpp syntax-palette.hpp
+    SOURCES editor-document.hpp editor-document.cpp editor-drop-area.hpp editor-drop-area.cpp syntax-palette.hpp
 )
 target_include_directories(vicinae-editor PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(vicinae-editor PUBLIC Qt6::Quick KF6::SyntaxHighlighting)

@@ -294,6 +294,8 @@ Window {
                         anchors.bottomMargin: findBar.visible ? findBar.height + 8 : 0
                         document: NotesWindowHost.document
                         readOnly: NotesWindowHost.readOnly || NotesWindowHost.loading
+                        canPasteAttachment: NotesWindowHost.canPasteAttachments
+                        pasteHandler: (start, end) => NotesWindowHost.paste(start, end)
                         foreground: Theme.foreground
                         mutedForeground: Theme.textPlaceholder
                         selectionColor: Theme.textSelectionBg

@@ -1,6 +1,11 @@
 #include <QAbstractTextDocumentLayout>
 #include <QAccessible>
+#include <QDir>
+#include <QDragEnterEvent>
+#include <QDragLeaveEvent>
+#include <QDropEvent>
 #include <QFile>
+#include <QMimeData>
 #include <QQmlComponent>
 #include <QQmlEngine>
 #include <QQmlExtensionPlugin>
@@ -25,6 +30,208 @@ class NotesInvariantsTest : public QObject {
   Q_OBJECT
 
 private slots:
+  void nativeDropsFollowThePointerAndRespectReadOnly() {
+    QQmlEngine engine;
+    Vicinae::Editor::EditorDocument editor;
+    QQuickWindow window;
+    window.resize(800, 600);
+    QQmlComponent component(&engine, QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/Editor/MarkdownEditor.qml")));
+    auto *item = qobject_cast<QQuickItem *>(
+        component.createWithInitialProperties({{"document", QVariant::fromValue(&editor)}}));
+    QVERIFY2(item, qPrintable(component.errorString()));
+    item->setParent(&window);
+    item->setParentItem(window.contentItem());
+    item->setSize(QSizeF(800, 600));
+    auto *edit = qobject_cast<QQuickItem *>(editor.textDocument()->parent());
+    auto *area = item->findChild<QQuickItem *>("markdown-drop-area");
+    auto *viewport = item->property("flickable").value<QQuickItem *>();
+    QVERIFY(edit && area && viewport);
+    const QString original = QStringLiteral("Before 👋\nTarget line\nAfter\n").repeated(100);
+    editor.load("drop", original);
+    window.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&window));
+    viewport->setProperty("contentY", 500);
+    QCoreApplication::processEvents();
+    const QPoint point(120, 250);
+    const auto local = edit->mapFromScene(point);
+    int position = -1;
+    QVERIFY(QMetaObject::invokeMethod(edit, "positionAt", Q_RETURN_ARG(int, position),
+                                      Q_ARG(double, local.x()), Q_ARG(double, local.y())));
+    QVERIFY(position > 0);
+    QMimeData text;
+    text.setText("Dropped text");
+    QDragEnterEvent enter(point, Qt::CopyAction | Qt::MoveAction, &text, Qt::LeftButton, Qt::NoModifier);
+    QCoreApplication::sendEvent(&window, &enter);
+    QVERIFY(enter.isAccepted());
+    QCOMPARE(enter.dropAction(), Qt::CopyAction);
+    QVERIFY(area->property("containsDrag").toBool());
+    QCOMPARE(area->property("insertionPosition").toInt(), position);
+    QDropEvent drop(point, Qt::CopyAction | Qt::MoveAction, &text, Qt::LeftButton, Qt::NoModifier);
+    QCoreApplication::sendEvent(&window, &drop);
+    QVERIFY(drop.isAccepted());
+    QCOMPARE(drop.dropAction(), Qt::CopyAction);
+    QCOMPARE(editor.text(), QString(original).insert(position, text.text()));
+    QCOMPARE(edit->property("cursorPosition").toInt(), position + text.text().size());
+    QVERIFY(!area->property("containsDrag").toBool());
+    editor.textDocument()->textDocument()->undo();
+    QCOMPARE(editor.text(), original);
+
+    QDragEnterEvent edge(QPoint(120, 595), Qt::CopyAction, &text, Qt::LeftButton, Qt::NoModifier);
+    QCoreApplication::sendEvent(&window, &edge);
+    QVERIFY(edge.isAccepted());
+    const auto beforeScroll = viewport->property("contentY").toReal();
+    const auto beforePosition = area->property("insertionPosition").toInt();
+    QTRY_VERIFY(viewport->property("contentY").toReal() > beforeScroll + 40);
+    QVERIFY(area->property("insertionPosition").toInt() > beforePosition);
+    QDragLeaveEvent leave;
+    QCoreApplication::sendEvent(&window, &leave);
+    QVERIFY(!area->property("containsDrag").toBool());
+
+    item->setProperty("readOnly", true);
+    QDragEnterEvent readOnly(point, Qt::CopyAction, &text, Qt::LeftButton, Qt::NoModifier);
+    QCoreApplication::sendEvent(&window, &readOnly);
+    QVERIFY(!readOnly.isAccepted());
+    QCoreApplication::sendEvent(&window, &leave);
+    QCOMPARE(editor.text(), original);
+    item->setProperty("readOnly", false);
+    QDragEnterEvent moveOnly(point, Qt::MoveAction, &text, Qt::LeftButton, Qt::NoModifier);
+    QCoreApplication::sendEvent(&window, &moveOnly);
+    QVERIFY(!moveOnly.isAccepted());
+    QCoreApplication::sendEvent(&window, &leave);
+
+    QImage image(8, 8, QImage::Format_ARGB32);
+    image.fill(Qt::blue);
+    QMimeData imageMime;
+    imageMime.setImageData(image);
+    QVERIFY(!editor.acceptsDrop(&imageMime));
+    bool received = false;
+    editor.setDropHandler([](const QMimeData *mime) { return mime->hasImage(); },
+                          [&](const QMimeData *mime, int at) {
+                            received = qvariant_cast<QImage>(mime->imageData()) == image && at > 0;
+                            return true;
+                          });
+    QDragEnterEvent imageEnter(point, Qt::CopyAction, &imageMime, Qt::LeftButton, Qt::NoModifier);
+    QCoreApplication::sendEvent(&window, &imageEnter);
+    QVERIFY(imageEnter.isAccepted());
+    QDropEvent imageDrop(point, Qt::CopyAction, &imageMime, Qt::LeftButton, Qt::NoModifier);
+    QCoreApplication::sendEvent(&window, &imageDrop);
+    QVERIFY(imageDrop.isAccepted());
+    QVERIFY(received);
+    QCOMPARE(editor.text(), original);
+  }
+
+  void pastedImagesRemainPortableAfterRenamingAndReopening() {
+    QTemporaryDir directory;
+    QImage image(30, 20, QImage::Format_ARGB32);
+    image.fill(QColor(40, 90, 180, 120));
+    QMimeData mime;
+    mime.setImageData(image);
+    QVERIFY(Notes::canImportAttachments(&mime));
+    const auto attachments = Notes::attachmentsFromMimeData(&mime);
+    QCOMPARE(attachments.size(), std::size_t(1));
+    const std::string frontmatter = "---\ntags: [work]\ncustom: untouched\n---\n\n";
+    QString originalFolder;
+    {
+      Notes::Store store(directory.path().toStdString());
+      auto imported = store.attach({"id", "Meeting #计划", frontmatter}, true, attachments).result();
+      QVERIFY(imported);
+      QVERIFY(imported->markdown);
+      QCOMPARE(imported->note.markdown, frontmatter);
+      const auto markdown = QString::fromStdString(*imported->markdown);
+      const auto destination = markdown.mid(markdown.indexOf(u"(<") + 2).chopped(2);
+      const auto relative = QUrl(destination).path();
+      QVERIFY(relative.startsWith(u"Meeting #计划.assets/"));
+      QCOMPARE(QImage(directory.filePath(relative)), image);
+      originalFolder = QFileInfo(relative).path();
+      auto note = imported->note;
+      note.markdown += *imported->markdown;
+      auto saved = store.save(note, false).result();
+      QVERIFY(saved);
+      saved->title = "Renamed";
+      saved = store.save(*saved, false).result();
+      QVERIFY(saved);
+      QCOMPARE(saved->markdown, note.markdown);
+      QVERIFY(QFileInfo::exists(directory.filePath(relative)));
+    }
+    {
+      Notes::Store store(directory.path().toStdString());
+      const auto notes = store.list().result();
+      QVERIFY(notes);
+      QCOMPARE(notes->size(), std::size_t(1));
+      const auto imported = store.attach(notes->front(), false, attachments).result();
+      QVERIFY(imported && imported->markdown);
+      const auto markdown = QString::fromStdString(*imported->markdown);
+      const auto destination = markdown.mid(markdown.indexOf(u"(<") + 2).chopped(2);
+      const auto relative = QUrl(destination).path();
+      QCOMPARE(QFileInfo(relative).path(), originalFolder);
+      QCOMPARE(QDir(directory.filePath(originalFolder)).entryList(QDir::Files).size(), 2);
+      QVERIFY(store.remove(notes->front().id).result());
+      QVERIFY(QFileInfo::exists(directory.filePath(relative)));
+    }
+  }
+
+  void copiedFilesAndSaveCopyPreserveAttachmentContents() {
+    QTemporaryDir directory;
+    QTemporaryDir destination;
+    const auto source = directory.filePath("reference [1] #%.md");
+    QFile file(source);
+    QVERIFY(file.open(QIODevice::WriteOnly));
+    const QByteArray contents("# A file attachment\n\nOriginal bytes\n");
+    QCOMPARE(file.write(contents), contents.size());
+    file.close();
+    QMimeData mime;
+    mime.setUrls({QUrl::fromLocalFile(source)});
+    Notes::Store store(directory.filePath("notes").toStdString());
+    auto result = store.attach({"id", "Files", ""}, true, Notes::attachmentsFromMimeData(&mime)).result();
+    QVERIFY(result && result->markdown);
+    QVERIFY(result->markdown->starts_with("[reference \\[1\\]"));
+    auto note = result->note;
+    note.markdown = *result->markdown;
+    auto saved = store.save(note, false).result();
+    QVERIFY(saved);
+    QCOMPARE(store.list().result()->size(), std::size_t(1));
+    store.configure({.defaultDirectory = destination.path().toStdString()});
+    auto copy = *saved;
+    copy.id = "copy";
+    auto copied = store.save(copy, true).result();
+    QVERIFY(copied);
+    QCOMPARE(copied->markdown, saved->markdown);
+    QFile copiedFile(destination.filePath("Files.assets/reference [1] #%.md"));
+    QVERIFY(copiedFile.open(QIODevice::ReadOnly));
+    QCOMPARE(copiedFile.readAll(), contents);
+    copiedFile.close();
+    QVERIFY(copiedFile.open(QIODevice::WriteOnly));
+    copiedFile.write("Unrelated contents");
+    copiedFile.close();
+    copy.id = "collision";
+    QVERIFY(!store.save(copy, true).result());
+    QVERIFY(!QFileInfo::exists(destination.filePath("Files (2).md")));
+    QVERIFY(copiedFile.open(QIODevice::ReadOnly));
+    QCOMPARE(copiedFile.readAll(), QByteArray("Unrelated contents"));
+  }
+
+  void failedAttachmentImportKeepsTheNoteUsableAndRollsBackFiles() {
+    QTemporaryDir directory;
+    Notes::Store store(directory.path().toStdString());
+    QImage image(10, 10, QImage::Format_RGB32);
+    image.fill(Qt::blue);
+    const auto result =
+        store.attach({"id", "Failure", "Keep this text"}, true, {{"good.png", image}, {"bad.png", QImage()}})
+            .result();
+    QVERIFY(result);
+    QVERIFY(!result->markdown);
+    QCOMPARE(result->note.markdown, std::string("Keep this text"));
+    QVERIFY(QDir(directory.filePath("Failure.assets")).entryList(QDir::Files).isEmpty());
+    const auto retry = store.attach(result->note, false, {{"good.png", image}}).result();
+    QVERIFY(retry && retry->markdown);
+    QMimeData text;
+    text.setText("Ordinary text");
+    QVERIFY(!Notes::canImportAttachments(&text));
+    QVERIFY(Notes::attachmentsFromMimeData(&text).empty());
+    text.setUrls({QUrl("https://example.com/image.png")});
+    QVERIFY(!Notes::canImportAttachments(&text));
+  }
+
   void cursorReappearsAfterScrollingAndClicking() {
     auto *styleHints = QGuiApplication::styleHints();
     const auto flashTime = styleHints->cursorFlashTime();

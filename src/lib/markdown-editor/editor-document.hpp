@@ -7,7 +7,10 @@
 #include <QTextDocument>
 #include <QVariantMap>
 #include <QtQml/qqmlregistration.h>
+#include <functional>
 #include "syntax-palette.hpp"
+
+class QMimeData;
 
 namespace Vicinae::Editor {
 
@@ -65,6 +68,10 @@ public:
   void setPalette(const Syntax::Palette &palette);
   QString documentId() const { return m_id; }
   int revision() const { return m_revision; }
+  void setDropHandler(std::function<bool(const QMimeData *)> accepts,
+                      std::function<bool(const QMimeData *, int)> insert);
+  bool acceptsDrop(const QMimeData *mime) const;
+  bool drop(const QMimeData *mime, int position);
 
 private:
   void formatLines(int start, int end, Format format);
@@ -78,6 +85,8 @@ private:
   int m_revision = 0;
   int m_generation = 0;
   bool m_loading = false;
+  std::function<bool(const QMimeData *)> m_acceptDrop;
+  std::function<bool(const QMimeData *, int)> m_drop;
 };
 
 } // namespace Vicinae::Editor

@@ -5,6 +5,7 @@
 #include <KSyntaxHighlighting/Theme>
 #include <QRegularExpression>
 #include <QQuickItem>
+#include <QMimeData>
 #include <QTextBlock>
 #include <QTextCursor>
 #include <algorithm>
@@ -14,6 +15,29 @@
 #include "editor-document.hpp"
 
 namespace Vicinae::Editor {
+
+void EditorDocument::setDropHandler(std::function<bool(const QMimeData *)> accepts,
+                                    std::function<bool(const QMimeData *, int)> insert) {
+  m_acceptDrop = std::move(accepts);
+  m_drop = std::move(insert);
+}
+
+bool EditorDocument::acceptsDrop(const QMimeData *mime) const {
+  return mime && (m_acceptDrop ? m_acceptDrop(mime) : mime->hasText());
+}
+
+bool EditorDocument::drop(const QMimeData *mime, int position) {
+  if (!validRange(position, position) || !acceptsDrop(mime)) return false;
+  if (m_drop && m_drop(mime, position)) return true;
+  if (!mime->hasText()) return false;
+  QTextCursor cursor(m_document);
+  cursor.setPosition(position);
+  cursor.beginEditBlock();
+  cursor.insertText(mime->text());
+  cursor.endEditBlock();
+  emit selectionRequested(cursor.position(), cursor.position());
+  return true;
+}
 
 class MarkdownHighlighter : public KSyntaxHighlighting::SyntaxHighlighter {
 public:

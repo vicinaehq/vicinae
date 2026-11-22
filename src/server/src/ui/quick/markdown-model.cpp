@@ -18,6 +18,7 @@
 #include "services/font-service/font-service.hpp"
 #include "ui/image/image-url.hpp"
 #include "ui/image/image-stream.hpp"
+#include "ui/views/drag-utils.hpp"
 #include "services/clipboard/clipboard-service.hpp"
 #include "services/toast/toast-service.hpp"
 #include "ui/quick/syntax-highlighter.hpp"
@@ -264,7 +265,7 @@ struct HtmlBlockResult {
   std::vector<QVariantMap> extractedImages;
 };
 
-void processHtmlNodes(pugi::xml_node node, HtmlBlockResult &result) {
+void processHtmlNodes(pugi::xml_node node, HtmlBlockResult &result, const QUrl &baseUrl) {
   for (auto cur = node.first_child(); cur; cur = cur.next_sibling()) {
     if (cur.type() == pugi::node_element) {
       if (std::strcmp(cur.name(), "img") == 0) {
@@ -296,14 +297,15 @@ void processHtmlNodes(pugi::xml_node node, HtmlBlockResult &result) {
         }
         if (!src.isEmpty()) {
           QVariantMap img;
-          img[QStringLiteral("src")] = imageProviderUrl(src);
+          img[QStringLiteral("src")] =
+              imageProviderUrl(baseUrl.isEmpty() ? src : baseUrl.resolved(QUrl(src)).toString());
           img[QStringLiteral("alt")] = QString();
           if (w > 0) img[QStringLiteral("width")] = w;
           if (h > 0) img[QStringLiteral("height")] = h;
           result.extractedImages.push_back(img);
         }
       } else {
-        processHtmlNodes(cur, result);
+        processHtmlNodes(cur, result, baseUrl);
       }
     } else if (cur.type() == pugi::node_pcdata) {
       QString const text = QString::fromUtf8(cur.value()).trimmed();
@@ -388,6 +390,19 @@ std::vector<MarkdownModel::Block> MarkdownModel::parseBlocks(const QString &mark
   cmark_parser_feed(parser, buf.data(), buf.size());
   cmark_node *root = cmark_parser_finish(parser);
   cmark_parser_free(parser);
+
+  if (!styles.baseUrl.isEmpty()) {
+    auto *iter = cmark_iter_new(root);
+    while (cmark_iter_next(iter) != CMARK_EVENT_DONE) {
+      if (cmark_iter_get_event_type(iter) != CMARK_EVENT_ENTER) continue;
+      auto *node = cmark_iter_get_node(iter);
+      const auto type = cmark_node_get_type(node);
+      if (type != CMARK_NODE_IMAGE && type != CMARK_NODE_LINK) continue;
+      const QUrl url(QString::fromUtf8(cmark_node_get_url(node)));
+      if (url.isRelative()) cmark_node_set_url(node, styles.baseUrl.resolved(url).toEncoded().constData());
+    }
+    cmark_iter_free(iter);
+  }
 
   for (auto *node = cmark_node_first_child(root); node; node = cmark_node_next(node)) {
     const auto firstBlock = blocks.size();
@@ -526,7 +541,7 @@ std::vector<MarkdownModel::Block> MarkdownModel::parseBlocks(const QString &mark
       if (parseResult) {
         auto root = doc.first_child();
         HtmlBlockResult result;
-        processHtmlNodes(root, result);
+        processHtmlNodes(root, result, styles.baseUrl);
 
         for (auto &img : result.extractedImages)
           blocks.push_back({Markdown::BlockType::Image, img});
@@ -782,6 +797,13 @@ void MarkdownModel::setMarkdownAsync(QString markdown, bool incremental) {
   if (!m_parseRunning) startParse();
 }
 
+void MarkdownModel::setBaseUrl(const QUrl &url) {
+  if (m_styles.baseUrl == url) return;
+  m_styles.baseUrl = url;
+  ++m_styleGeneration;
+  if (!m_markdown.isEmpty()) setMarkdownAsync(m_markdown, true);
+}
+
 void MarkdownModel::startParse() {
   m_parseRunning = true;
   const auto generation = m_parseGeneration;
@@ -806,7 +828,8 @@ void MarkdownModel::startParse() {
 
 void MarkdownModel::openLink(const QString &url) {
   auto *appDb = ServiceRegistry::instance()->appDb();
-  if (!appDb->openTarget(url)) qWarning() << "MarkdownModel: failed to open link" << url;
+  const auto resolved = m_styles.baseUrl.isEmpty() ? url : m_styles.baseUrl.resolved(QUrl(url)).toString();
+  if (!appDb->openTarget(resolved)) qWarning() << "MarkdownModel: failed to open link" << resolved;
 }
 
 void MarkdownModel::copyImage(const QString &source) {
@@ -837,6 +860,26 @@ void MarkdownModel::copyImage(const QString &source) {
       if (!ServiceRegistry::instance()->clipman()->copyQMimeData(mime, {.concealed = false})) fail();
     });
   });
+  stream->start();
+}
+
+void MarkdownModel::dragImage(const QString &source, QObject *dragSource) {
+  const ImageURL url(source);
+  if (!url.isValid() || !dragSource) return;
+  if (m_dragStream) m_dragStream->deleteLater();
+  auto *stream = new ImageStream(url, {}, {.fallback = false}, this);
+  m_dragStream = stream;
+  connect(stream, &ImageStream::failed, stream, &QObject::deleteLater);
+  connect(stream, &ImageStream::frameReady, this,
+          [this, stream, url, dragSource = QPointer(dragSource)](const QImage &image) {
+            disconnect(stream, nullptr, this, nullptr);
+            stream->deleteLater();
+            if (!dragSource || !(QGuiApplication::mouseButtons() & Qt::LeftButton)) return;
+            auto mime = std::make_unique<QMimeData>();
+            mime->setImageData(image);
+            if (url.type() == ImageURLType::Local) mime->setUrls({QUrl::fromLocalFile(url.name())});
+            DragUtils::startDrag(dragSource, std::move(mime), url);
+          });
   stream->start();
 }
 

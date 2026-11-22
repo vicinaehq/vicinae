@@ -25,6 +25,8 @@ FocusScope {
     readonly property alias composing: edit.inputMethodComposing
     readonly property alias flickable: viewport
     property bool readOnly: false
+    property var pasteHandler: null
+    property bool canPasteAttachment: false
     property bool _formattingDismissed: false
 
     function applyFormat(format) {
@@ -36,6 +38,12 @@ FocusScope {
 
     function focusEditor() {
         edit.forceActiveFocus();
+    }
+    function paste() {
+        if (root.readOnly)
+            return;
+        if (!root.pasteHandler || !root.pasteHandler(edit.selectionStart, edit.selectionEnd))
+            edit.paste();
     }
     function find(query, backwards, incremental = false) {
         const from = backwards || incremental ? edit.selectionStart : edit.selectionEnd;
@@ -151,6 +159,12 @@ FocusScope {
                     Qt.callLater(root.ensureCursorVisible);
             }
             Keys.priority: Keys.BeforeItem
+            Keys.onPressed: event => {
+                if (event.matches(StandardKey.Paste)) {
+                    root.paste();
+                    event.accepted = true;
+                }
+            }
             Keys.onEscapePressed: event => {
                 event.accepted = formatting.visible;
                 root._formattingDismissed = true;
@@ -170,6 +184,42 @@ FocusScope {
                 text: root.placeholderText
                 color: root.mutedForeground
                 font: edit.font
+            }
+        }
+    }
+    MarkdownDropArea {
+        id: dropArea
+        objectName: "markdown-drop-area"
+        anchors.fill: viewport
+        z: 1
+        clip: true
+        enabled: !root.readOnly && !edit.inputMethodComposing
+        document: root.document
+        insertionPosition: edit.positionAt(dragPosition.x - edit.x, dragPosition.y + viewport.contentY - edit.y)
+        onDropping: position => {
+            edit.cursorPosition = position;
+            edit.forceActiveFocus();
+        }
+
+        Rectangle {
+            readonly property rect caret: edit.positionToRectangle(dropArea.insertionPosition)
+            visible: dropArea.containsDrag
+            x: edit.x + caret.x
+            y: edit.y + caret.y - viewport.contentY
+            width: 2
+            height: caret.height
+            color: root.foreground
+        }
+
+        Timer {
+            interval: 16
+            repeat: true
+            running: dropArea.containsDrag
+            onTriggered: {
+                const margin = Math.min(48, viewport.height / 4);
+                const y = dropArea.dragPosition.y;
+                const speed = y < margin ? (y - margin) / 4 : y > viewport.height - margin ? (y - viewport.height + margin) / 4 : 0;
+                viewport.contentY = Math.max(0, Math.min(viewport.contentHeight - viewport.height, viewport.contentY + speed));
             }
         }
     }
@@ -208,7 +258,7 @@ FocusScope {
         height: implicitHeight
         x: Math.max(6, Math.min(root.width - width - 6, anchorX - width / 2))
         y: Math.max(6, Math.min(root.height - height - 6, above ? selectionTop - height - 8 : selectionTop + startRect.height + 8))
-        visible: !root.readOnly && hasSelection && root.Window.active && !root._formattingDismissed && !edit.inputMethodComposing && !selectionPointer.active && !viewport.moving && !editMenu.visible && root.activeFocus && selectionTop < root.height && selectionBottom > 0
+        visible: !root.readOnly && hasSelection && root.Window.active && !root._formattingDismissed && !edit.inputMethodComposing && !selectionPointer.active && !viewport.moving && !dropArea.containsDrag && !editMenu.visible && root.activeFocus && selectionTop < root.height && selectionBottom > 0
         onFormatRequested: format => root.applyFormat(format)
         onDismissed: {
             root._formattingDismissed = true;
@@ -251,8 +301,8 @@ FocusScope {
         }
         MenuItem {
             text: qsTr("Paste")
-            enabled: !root.readOnly && edit.canPaste
-            onTriggered: edit.paste()
+            enabled: !root.readOnly && (edit.canPaste || root.canPasteAttachment)
+            onTriggered: root.paste()
         }
         MenuItem {
             text: qsTr("Select All")
