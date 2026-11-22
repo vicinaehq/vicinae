@@ -121,6 +121,8 @@ FocusScope {
             selectedTextColor: root.selectedTextColor
             font.family: root.fontFamily
             font.pointSize: root.fontSize
+            // Keep source characters separate: Geist Mono ligates ### into a single glyph.
+            font.preferShaping: false
             Accessible.name: qsTr("Markdown editor")
             onSelectionStartChanged: {
                 root._formattingDismissed = false;
