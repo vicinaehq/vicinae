@@ -63,7 +63,6 @@ private:
     auto *window = QGuiApplication::focusWindow();
     while (window && window->type() == Qt::Popup && window->transientParent())
       window = window->transientParent();
-    // The launcher owns its shortcuts; regular windows use the native application menu.
     const bool enabled = isRegularWindow(window);
     for (const auto &shortcut : m_menuShortcuts) {
       shortcut.item.keyEquivalent = enabled ? shortcut.key : @"";

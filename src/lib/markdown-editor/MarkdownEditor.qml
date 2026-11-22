@@ -71,7 +71,7 @@ FocusScope {
         property: "textDocument"
         value: edit.textDocument
     }
-    // Qt hides an off-screen caret internally without restoring it when a click moves it.
+    // Qt does not restore the off-screen caret after a click.
     Binding {
         target: edit
         property: "cursorVisible"
@@ -115,8 +115,7 @@ FocusScope {
         TextEdit {
             id: edit
             readOnly: root.readOnly
-            // Accessibility can query sibling geometry during construction. A zero-size
-            // lookup enables TextEdit's expensive implicit-width measurement on every edit.
+            // Early accessibility queries enable costly implicit-width measurement on every edit.
             visible: false
             Component.onCompleted: visible = true
             x: root.contentPadding
@@ -133,7 +132,6 @@ FocusScope {
             selectedTextColor: root.selectedTextColor
             font.family: root.fontFamily
             font.pointSize: root.fontSize
-            // Keep source characters separate: Geist Mono ligates ### into a single glyph.
             font.preferShaping: false
             Accessible.name: qsTr("Markdown editor")
             onSelectionStartChanged: {
@@ -242,7 +240,6 @@ FocusScope {
         property rect startRect: Qt.rect(0, 0, 0, 0)
         property rect endRect: Qt.rect(0, 0, 0, 0)
         function refreshGeometry() {
-            // TextEdit finishes reflow after its geometry change notifications.
             if (hasSelection) {
                 startRect = edit.positionToRectangle(edit.selectionStart);
                 endRect = edit.positionToRectangle(edit.selectionEnd);

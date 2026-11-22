@@ -815,7 +815,7 @@ void MarkdownModel::startParse() {
   }).then(this, [this, generation, styleGeneration, markdown, incremental](std::vector<Block> blocks) {
     m_parseRunning = false;
     if (!m_async) return;
-    // Keep live editing visible even when new input arrives faster than parsing finishes.
+    // Publish completed previews even while typing.
     const bool liveUpdate = incremental && m_incremental;
     if (styleGeneration == m_styleGeneration && (liveUpdate || m_markdown.startsWith(markdown)))
       applyBlocks(markdown, std::move(blocks), incremental);

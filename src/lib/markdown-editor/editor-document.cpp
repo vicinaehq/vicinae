@@ -74,7 +74,6 @@ protected:
   void applyFormat(int offset, int length, const KSyntaxHighlighting::Format &format) override {
     if (!format.isValid() || length <= 0) return;
     QTextCharFormat style;
-    // Honor grammar emphasis, without inheriting bold keywords or colors from an unrelated theme.
     style.setForeground(m_styles[format.textStyle()]);
     style.setFontWeight(format.isBold({}) ? QFont::Bold : QFont::Normal);
     style.setFontItalic(format.isItalic({}));
@@ -278,8 +277,6 @@ void EditorDocument::wrap(int start, int end, const QString &marker) {
 void EditorDocument::format(int start, int end, Format format) {
   if (!validRange(start, end)) return;
   if (format >= Bold && format <= Link && start != end) {
-    // Native whole-line selections include the paragraph separator. Keep boundary
-    // whitespace outside inline markers so the following line stays untouched.
     while (start < end && m_document->characterAt(start).isSpace())
       ++start;
     while (end > start && m_document->characterAt(end - 1).isSpace())
@@ -309,7 +306,6 @@ void EditorDocument::format(int start, int end, Format format) {
       replace(selection, content);
       return;
     }
-    // Use a longer delimiter when the selected source itself contains backticks.
     static const QRegularExpression TICKS(QStringLiteral("`+"));
     int length = 1;
     for (const auto &match : TICKS.globalMatch(selected))

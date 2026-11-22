@@ -66,7 +66,7 @@ QString filename(const std::string &title) {
   name.replace(QRegularExpression(QStringLiteral(R"([\x00-\x1f<>:"/\\|?*])")), QStringLiteral("-"));
   while (name.endsWith(u'.') || name.endsWith(u' '))
     name.chop(1);
-  // Leave room for collision suffixes on filesystems with a 255-byte name limit.
+  // Leave room for collision suffixes within the 255-byte filename limit.
   while (name.toUtf8().size() > 180)
     name.chop(1);
   if (name.isEmpty()) name = Store::tr("Untitled Note");
@@ -151,7 +151,6 @@ public:
     }
     for (const auto &path : paths())
       desired.emplace(path);
-    // An open note remains usable after its directory is removed from search.
     for (const auto &[id, path] : m_paths)
       if (QFileInfo::exists(path)) desired.emplace(path);
     const auto current = m_watcher->files() + m_watcher->directories();
@@ -233,7 +232,6 @@ public:
       m_ids.erase(path.toStdString());
       path = renamed;
     } else {
-      // Reserve a new name without overwriting a file created by another process.
       if (create) {
         QFile reservation(path);
         if (!reservation.open(QIODevice::WriteOnly | QIODevice::NewOnly)) fail(reservation.errorString());
@@ -373,7 +371,7 @@ Store::Store(std::filesystem::path directory, Preferences preferences)
   connect(&m_thread, &QThread::finished, m_worker, &QObject::deleteLater);
   m_thread.setObjectName(QStringLiteral("NotesStore"));
   m_thread.start();
-  // Install watchers even before the launcher first opens Search Notes.
+  // Start watching before the first search.
   list();
 }
 Store::~Store() {

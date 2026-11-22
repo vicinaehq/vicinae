@@ -36,8 +36,7 @@ yellow = "#c9a76e"
 cyan = "#18a5b3"
 purple = "#bc8cff"
 
-# Optional syntax roles, shared by the Markdown editor and document code blocks.
-# Omitted roles derive from this theme's accents. Colors support the same references as UI colors.
+# Optional syntax colors; omitted values derive from the theme's accents.
 [colors.syntax]
 keyword = "#8eb7e8"
 control_flow = "#c6a0db"

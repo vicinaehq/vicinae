@@ -92,7 +92,6 @@ void NotesWindowController::ensureWindow() {
   if (m_window) {
     m_window->setProperty(PasteService::PASTE_TARGET_PROPERTY, true);
 #ifdef Q_OS_LINUX
-    // QWindow's XCB backend reads this role when creating the native window.
     m_window->setProperty("_q_xcb_wm_window_role", QByteArrayLiteral("vicinae-notes"));
 #endif
   }

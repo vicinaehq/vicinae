@@ -26,7 +26,7 @@ Window {
     minimumHeight: 400
     color: "transparent"
     objectName: "vicinae-notes"
-    // Keep the product prefix stable for window-manager rules, including across locales.
+    // Stable prefix for window-manager rules.
     title: "Vicinae Notes — %1".arg(NotesWindowHost.title || qsTr("Untitled Note"))
     flags: Qt.Window | Qt.WindowTitleHint | Qt.WindowCloseButtonHint | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint | root.stayOnTopFlag
     WindowMaterial.enabled: Platform.supports("windowMaterial")
