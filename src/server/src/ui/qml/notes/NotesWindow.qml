@@ -417,23 +417,12 @@ Window {
                     topPadding: 20
                 }
             }
-            RowLayout {
+            Text {
                 Layout.fillWidth: true
                 Layout.margins: 14
-                spacing: 6
-                Text {
-                    text: NotesWindowHost.status
-                    color: Theme.textMuted
-                    font.pointSize: Theme.smallerFontSize
-                }
-                Item {
-                    Layout.fillWidth: true
-                }
-                Text {
-                    text: "Markdown"
-                    color: Theme.textMuted
-                    font.pointSize: Theme.smallerFontSize
-                }
+                text: NotesWindowHost.status
+                color: Theme.textMuted
+                font.pointSize: Theme.smallerFontSize
             }
         }
     }

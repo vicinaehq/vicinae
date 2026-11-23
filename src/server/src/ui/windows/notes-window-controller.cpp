@@ -128,6 +128,7 @@ void NotesWindowController::present() {
 
 void NotesWindowController::activate(Notes::Note note, bool persisted) {
   m_note = std::move(note);
+  m_crlf = m_note.markdown.contains("\r\n");
   m_previewModel.setBaseUrl(QUrl::fromLocalFile(QString::fromStdString(m_note.path)));
   m_persisted = persisted;
   m_serial = m_savedSerial = 0;
@@ -190,7 +191,10 @@ void NotesWindowController::edited() {
 
 Notes::Note NotesWindowController::snapshot() const {
   auto note = m_note;
-  note.markdown = m_document.text().toStdString();
+  auto text = m_document.text();
+  // The editor only knows line feeds: a file that came with CRLF endings keeps them.
+  if (m_crlf) text.replace(u'\n', QStringLiteral("\r\n"));
+  note.markdown = text.toStdString();
   note.updatedAt = QDateTime::currentMSecsSinceEpoch();
   return note;
 }

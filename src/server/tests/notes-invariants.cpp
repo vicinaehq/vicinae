@@ -448,10 +448,12 @@ private slots:
                                                    .directories = {first.path().toStdString()}});
     auto saved = store.save({"one", "Same title", "original"}, true).result();
     QVERIFY(saved);
-    QCOMPARE(saved->path,
-             (std::filesystem::path(Notes::Store::normalizeDirectory(second.path().toStdString())) /
-              "Same title.md")
-                 .string());
+    const auto pathIn = [](const QTemporaryDir &directory, const QString &name) {
+      return QDir(QString::fromStdString(Notes::Store::normalizeDirectory(directory.path().toStdString())))
+          .filePath(name)
+          .toStdString();
+    };
+    QCOMPARE(saved->path, pathIn(second, "Same title.md"));
     QFile file(QString::fromStdString(saved->path));
     QVERIFY(file.open(QIODevice::WriteOnly));
     file.write("external edit");
@@ -473,10 +475,7 @@ private slots:
     QVERIFY(QFileInfo::exists(QString::fromStdString(loaded->path)));
     auto next = store.save({"three", "New note", "hello"}, true).result();
     QVERIFY(next);
-    QCOMPARE(
-        next->path,
-        (std::filesystem::path(Notes::Store::normalizeDirectory(first.path().toStdString())) / "New note.md")
-            .string());
+    QCOMPARE(next->path, pathIn(first, "New note.md"));
     store.configure({.defaultDirectory = first.filePath("missing/nested").toStdString()});
     QVERIFY(store.save({"four", "Created", "hello"}, true).result());
     QVERIFY(QFileInfo::exists(first.filePath("missing/nested/Created.md")));
@@ -506,6 +505,18 @@ private slots:
     QVERIFY(!store.save(*loaded, false).result());
     QVERIFY(!store.remove(loaded->id).result());
     QVERIFY(file.setPermissions(QFileDevice::ReadOwner | QFileDevice::WriteOwner));
+  }
+
+  void notesInAnotherEncodingAreReadOnly() {
+    QTemporaryDir directory;
+    QFile file(directory.filePath("Latin.md"));
+    QVERIFY(file.open(QIODevice::WriteOnly));
+    file.write("caf\xe9");
+    file.close();
+    Notes::Store store(directory.path().toStdString());
+    const auto notes = store.list().result();
+    QVERIFY(notes && notes->size() == 1);
+    QVERIFY(notes->front().readOnly);
   }
 
   void followsReplacedDirectorySymlinks() {
@@ -649,8 +660,7 @@ private slots:
     QCOMPARE(store.list().result()->front().markdown, std::string("- milk\n- eggs"));
 
     const auto replace = [&](const std::string &revision) {
-      return arguments(
-          {{"path", path}, {"title", "Shopping"}, {"content", "- bread"}, {"revision", revision}});
+      return arguments({{"path", path}, {"content", "- bread"}, {"revision", revision}});
     };
     QVERIFY(write.requiresApproval(replace(stale)));
     QVERIFY(!run(write, arguments({{"path", path}, {"content", "- bread"}})));
@@ -660,10 +670,11 @@ private slots:
     const auto current = json(run(read, arguments({{"path", path}})))["revision"].get<std::string>();
     const auto replaced = run(write, replace(current));
     QVERIFY(replaced);
-    QCOMPARE(json(replaced)["path"].get<std::string>(), directory.filePath("Shopping.md").toStdString());
+    QVERIFY(!run(write,
+                 arguments({{"path", path}, {"title", "Shopping"}, {"mode", "append"}, {"content", "x"}})));
     const auto notes = store.list().result();
     QCOMPARE(notes->size(), std::size_t(1));
-    QCOMPARE(notes->front().title, std::string("Shopping"));
+    QCOMPARE(notes->front().title, std::string("Groceries"));
     QCOMPARE(notes->front().markdown, std::string("- bread"));
   }
 

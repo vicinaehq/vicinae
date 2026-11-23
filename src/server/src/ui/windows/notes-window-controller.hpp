@@ -104,6 +104,7 @@ private:
   std::uint64_t m_attachmentSerial = 0;
   bool m_pasting = false;
   bool m_attachmentError = false;
+  bool m_crlf = false;
   QTimer m_idleSave;
   QTimer m_maxSave;
   QTimer m_previewUpdate;

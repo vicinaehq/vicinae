@@ -196,6 +196,8 @@ public:
     const QFileInfo info(path);
     auto markdown = bytes.toStdString();
     auto noteTags = tags(markdown);
+    // Editing decodes the text, which another encoding would not survive.
+    const bool locked = readOnly(info) || !bytes.isValidUtf8();
     return {id,
             info.completeBaseName().toStdString(),
             std::move(markdown),
@@ -203,7 +205,7 @@ public:
             info.lastModified().toMSecsSinceEpoch(),
             path.toStdString(),
             revision(bytes),
-            readOnly(info),
+            locked,
             std::move(noteTags)};
   }
 

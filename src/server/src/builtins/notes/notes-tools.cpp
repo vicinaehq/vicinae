@@ -4,6 +4,7 @@
 #include <ranges>
 #include <span>
 #include <QDateTime>
+#include <QDir>
 #include <QUuid>
 #include "notes-tools.hpp"
 #include "notes-search.hpp"
@@ -90,7 +91,9 @@ std::string revision(const Notes::Note &note) { return note.revision.substr(0, R
 // Only notes the store lists can be addressed, so a path never reaches an arbitrary file.
 std::expected<Notes::Note, std::string> findNote(const NoteList &notes, std::string_view path) {
   if (!notes) return std::unexpected(notes.error());
-  const auto it = std::ranges::find(*notes, path, &Notes::Note::path);
+  // Models on Windows tend to answer with backslashes, which the store never uses.
+  const auto normalized = QDir::cleanPath(QDir::fromNativeSeparators(QString::fromUtf8(path))).toStdString();
+  const auto it = std::ranges::find(*notes, normalized, &Notes::Note::path);
   if (it == notes->end())
     return std::unexpected(std::format("There is no note at {}. Use notes_search to find notes.", path));
   return *it;
@@ -193,13 +196,13 @@ std::string WriteNoteTool::description() const {
   return "Create a note or change an existing one. Without a path, creates a note from title and content "
          "in the user's default notes directory. With a path, mode \"replace\" (the default) overwrites "
          "the whole content and requires the revision returned by notes_read, while mode \"append\" adds "
-         "content at the end. Passing a title with a path renames the note. Content is Markdown, with "
-         "tags in a leading YAML front matter block such as \"---\\ntags: [work, idea]\\n---\". Returns "
-         "the path of the note, which changes when it is renamed.";
+         "content at the end. An existing note cannot be renamed. Content is Markdown, with tags in a "
+         "leading YAML front matter block such as \"---\\ntags: [work, idea]\\n---\". Returns the path "
+         "of the note.";
 }
 
 std::string WriteNoteTool::generateInputSchema() const {
-  return R"({"type":"object","properties":{"path":{"type":"string","description":"Path of the note to change. Omit to create a note."},"title":{"type":"string","description":"Title of the note. Required when creating a note."},"content":{"type":"string","description":"Markdown content."},"mode":{"type":"string","enum":["replace","append"],"description":"How content is applied to an existing note. Defaults to replace."},"revision":{"type":"string","description":"Revision returned by notes_read. Required to replace the content of a note."}},"required":["content"],"additionalProperties":false})";
+  return R"({"type":"object","properties":{"path":{"type":"string","description":"Path of the note to change. Omit to create a note."},"title":{"type":"string","description":"Title of the new note. Only when creating a note."},"content":{"type":"string","description":"Markdown content."},"mode":{"type":"string","enum":["replace","append"],"description":"How content is applied to an existing note. Defaults to replace."},"revision":{"type":"string","description":"Revision returned by notes_read. Required to replace the content of a note."}},"required":["content"],"additionalProperties":false})";
 }
 
 bool WriteNoteTool::requiresApproval(std::string_view arguments) const {
@@ -231,6 +234,9 @@ AI::AbstractTool::RawToolTask WriteNoteTool::runRaw(std::string_view arguments) 
     return {m_store.save(std::move(note), true).then(&m_store, written), {}};
   }
 
+  if (input.title)
+    return ready(std::unexpected(std::string("A title can only be given when creating a note.")));
+
   auto future =
       m_store.list()
           .then(
@@ -254,7 +260,6 @@ AI::AbstractTool::RawToolTask WriteNoteTool::runRaw(std::string_view arguments) 
                                 "again with notes_read before replacing its content.");
                   note->markdown = input.content;
                 }
-                if (input.title) note->title = *input.title;
                 return store.save(std::move(*note), false).then(&store, written);
               })
           .unwrap();
