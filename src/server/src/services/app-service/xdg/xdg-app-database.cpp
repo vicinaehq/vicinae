@@ -187,6 +187,14 @@ AppPtr XdgAppDatabase::findDefaultTerminalFromSpec() const {
                                  });
   }
 
+  // Mirrors the lowest priority exclusions shipped with the xdg-terminal-exec reference implementation.
+  static constexpr auto DEFAULT_FALLBACK_EXCLUSIONS = std::to_array<std::string_view>(
+      {"org.kde.yakuake.desktop", "kitty-open.desktop", "foot-server.desktop", "footclient.desktop"});
+
+  for (const auto id : DEFAULT_FALLBACK_EXCLUSIONS) {
+    if (!seen.contains(std::string(id))) { excluded.emplace(id); }
+  }
+
   for (const auto &key : selected) {
     if (auto it = appMap.find(key.c_str()); it != appMap.end()) {
       // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
