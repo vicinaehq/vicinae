@@ -340,3 +340,39 @@ TEST_CASE("exact path component substring wins, mid-word filename subsequence is
   CHECK(rankOf("oled", "4k-oled/jellyfish-amoled.png") == 1);
   CHECK(rankOf("oled", "icons/SymbolEditor.svg") == -1);
 }
+
+TEST_CASE("re-indexing an unchanged entry leaves its row untouched") {
+  auto const &env = qualityEnv();
+  fs::path const file = env.root / "upsert-probe" / "zqx-upsert-probe.dat";
+  fs::create_directories(file.parent_path());
+  { std::ofstream{file} << "probe"; }
+
+  FileEvent const event{
+      .type = FileEventType::Modify,
+      .path = file,
+      .eventTime = fs::last_write_time(file),
+      .isDirectory = false,
+      .sizeBytes = 5,
+  };
+  FileIndexerDatabase db;
+  auto const markStale = [&] {
+    auto stmt = db.database().prepare("UPDATE indexed_file SET indexed_at = 0 WHERE path = :path");
+    stmt.bind(":path", file.c_str());
+    REQUIRE(stmt.exec());
+  };
+
+  db.indexEvents({event});
+  markStale();
+
+  db.indexEvents({event});
+  CHECK(db.retrieveIndexedAt(file) == 0);
+
+  auto changed = event;
+  changed.sizeBytes = 6;
+  db.indexEvents({changed});
+  CHECK(db.retrieveIndexedAt(file).value_or(0) > 0);
+  CHECK(db.retrieveIndexedSizeBytes(file) == 6);
+
+  db.indexEvents({{.type = FileEventType::Delete, .path = file, .eventTime = {}}});
+  CHECK_FALSE(db.tracksFile(file));
+}

@@ -24,6 +24,21 @@ static constexpr const char *SQLITE_PRAGMAS[] = {
     "PRAGMA temp_store = memory",
 };
 
+// rescans resubmit every entry of a directory: skip unchanged rows so skeleton_idx is not rewritten
+static constexpr std::string_view UPSERT_INDEXED_FILE_SQL = R"(
+    INSERT INTO
+      indexed_file (path, skeleton_path, parent_id, last_modified_at, type, category, size_bytes, mime_type_id)
+    VALUES
+      (:path, :skeleton_path, :parent_id, :last_modified_at, :type, :category, :size_bytes, :mime_type_id)
+    ON CONFLICT (path) DO UPDATE SET last_modified_at = excluded.last_modified_at,
+      skeleton_path = excluded.skeleton_path, parent_id = excluded.parent_id, type = excluded.type,
+      category = excluded.category, size_bytes = excluded.size_bytes, mime_type_id = excluded.mime_type_id,
+      indexed_at = unixepoch()
+    WHERE last_modified_at IS NOT excluded.last_modified_at OR skeleton_path IS NOT excluded.skeleton_path
+      OR parent_id IS NOT excluded.parent_id OR type IS NOT excluded.type OR category IS NOT excluded.category
+      OR size_bytes IS NOT excluded.size_bytes OR mime_type_id IS NOT excluded.mime_type_id
+  )";
+
 namespace fs = std::filesystem;
 
 namespace {
@@ -598,16 +613,7 @@ FileIndexerDatabase::spellfixSuggestions(std::string_view word, int top, bool pr
 void FileIndexerDatabase::indexEvents(const std::vector<FileEvent> &events) {
   auto tx = m_db.transaction();
 
-  auto modifyStmt = m_db.prepare(R"(
-    INSERT INTO
-      indexed_file (path, skeleton_path, parent_id, last_modified_at, type, category, size_bytes, mime_type_id)
-    VALUES
-      (:path, :skeleton_path, :parent_id, :last_modified_at, :type, :category, :size_bytes, :mime_type_id)
-    ON CONFLICT (path) DO UPDATE SET last_modified_at = excluded.last_modified_at,
-      skeleton_path = excluded.skeleton_path, parent_id = excluded.parent_id, type = excluded.type,
-      category = excluded.category, size_bytes = excluded.size_bytes, mime_type_id = excluded.mime_type_id,
-      indexed_at = unixepoch()
-  )");
+  auto modifyStmt = m_db.prepare(UPSERT_INDEXED_FILE_SQL);
 
   auto deleteStmt = m_db.prepare("DELETE FROM indexed_file WHERE path = :path");
   auto deleteSubtreeStmt = m_db.prepare("DELETE FROM indexed_file WHERE path >= :lower AND path < :upper");
@@ -667,16 +673,7 @@ void FileIndexerDatabase::indexEvents(const std::vector<FileEvent> &events) {
 void FileIndexerDatabase::indexFiles(const std::vector<std::filesystem::path> &paths) {
   auto tx = m_db.transaction();
 
-  auto stmt = m_db.prepare(R"(
-    INSERT INTO
-      indexed_file (path, skeleton_path, parent_id, last_modified_at, type, category, size_bytes, mime_type_id)
-    VALUES
-      (:path, :skeleton_path, :parent_id, :last_modified_at, :type, :category, :size_bytes, :mime_type_id)
-    ON CONFLICT (path) DO UPDATE SET last_modified_at = excluded.last_modified_at,
-      skeleton_path = excluded.skeleton_path, parent_id = excluded.parent_id, type = excluded.type,
-      category = excluded.category, size_bytes = excluded.size_bytes, mime_type_id = excluded.mime_type_id,
-      indexed_at = unixepoch()
-  )");
+  auto stmt = m_db.prepare(UPSERT_INDEXED_FILE_SQL);
 
   std::error_code ec;
   double score = 1.0;
