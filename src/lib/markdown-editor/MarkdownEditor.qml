@@ -45,6 +45,37 @@ FocusScope {
         if (!root.pasteHandler || !root.pasteHandler(edit.selectionStart, edit.selectionEnd))
             edit.paste();
     }
+    function lineCommand(event) {
+        const modifiers = event.modifiers & (Qt.ShiftModifier | Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier);
+        const start = edit.selectionStart;
+        const end = edit.selectionEnd;
+        if (start === end && event.matches(StandardKey.Copy)) {
+            root.document.copyLine(start);
+            return true;
+        }
+        if (root.readOnly)
+            return false;
+        if (start === end && event.matches(StandardKey.Cut)) {
+            root.document.cutLine(start);
+            return true;
+        }
+        switch (event.key) {
+        case Qt.Key_Tab:
+        case Qt.Key_Backtab:
+            if (event.key === Qt.Key_Tab && modifiers === Qt.NoModifier)
+                return root.document.indent(start, end);
+            if (modifiers !== Qt.ShiftModifier)
+                return false;
+            root.document.outdent(start, end);
+            return true;
+        case Qt.Key_K:
+            if (modifiers !== (Qt.ControlModifier | Qt.ShiftModifier))
+                return false;
+            root.document.deleteLines(start, end);
+            return true;
+        }
+        return false;
+    }
     function find(query, backwards, incremental = false) {
         const from = backwards || incremental ? edit.selectionStart : edit.selectionEnd;
         const match = document.find(query, from, backwards);
@@ -161,6 +192,8 @@ FocusScope {
                 if (event.matches(StandardKey.Paste)) {
                     root.paste();
                     event.accepted = true;
+                } else if (!inputMethodComposing) {
+                    event.accepted = root.lineCommand(event);
                 }
             }
             Keys.onEscapePressed: event => {

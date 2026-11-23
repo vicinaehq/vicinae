@@ -57,6 +57,11 @@ public:
   Q_INVOKABLE void wrap(int start, int end, const QString &marker);
   Q_INVOKABLE void format(int start, int end, Format format);
   Q_INVOKABLE int continueLine(int position);
+  Q_INVOKABLE void copyLine(int position) const;
+  Q_INVOKABLE void cutLine(int position);
+  Q_INVOKABLE void deleteLines(int start, int end);
+  Q_INVOKABLE bool indent(int start, int end);
+  Q_INVOKABLE void outdent(int start, int end);
   Q_INVOKABLE QVariantMap find(const QString &query, int from, bool backwards = false) const;
 
 signals:

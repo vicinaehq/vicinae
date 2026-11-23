@@ -3,6 +3,8 @@
 #include <KSyntaxHighlighting/Repository>
 #include <KSyntaxHighlighting/SyntaxHighlighter>
 #include <KSyntaxHighlighting/Theme>
+#include <QClipboard>
+#include <QGuiApplication>
 #include <QRegularExpression>
 #include <QQuickItem>
 #include <QMimeData>
@@ -15,6 +17,23 @@
 #include "editor-document.hpp"
 
 namespace Vicinae::Editor {
+
+namespace {
+
+constexpr int INDENT_WIDTH = 4;
+
+struct LineRange {
+  QTextBlock first;
+  QTextBlock last;
+  int start() const { return first.position(); }
+  int end() const { return last.position() + last.length() - 1; }
+};
+
+LineRange lineRange(const QTextDocument &document, int start, int end) {
+  return {document.findBlock(start), document.findBlock(end > start ? end - 1 : end)};
+}
+
+} // namespace
 
 void EditorDocument::setDropHandler(std::function<bool(const QMimeData *)> accepts,
                                     std::function<bool(const QMimeData *, int)> insert) {
@@ -386,8 +405,7 @@ void EditorDocument::formatLines(int start, int end, Format format) {
     int prefix;
     bool matches;
   };
-  const auto first = m_document->findBlock(start);
-  const auto last = m_document->findBlock(end > start ? end - 1 : end);
+  const auto [first, last] = lineRange(*m_document, start, end);
   std::vector<Line> lines;
   lines.reserve(last.blockNumber() - first.blockNumber() + 1);
   bool remove = true;
@@ -442,8 +460,7 @@ void EditorDocument::formatLines(int start, int end, Format format) {
 }
 
 void EditorDocument::formatCodeBlock(int start, int end) {
-  auto first = m_document->findBlock(start);
-  auto last = m_document->findBlock(end > start ? end - 1 : end);
+  auto [first, last] = lineRange(*m_document, start, end);
   static const QRegularExpression FENCE(R"(^(`{3,}|~{3,})[^`~]*$)");
   auto opening = FENCE.match(first.text());
   if (!opening.hasMatch() && first.previous().isValid() && last.next().isValid()) {
@@ -504,6 +521,73 @@ int EditorDocument::continueLine(int position) {
   cursor.insertText('\n' + continuation);
   cursor.endEditBlock();
   return cursor.position();
+}
+
+void EditorDocument::copyLine(int position) const {
+  if (!validRange(position, position)) return;
+  QGuiApplication::clipboard()->setText(m_document->findBlock(position).text() + u'\n');
+}
+
+void EditorDocument::cutLine(int position) {
+  copyLine(position);
+  deleteLines(position, position);
+}
+
+void EditorDocument::deleteLines(int start, int end) {
+  if (!validRange(start, end)) return;
+  const auto lines = lineRange(*m_document, start, end);
+  const auto next = lines.last.next();
+  QTextCursor cursor(m_document);
+  // The last line has no separator after it, so it takes the one before it instead.
+  cursor.setPosition(next.isValid() ? lines.start() : std::max(0, lines.start() - 1));
+  cursor.setPosition(next.isValid() ? next.position() : lines.end(), QTextCursor::KeepAnchor);
+  cursor.removeSelectedText();
+  emit selectionRequested(cursor.position(), cursor.position());
+}
+
+bool EditorDocument::indent(int start, int end) {
+  if (!validRange(start, end)) return false;
+  static const QRegularExpression LIST_ITEM(R"(^[\t ]*(?:[-+*]|\d+[.)])[\t ])");
+  const auto lines = lineRange(*m_document, start, end);
+  if (lines.first == lines.last && !LIST_ITEM.match(lines.first.text()).hasMatch()) return false;
+  QTextCursor selection(m_document);
+  selection.setPosition(start);
+  selection.setPosition(end, QTextCursor::KeepAnchor);
+  QTextCursor cursor(m_document);
+  cursor.beginEditBlock();
+  for (auto block = lines.first; block.isValid(); block = block.next()) {
+    if (!block.text().trimmed().isEmpty()) {
+      cursor.setPosition(block.position());
+      cursor.insertText(QString(INDENT_WIDTH, u' '));
+    }
+    if (block == lines.last) break;
+  }
+  cursor.endEditBlock();
+  emit selectionRequested(selection.selectionStart(), selection.selectionEnd());
+  return true;
+}
+
+void EditorDocument::outdent(int start, int end) {
+  if (!validRange(start, end)) return;
+  const auto lines = lineRange(*m_document, start, end);
+  QTextCursor selection(m_document);
+  selection.setPosition(start);
+  selection.setPosition(end, QTextCursor::KeepAnchor);
+  QTextCursor cursor(m_document);
+  cursor.beginEditBlock();
+  for (auto block = lines.first; block.isValid(); block = block.next()) {
+    const auto line = block.text();
+    int width = 0;
+    while (width < INDENT_WIDTH && width < line.size() && line.at(width) == u' ')
+      ++width;
+    if (line.startsWith(u'\t')) width = 1;
+    cursor.setPosition(block.position());
+    cursor.setPosition(block.position() + width, QTextCursor::KeepAnchor);
+    cursor.removeSelectedText();
+    if (block == lines.last) break;
+  }
+  cursor.endEditBlock();
+  emit selectionRequested(selection.selectionStart(), selection.selectionEnd());
 }
 
 QVariantMap EditorDocument::find(const QString &query, int from, bool backwards) const {
