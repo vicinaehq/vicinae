@@ -8,7 +8,9 @@ import Vicinae.Editor
 Window {
     id: root
     property bool nativeChrome: false
-    property bool translucentBackground: false
+    property bool translucentBackground: Config.blurEnabled && Platform.supports("windowMaterial")
+    property real headerOpacity: 0.9
+    property real bodyOpacity: 0.96
     property bool supportsKeepOnTop: false
     property bool keepOnTop: supportsKeepOnTop
     readonly property int stayOnTopFlag: supportsKeepOnTop && keepOnTop ? Qt.WindowStaysOnTopHint : 0
@@ -29,13 +31,13 @@ Window {
     // Stable prefix for window-manager rules.
     title: "Vicinae Notes — %1".arg(NotesWindowHost.title || qsTr("Untitled Note"))
     flags: Qt.Window | Qt.WindowTitleHint | Qt.WindowCloseButtonHint | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint | root.stayOnTopFlag
-    WindowMaterial.enabled: Platform.supports("windowMaterial")
+    WindowMaterial.enabled: root.translucentBackground
     onClosing: event => event.accepted = NotesWindowHost.requestClose()
 
     Rectangle {
         width: parent.width
         height: root.headerHeight
-        color: root.translucentBackground ? Config.withAlpha(Theme.background, 0.58) : Theme.background
+        color: root.translucentBackground ? Config.withAlpha(Theme.background, root.headerOpacity) : Theme.background
         DragHandler {
             target: null
             onActiveChanged: if (active)
@@ -228,7 +230,7 @@ Window {
     Rectangle {
         anchors.fill: parent
         anchors.topMargin: root.headerHeight
-        color: root.translucentBackground ? Config.withAlpha(Theme.background, 0.84) : Theme.background
+        color: root.translucentBackground ? Config.withAlpha(Theme.background, root.bodyOpacity) : Theme.background
 
         ColumnLayout {
             anchors.fill: parent

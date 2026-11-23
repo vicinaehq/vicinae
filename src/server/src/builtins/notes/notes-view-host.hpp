@@ -21,6 +21,9 @@ class NotesViewHost : public MonoListViewHost<Notes::Note> {
 public:
   void onMount() override {
     setSearchPlaceholderText(tr("Search notes…"));
+    m_emptyTitle = tr("No notes found");
+    m_emptyDescription = tr("Create a note to start writing.");
+    m_emptyIcon = ImageUrl{ImageURL::builtin(BuiltinIcon::Feather).setBackgroundTint(SemanticColor::Yellow)};
     connect(context()->services->notes(), &Notes::Store::changed, this, [this] {
       if (context()->navigation->isWindowOpened()) reload();
     });

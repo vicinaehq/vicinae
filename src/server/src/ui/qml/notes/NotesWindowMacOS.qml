@@ -9,7 +9,8 @@ NotesWindow {
     toolbarCenterY: windowButtons.height > 0 ? windowButtons.y + windowButtons.height / 2 : 20
     toolbarLeftInset: windowButtons.width > 0 ? windowButtons.x + windowButtons.width + 14 : 84
     headerHeight: Math.max(40, toolbarCenterY * 2)
-    translucentBackground: Config.blurEnabled
+    headerOpacity: 0.58
+    bodyOpacity: 0.84
     MacOSWindow.enabled: true
     MacOSWindow.blurEnabled: root.translucentBackground
     MacOSWindow.material: "sidebar"
