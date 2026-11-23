@@ -77,10 +77,7 @@ QString imageProviderUrl(const QString &rawUrl) {
     return imgUrl.toString();
   }
 
-  if (scheme == "file") {
-    auto path = url.host().isEmpty() ? url.path() : url.host() + url.path();
-    return ImageURL::local(path).toString();
-  }
+  if (scheme == "file") return ImageURL::local(url.toLocalFile()).toString();
 
   if (scheme.isEmpty()) return ImageURL::local(rawUrl).toString();
 
