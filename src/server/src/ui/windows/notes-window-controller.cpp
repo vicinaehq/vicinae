@@ -11,6 +11,7 @@
 #include "notes-window-controller.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
+#include "services/notes/notes-front-matter.hpp"
 #include "services/paste/paste-service.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "services/toast/toast-service.hpp"
@@ -463,7 +464,7 @@ void NotesWindowController::setViewMode(ViewMode mode) {
 
 void NotesWindowController::refreshPreview() {
   if (m_closed || m_viewMode == Edit) return;
-  auto markdown = m_document.text();
+  auto markdown = QString::fromUtf8(Notes::body(m_document.text().toStdString()));
   if (markdown != m_previewModel.markdown()) m_previewModel.setMarkdownAsync(std::move(markdown), true);
 }
 

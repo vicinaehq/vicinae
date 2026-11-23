@@ -347,6 +347,8 @@ set(SRCS
 	src/services/notes/notes-store.cpp
 	src/services/notes/notes-attachments.hpp
 	src/services/notes/notes-attachments.cpp
+	src/services/notes/notes-front-matter.hpp
+	src/services/notes/notes-front-matter.cpp
 	src/ui/windows/notes-window-controller.cpp
 
 
@@ -566,6 +568,7 @@ set(SRCS
 	src/builtins/clipboard/clipboard-tools.cpp
 	src/builtins/file/file-tools.cpp
 	src/builtins/notes/notes-tools.cpp
+	src/builtins/notes/notes-view-host.hpp
 	src/builtins/system/open-tool.cpp
 
 	src/builtins/file/search-files-model.hpp
@@ -1864,6 +1867,8 @@ if(BUILD_TESTS)
 		src/services/notes/notes-store.cpp
 		src/services/notes/notes-attachments.hpp
 		src/services/notes/notes-attachments.cpp
+		src/services/notes/notes-front-matter.hpp
+		src/services/notes/notes-front-matter.cpp
 		src/builtins/notes/notes-tools.hpp
 		src/builtins/notes/notes-tools.cpp
 	)

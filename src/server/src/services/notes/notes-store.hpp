@@ -22,6 +22,7 @@ struct Note {
   std::string path;
   std::string revision;
   bool readOnly = false;
+  std::vector<std::string> tags;
 };
 
 struct AttachmentResult {
@@ -50,6 +51,7 @@ public:
   QFuture<Result<std::vector<Note>>> list();
   QFuture<Result<Note>> load(std::string id);
   QFuture<Result<Note>> save(Note note, bool create);
+  QFuture<Result<Note>> setTags(std::string id, std::vector<std::string> tags);
   QFuture<Result<AttachmentResult>> attach(Note note, bool create, std::vector<Attachment> attachments);
   QFuture<Result<void>> remove(std::string id);
 

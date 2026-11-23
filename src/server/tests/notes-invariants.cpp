@@ -12,6 +12,7 @@
 #include <QUrl>
 #include "builtins/notes/notes-tools.hpp"
 #include "editor-document.hpp"
+#include "services/notes/notes-front-matter.hpp"
 #include "services/notes/notes-store.hpp"
 
 class NotesInvariantsTest : public QObject {
@@ -497,6 +498,8 @@ private slots:
     QVERIFY(notes);
     QCOMPARE(notes->size(), std::size_t(1));
     QVERIFY(file.setPermissions(QFileDevice::ReadOwner));
+    if (QFileInfo(file).isWritable())
+      QSKIP("Permissions do not restrict this user, as when running as root.");
     auto loaded = store.load(notes->front().id).result();
     QVERIFY(loaded);
     QVERIFY(loaded->readOnly);
@@ -543,6 +546,55 @@ private slots:
     Notes::Store store(file.fileName().toStdString());
     QVERIFY(!store.save({"id", "title", "body", 1, 1}, true).result());
     QVERIFY(!store.list().result());
+  }
+
+  void frontMatterTags() {
+    using Tags = std::vector<std::string>;
+    QCOMPARE(Notes::tags("---\ntags: [work, idea]\n---\nBody"), (Tags{"work", "idea"}));
+    QCOMPARE(Notes::tags("---\ntitle: x\ntags:\n  - work\n  - \"#idea\"\nother: 1\n---\n"),
+             (Tags{"work", "idea"}));
+    QCOMPARE(Notes::tags("---\ntags: work, not a tag # comment\n---\n"), (Tags{"work"}));
+    QVERIFY(Notes::tags("tags: [work]\n").empty());
+    QCOMPARE(Notes::body("---\ntags: [work]\n---\nBody"), std::string_view("Body"));
+
+    // A leading thematic break is not front matter.
+    const std::string prose = "---\nSome text\n---\nBody";
+    QCOMPARE(Notes::body(prose), std::string_view(prose));
+    QVERIFY(Notes::tags("---\ntags: [work]\nBody").empty());
+
+    const std::string plain = "# Title\n";
+    const auto tagged = Notes::withTags(plain, Tags{"work", "a/b"});
+    QCOMPARE(tagged, std::string("---\ntags: [work, a/b]\n---\n# Title\n"));
+    QCOMPARE(Notes::withTags(tagged, Tags{}), plain);
+
+    const std::string existing = "---\ntitle: x # keep\ntags:\n  - old\naliases: [y]\n---\n\nBody";
+    QCOMPARE(Notes::withTags(existing, Tags{"new"}),
+             std::string("---\ntitle: x # keep\ntags: [new]\naliases: [y]\n---\n\nBody"));
+    QCOMPARE(Notes::withTags(existing, Tags{}),
+             std::string("---\ntitle: x # keep\naliases: [y]\n---\n\nBody"));
+    QCOMPARE(Notes::withTags("---\ntitle: x\n---\nBody", Tags{"new"}),
+             std::string("---\ntitle: x\ntags: [new]\n---\nBody"));
+
+    QVERIFY(Notes::isValidTag("work/2026_q1-été"));
+    for (const auto *invalid : {"", "two words", "a,b", "[a]", "-a", "a:b", "#a"})
+      QVERIFY2(!Notes::isValidTag(invalid), invalid);
+  }
+
+  void storeSetsTagsOnTheCurrentFile() {
+    QTemporaryDir directory;
+    Notes::Store store(directory.path().toStdString());
+    const auto saved = store.save({.id = "id", .title = "Tagged", .markdown = "Body"}, true).result();
+    QVERIFY(saved && saved->tags.empty());
+
+    // Each change applies to what is on disk, so that queued changes need no fresh revision.
+    store.setTags(saved->id, {"work"});
+    const auto tagged = store.setTags(saved->id, {"work", "idea"}).result();
+    QVERIFY(tagged);
+    QCOMPARE(tagged->tags, (std::vector<std::string>{"work", "idea"}));
+    QCOMPARE(tagged->markdown, std::string("---\ntags: [work, idea]\n---\nBody"));
+    QCOMPARE(store.list().result()->front().tags, tagged->tags);
+    QCOMPARE(store.setTags(saved->id, {}).result()->markdown, std::string("Body"));
+    QVERIFY(!store.setTags("missing", {"work"}).result());
   }
 
   void toolsSearchReadAndWriteNotes() {

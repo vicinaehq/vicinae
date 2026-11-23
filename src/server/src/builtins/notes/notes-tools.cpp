@@ -7,6 +7,7 @@
 #include <QUuid>
 #include "notes-tools.hpp"
 #include "notes-search.hpp"
+#include "services/notes/notes-front-matter.hpp"
 #include "services/notes/notes-store.hpp"
 
 // not anonymous: glaze can't reflect types with internal linkage
@@ -38,6 +39,7 @@ struct SearchResult {
   std::string path;
   std::string title;
   std::string modified_at;
+  std::vector<std::string> tags;
   std::string preview;
   bool read_only;
 };
@@ -50,6 +52,7 @@ struct ReadOutput {
   std::string path;
   std::string title;
   std::string revision;
+  std::vector<std::string> tags;
   bool read_only;
   bool truncated;
   std::string content;
@@ -103,9 +106,9 @@ RawToolResult written(const Notes::Result<Notes::Note> &note) {
 using namespace notes_tools;
 
 std::string SearchNotesTool::description() const {
-  return "Search the user's Markdown notes by title and content. An empty query lists the most recently "
-         "modified notes. Returns the path of each note with a short preview. Use notes_read with a path "
-         "to get the full content.";
+  return "Search the user's Markdown notes by title, tags and content. An empty query lists the most "
+         "recently modified notes. Returns the path and tags of each note with a short preview. Use "
+         "notes_read with a path to get the full content.";
 }
 
 std::string SearchNotesTool::generateInputSchema() const {
@@ -139,7 +142,8 @@ AI::AbstractTool::RawToolTask SearchNotesTool::runRaw(std::string_view arguments
               .title = note.title,
               .modified_at =
                   QDateTime::fromMSecsSinceEpoch(note.updatedAt).toString(Qt::ISODate).toStdString(),
-              .preview = std::string(AI::truncateUtf8(note.markdown, MAX_PREVIEW_BYTES).text),
+              .tags = note.tags,
+              .preview = std::string(AI::truncateUtf8(Notes::body(note.markdown), MAX_PREVIEW_BYTES).text),
               .read_only = note.readOnly,
           });
         }
@@ -177,6 +181,7 @@ AI::AbstractTool::RawToolTask ReadNoteTool::runRaw(std::string_view arguments) {
         return serialize(ReadOutput{.path = note->path,
                                     .title = note->title,
                                     .revision = revision(*note),
+                                    .tags = note->tags,
                                     .read_only = note->readOnly,
                                     .truncated = truncated,
                                     .content = std::string(text)});
@@ -188,7 +193,8 @@ std::string WriteNoteTool::description() const {
   return "Create a note or change an existing one. Without a path, creates a note from title and content "
          "in the user's default notes directory. With a path, mode \"replace\" (the default) overwrites "
          "the whole content and requires the revision returned by notes_read, while mode \"append\" adds "
-         "content at the end. Passing a title with a path renames the note. Content is Markdown. Returns "
+         "content at the end. Passing a title with a path renames the note. Content is Markdown, with "
+         "tags in a leading YAML front matter block such as \"---\\ntags: [work, idea]\\n---\". Returns "
          "the path of the note, which changes when it is renamed.";
 }
 

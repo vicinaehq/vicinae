@@ -12,6 +12,7 @@
 #include <set>
 #include <stdexcept>
 #include <unordered_map>
+#include "notes-front-matter.hpp"
 #include "notes-store.hpp"
 
 namespace Notes {
@@ -193,14 +194,17 @@ public:
     const auto path = pathFor(id);
     const auto bytes = read(path);
     const QFileInfo info(path);
+    auto markdown = bytes.toStdString();
+    auto noteTags = tags(markdown);
     return {id,
             info.completeBaseName().toStdString(),
-            bytes.toStdString(),
+            std::move(markdown),
             info.birthTime().toMSecsSinceEpoch(),
             info.lastModified().toMSecsSinceEpoch(),
             path.toStdString(),
             revision(bytes),
-            readOnly(info)};
+            readOnly(info),
+            std::move(noteTags)};
   }
 
   Note save(const Note &note, bool create) {
@@ -255,6 +259,12 @@ public:
     m_ids.insert_or_assign(path.toStdString(), note.id);
     watch();
     return load(note.id);
+  }
+
+  Note setTags(const std::string &id, std::span<const std::string> tags) {
+    auto note = load(id);
+    note.markdown = withTags(note.markdown, tags);
+    return save(note, false);
   }
 
   void remove(const std::string &id) {
@@ -346,6 +356,13 @@ QFuture<Result<Note>> Store::load(std::string id) {
 QFuture<Result<Note>> Store::save(Note note, bool create) {
   return submit(m_worker, [this, note = std::move(note), create] {
     auto saved = m_worker->save(note, create);
+    QMetaObject::invokeMethod(this, &Store::changed, Qt::QueuedConnection);
+    return saved;
+  });
+}
+QFuture<Result<Note>> Store::setTags(std::string id, std::vector<std::string> tags) {
+  return submit(m_worker, [this, id = std::move(id), tags = std::move(tags)] {
+    auto saved = m_worker->setTags(id, tags);
     QMetaObject::invokeMethod(this, &Store::changed, Qt::QueuedConnection);
     return saved;
   });
