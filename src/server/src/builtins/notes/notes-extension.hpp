@@ -22,10 +22,14 @@ class CreateNoteCommand : public BuiltinCallbackCommand {
         .setBadge(BuiltinIcon::Plus);
   }
   std::vector<QString> keywords() const override { return {"new", "markdown", "write"}; }
+  std::vector<CommandArgument> arguments() const override {
+    return {CommandArgument{.name = "title", .placeholder = tr("Title"), .required = false}};
+  }
   void execute(CommandController &controller) const override {
     auto *ctx = controller.context();
+    const auto &arguments = controller.launchProps().arguments;
     ctx->navigation->closeWindow();
-    ctx->notes->newNote();
+    ctx->notes->newNote(arguments.empty() ? QString{} : arguments.front().second.trimmed());
   }
 };
 

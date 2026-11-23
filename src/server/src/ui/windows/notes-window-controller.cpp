@@ -518,16 +518,16 @@ NotesWindowController *NotesWindowManager::createWindow(std::string id) {
   return controller;
 }
 
-void NotesWindowManager::newNote() {
+void NotesWindowManager::newNote(const QString &title) {
   QGuiApplication::inputMethod()->commit();
-  for (const auto &[id, window] : m_windows) {
-    if (window->isEmptyDraft()) {
-      window->setViewMode(NotesWindowController::Edit);
-      window->present();
-      return;
-    }
-  }
-  createWindow(QUuid::createUuid().toString(QUuid::WithoutBraces).toStdString())->present();
+  const auto draft =
+      std::ranges::find_if(m_windows, [](const auto &entry) { return entry.second->isEmptyDraft(); });
+  auto *window = draft != m_windows.end()
+                     ? draft->second
+                     : createWindow(QUuid::createUuid().toString(QUuid::WithoutBraces).toStdString());
+  window->setViewMode(NotesWindowController::Edit);
+  window->setTitle(title);
+  window->present();
 }
 
 void NotesWindowManager::openNote(const QString &id) {

@@ -127,7 +127,7 @@ class NotesWindowManager : public QObject {
 
 public:
   explicit NotesWindowManager(ApplicationContext &context) : m_context(context) {}
-  void newNote();
+  void newNote(const QString &title = {});
   void openNote(const QString &id);
   void deleteNote(const QString &id);
 
