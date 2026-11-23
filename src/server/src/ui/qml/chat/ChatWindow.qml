@@ -25,7 +25,7 @@ Window {
     WindowMaterial.enabled: Platform.supports("windowMaterial")
 
     Shortcut {
-        sequences: [StandardKey.Close]
+        sequences: [StandardKey.Close, StandardKey.Quit]
         onActivated: root.close()
     }
     Shortcut {
