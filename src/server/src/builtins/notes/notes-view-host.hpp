@@ -1,19 +1,13 @@
 #pragma once
 
-#include "fuzzy/fuzzy-searchable.hpp"
 #include "navigation-controller.hpp"
+#include "notes-search.hpp"
 #include "service-registry.hpp"
 #include "services/notes/notes-store.hpp"
 #include "services/toast/toast-service.hpp"
 #include "ui/action-panel/action-panel-state.hpp"
 #include "ui/views/mono-list-view-host.hpp"
 #include "ui/windows/notes-window-controller.hpp"
-
-template <> struct fuzzy::FuzzySearchable<Notes::Note> {
-  static fuzzy::Match score(const Notes::Note &note, const fuzzy::Query &query) {
-    return fuzzy::scoreWeighted({{note.title, 1.0}, {note.markdown, 0.5}}, query);
-  }
-};
 
 class NotesViewHost : public MonoListViewHost<Notes::Note> {
   Q_DECLARE_TR_FUNCTIONS(NotesViewHost)

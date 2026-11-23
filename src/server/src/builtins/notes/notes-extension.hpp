@@ -5,6 +5,7 @@
 #include "command/command-database.hpp"
 #include "command/single-view-command-context.hpp"
 #include "command/typed-command.hpp"
+#include "notes-tools.hpp"
 #include "notes-view-host.hpp"
 #include "vicinae.hpp"
 
@@ -60,5 +61,27 @@ public:
   NotesExtension() {
     registerCommand<CreateNoteCommand>();
     registerCommand<SearchNotesCommand>();
+
+    registerTool(
+        {.id = "search",
+         .title = tr("Search Notes"),
+         .description = tr("Find notes by title or content."),
+         .icon = ImageURL::builtin(BuiltinIcon::Feather),
+         .annotations = {.readOnly = true, .openWorld = false},
+         .create = [] { return std::make_unique<SearchNotesTool>(*ServiceRegistry::instance()->notes()); }});
+    registerTool(
+        {.id = "read",
+         .title = tr("Read Note"),
+         .description = tr("Read the content of a note."),
+         .icon = ImageURL::builtin(BuiltinIcon::Feather),
+         .annotations = {.readOnly = true, .openWorld = false},
+         .create = [] { return std::make_unique<ReadNoteTool>(*ServiceRegistry::instance()->notes()); }});
+    registerTool(
+        {.id = "write",
+         .title = tr("Write Note"),
+         .description = tr("Create notes and change existing ones."),
+         .icon = ImageURL::builtin(BuiltinIcon::Feather),
+         .annotations = {.destructive = true, .openWorld = false},
+         .create = [] { return std::make_unique<WriteNoteTool>(*ServiceRegistry::instance()->notes()); }});
   }
 };

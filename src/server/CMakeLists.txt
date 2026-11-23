@@ -565,6 +565,7 @@ set(SRCS
 	src/builtins/vicinae/theme-tools.cpp
 	src/builtins/clipboard/clipboard-tools.cpp
 	src/builtins/file/file-tools.cpp
+	src/builtins/notes/notes-tools.cpp
 	src/builtins/system/open-tool.cpp
 
 	src/builtins/file/search-files-model.hpp
@@ -1866,9 +1867,11 @@ if(BUILD_TESTS)
 		src/services/notes/notes-store.cpp
 		src/services/notes/notes-attachments.hpp
 		src/services/notes/notes-attachments.cpp
+		src/builtins/notes/notes-tools.hpp
+		src/builtins/notes/notes-tools.cpp
 	)
 	target_include_directories(vicinae-notes-tests PRIVATE src src/internal src/utils)
-	target_link_libraries(vicinae-notes-tests PRIVATE vicinae::editor vicinae-editorplugin vicinae::common Qt6::Test glaze::glaze)
+	target_link_libraries(vicinae-notes-tests PRIVATE vicinae::editor vicinae-editorplugin vicinae::common vicinae::fuzzy Qt6::Test glaze::glaze)
 	target_link_libraries(vicinae-notes-tests PRIVATE ${CMARK_LIBRARY})
 	target_compile_definitions(vicinae-notes-tests PRIVATE THEME_DIR="${EXTRA_DIR}/themes")
 	target_compile_features(vicinae-notes-tests PRIVATE cxx_std_23)

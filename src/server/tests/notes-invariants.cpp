@@ -19,6 +19,7 @@
 #include <QTextBlock>
 #include <QTextCursor>
 #include <QTextLayout>
+#include "builtins/notes/notes-tools.hpp"
 #include "editor-document.hpp"
 #include "services/notes/notes-store.hpp"
 #include "ui/quick/syntax-highlighter.hpp"
@@ -1105,6 +1106,76 @@ private slots:
     Notes::Store store(file.fileName().toStdString());
     QVERIFY(!store.save({"id", "title", "body", 1, 1}, true).result());
     QVERIFY(!store.list().result());
+  }
+
+  void toolsSearchReadAndWriteNotes() {
+    QTemporaryDir directory;
+    Notes::Store store(directory.path().toStdString());
+    SearchNotesTool search(store);
+    ReadNoteTool read(store);
+    WriteNoteTool write(store);
+    const auto run = [](AI::AbstractTool &tool, std::string_view arguments) {
+      auto task = tool.runRaw(arguments);
+      const bool finished = QTest::qWaitFor([&task] { return task.future.isFinished(); });
+      return finished && task.future.resultCount() > 0
+                 ? task.future.result()
+                 : AI::AbstractTool::RawToolResult(std::unexpected(std::string("unfinished")));
+    };
+    const auto json = [](const AI::AbstractTool::RawToolResult &result) {
+      glz::generic value;
+      if (result) std::ignore = glz::read_json(value, result->content);
+      return value;
+    };
+    const auto arguments = [](const glz::generic::object_t &value) {
+      return glz::write_json(glz::generic(value)).value_or("");
+    };
+
+    QVERIFY(!run(write, R"({"content":"missing title"})"));
+    const auto created = run(write, R"({"title":"Groceries","content":"- milk\n"})");
+    QVERIFY(created);
+    const auto path = json(created)["path"].get<std::string>();
+    QCOMPARE(path, directory.filePath("Groceries.md").toStdString());
+
+    const auto found = json(run(search, R"({"query":"grocer"})"));
+    QCOMPARE(found.get<glz::generic::array_t>().size(), std::size_t(1));
+    QCOMPARE(found[0]["path"].get<std::string>(), path);
+    QCOMPARE(json(run(search, R"({"query":""})")).get<glz::generic::array_t>().size(), std::size_t(1));
+    QVERIFY(json(run(search, R"({"query":"zzzzqqqq"})")).get<glz::generic::array_t>().empty());
+
+    const auto first = json(run(read, arguments({{"path", path}})));
+    QCOMPARE(first["content"].get<std::string>(), std::string("- milk\n"));
+    const auto stale = first["revision"].get<std::string>();
+
+    QFile outside(directory.filePath("secret.txt"));
+    QVERIFY(outside.open(QIODevice::WriteOnly));
+    outside.write("secret");
+    outside.close();
+    QVERIFY(!run(read, arguments({{"path", outside.fileName().toStdString()}})));
+    QVERIFY(!run(write, arguments({{"path", outside.fileName().toStdString()}, {"content", "x"}})));
+
+    const auto append = arguments({{"path", path}, {"mode", "append"}, {"content", "- eggs"}});
+    QVERIFY(!write.requiresApproval(R"({"title":"New","content":""})"));
+    QVERIFY(!write.requiresApproval(append));
+    QVERIFY(run(write, append));
+    QCOMPARE(store.list().result()->front().markdown, std::string("- milk\n- eggs"));
+
+    const auto replace = [&](const std::string &revision) {
+      return arguments(
+          {{"path", path}, {"title", "Shopping"}, {"content", "- bread"}, {"revision", revision}});
+    };
+    QVERIFY(write.requiresApproval(replace(stale)));
+    QVERIFY(!run(write, arguments({{"path", path}, {"content", "- bread"}})));
+    QVERIFY(!run(write, replace(stale)));
+    QCOMPARE(store.list().result()->front().markdown, std::string("- milk\n- eggs"));
+
+    const auto current = json(run(read, arguments({{"path", path}})))["revision"].get<std::string>();
+    const auto replaced = run(write, replace(current));
+    QVERIFY(replaced);
+    QCOMPARE(json(replaced)["path"].get<std::string>(), directory.filePath("Shopping.md").toStdString());
+    const auto notes = store.list().result();
+    QCOMPARE(notes->size(), std::size_t(1));
+    QCOMPARE(notes->front().title, std::string("Shopping"));
+    QCOMPARE(notes->front().markdown, std::string("- bread"));
   }
 
 private:
