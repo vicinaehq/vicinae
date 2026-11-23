@@ -6,11 +6,13 @@
 #include <QMimeData>
 #include <QQuickWindow>
 #include <QUuid>
+#include <algorithm>
 #include <utility>
 #include "notes-window-controller.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include "services/paste/paste-service.hpp"
+#include "services/root-item-manager/root-item-manager.hpp"
 #include "services/toast/toast-service.hpp"
 #include "ui/bridges/config-bridge.hpp"
 #include "theme/theme.hpp"
@@ -24,11 +26,20 @@
 #include "internal/wayland/xdg-activation.hpp"
 #endif
 
+namespace {
+constexpr int MIN_FONT_SIZE = 8;
+constexpr int MAX_FONT_SIZE = 32;
+} // namespace
+
 NotesWindowController::NotesWindowController(ApplicationContext &context, std::string id, QObject *parent)
     : QObject(parent), m_context(context), m_document(syntax::repository()) {
   auto applyTheme = [this](const ThemeFile &theme) { m_document.setPalette(syntax::paletteForTheme(theme)); };
   applyTheme(ThemeService::instance().theme());
   connect(&ThemeService::instance(), &ThemeService::themeChanged, this, applyTheme);
+  connect(&ThemeService::instance(), &ThemeService::themeChanged, this,
+          &NotesWindowController::fontSizeChanged);
+  connect(m_context.services->notes(), &Notes::Store::configured, this,
+          &NotesWindowController::fontSizeChanged);
   m_idleSave.setSingleShot(true);
   m_idleSave.setInterval(500);
   m_maxSave.setSingleShot(true);
@@ -411,6 +422,24 @@ void NotesWindowController::saveCopy() {
 }
 
 void NotesWindowController::openSettings() { m_context.settings->openExtensionPreferences({"notes", {}}); }
+
+qreal NotesWindowController::fontSize() const {
+  const auto size = m_context.services->notes()->preferences().fontSize;
+  return size ? std::clamp(*size, MIN_FONT_SIZE, MAX_FONT_SIZE)
+              : ThemeService::instance().pointSize(TextRegular);
+}
+
+void NotesWindowController::adjustFontSize(int delta) {
+  storeFontSize(std::clamp(qRound(fontSize()) + delta, MIN_FONT_SIZE, MAX_FONT_SIZE));
+}
+
+void NotesWindowController::resetFontSize() { storeFontSize(std::nullopt); }
+
+void NotesWindowController::storeFontSize(std::optional<int> size) {
+  m_context.services->rootItemManager()->setProviderPreferenceValues(
+      QStringLiteral("notes"),
+      {{"fontSize", size ? glz::generic(static_cast<double>(*size)) : glz::generic{}}});
+}
 
 bool NotesWindowController::requestClose() {
   if (m_closed) return true;

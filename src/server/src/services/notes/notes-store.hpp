@@ -36,12 +36,14 @@ class Store : public QObject {
 
 signals:
   void changed();
+  void configured();
   void removed(const QString &id);
 
 public:
   explicit Store(std::filesystem::path directory, Preferences preferences = {});
   ~Store() override;
   void configure(Preferences preferences);
+  const Preferences &preferences() const { return m_preferences; }
   static std::string normalizeDirectory(const std::string &path);
   std::vector<std::string> directories() const;
   std::string defaultDirectory() const;

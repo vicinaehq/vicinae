@@ -208,7 +208,9 @@ public:
     QString path;
     if (create) {
       if (m_paths.contains(note.id)) fail(Store::tr("This note already exists."));
-      const QFileInfo directory(QString::fromStdString(m_defaultDirectory));
+      const auto root = QString::fromStdString(m_defaultDirectory);
+      QDir().mkpath(root);
+      const QFileInfo directory(root);
       if (!directory.isDir() || !directory.isWritable())
         fail(Store::tr(
             "The default notes directory is unavailable or read-only. Choose another in Settings."));
@@ -328,6 +330,7 @@ Store::~Store() {
 }
 void Store::configure(Preferences preferences) {
   m_preferences = std::move(preferences);
+  emit configured();
   QMetaObject::invokeMethod(m_worker,
                             [this, directories = directories(), defaultDirectory = defaultDirectory()] {
                               m_worker->configure(directories, defaultDirectory);

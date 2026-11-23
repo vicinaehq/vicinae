@@ -27,6 +27,7 @@ class NotesWindowController : public QObject {
   Q_PROPERTY(bool loading READ loading NOTIFY stateChanged)
   Q_PROPERTY(bool canPasteAttachments READ canPasteAttachments NOTIFY clipboardChanged)
   Q_PROPERTY(ViewMode viewMode READ viewMode WRITE setViewMode NOTIFY viewModeChanged)
+  Q_PROPERTY(qreal fontSize READ fontSize NOTIFY fontSizeChanged)
 
 public:
   Q_INVOKABLE void newNote();
@@ -38,11 +39,14 @@ public:
   Q_INVOKABLE void openSettings();
   Q_INVOKABLE bool requestClose();
   Q_INVOKABLE bool paste(int start, int end);
+  Q_INVOKABLE void adjustFontSize(int delta);
+  Q_INVOKABLE void resetFontSize();
 
 signals:
   void titleChanged();
   void stateChanged();
   void viewModeChanged();
+  void fontSizeChanged();
   void focusRequested();
   void closed();
   void clipboardChanged();
@@ -70,6 +74,7 @@ public:
   bool canPasteAttachments() const;
   ViewMode viewMode() const { return m_viewMode; }
   void setViewMode(ViewMode mode);
+  qreal fontSize() const;
 
 private:
   bool eventFilter(QObject *object, QEvent *event) override;
@@ -84,6 +89,7 @@ private:
   void startPaste();
   void finishPaste();
   bool flush();
+  void storeFontSize(std::optional<int> size);
   Notes::Note snapshot() const;
   bool dirty() const { return m_serial != m_savedSerial; }
   ApplicationContext &m_context;

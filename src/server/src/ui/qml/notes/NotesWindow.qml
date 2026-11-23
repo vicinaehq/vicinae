@@ -329,7 +329,7 @@ Window {
                                 quote: "qrc:/icons/quote-block.svg"
                             })
                         fontFamily: Theme.monoFontFamily
-                        fontSize: Theme.regularFontSize
+                        fontSize: NotesWindowHost.fontSize
                         contentPadding: root.splitView ? 24 : Math.max(32, (width - 760) / 2)
                         topPadding: 20
                         ViciWheelHandler {
@@ -512,6 +512,18 @@ Window {
     Shortcut {
         sequences: [StandardKey.Save]
         onActivated: NotesWindowHost.save()
+    }
+    Shortcut {
+        sequences: [StandardKey.ZoomIn, "Ctrl+="]
+        onActivated: NotesWindowHost.adjustFontSize(1)
+    }
+    Shortcut {
+        sequences: [StandardKey.ZoomOut]
+        onActivated: NotesWindowHost.adjustFontSize(-1)
+    }
+    Shortcut {
+        sequence: "Ctrl+0"
+        onActivated: NotesWindowHost.resetFontSize()
     }
     Shortcut {
         sequences: [StandardKey.Find]

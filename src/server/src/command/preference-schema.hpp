@@ -76,6 +76,11 @@ Preference::DropdownData::Option option(E value, QString title) {
 
 namespace preference_schema {
 
+template <typename M>
+concept OptionalNumber = requires {
+  typename M::value_type;
+} && std::is_same_v<M, std::optional<typename M::value_type>> && std::is_arithmetic_v<typename M::value_type>;
+
 template <typename T, std::size_t I> QString keyOf(const PreferenceMeta &meta) {
   if (!meta.key.isEmpty()) return meta.key;
   constexpr std::string_view name = glz::reflect<T>::keys[I];
@@ -131,6 +136,9 @@ template <typename M> Preference make(const QString &key, const M &value, const 
   } else if constexpr (std::is_arithmetic_v<M>) {
     pref = Preference::makeText(key);
     pref.setDefaultValue(glz::generic(static_cast<double>(value)));
+  } else if constexpr (OptionalNumber<M>) {
+    pref = Preference::makeText(key);
+    pref.setDefaultValue(value ? glz::generic(static_cast<double>(*value)) : glz::generic{});
   } else if constexpr (std::is_same_v<M, std::vector<std::string>>) {
     switch (meta.kind) {
     case Kind::Directories:
@@ -234,6 +242,23 @@ template <TypedPreferences T> T readPreferences(const PreferenceValues &values, 
                 if (ok) member = static_cast<M>(number);
                 return;
               }
+            }
+
+            if constexpr (preference_schema::OptionalNumber<M>) {
+              using Number = typename M::value_type;
+              if (value->is_number()) {
+                member = static_cast<Number>(value->get_number());
+              } else if (value->is_string()) {
+                // An emptied text field clears the value.
+                const auto text = QString::fromStdString(value->get_string()).trimmed();
+                bool ok = false;
+                const double number = text.toDouble(&ok);
+                if (text.isEmpty())
+                  member.reset();
+                else if (ok)
+                  member = static_cast<Number>(number);
+              }
+              return;
             }
 
             std::string json;

@@ -1,12 +1,14 @@
 #pragma once
 
 #include <QCoreApplication>
+#include <algorithm>
 #include "command/command-controller.hpp"
 #include "command/command-database.hpp"
 #include "command/single-view-command-context.hpp"
 #include "command/typed-command.hpp"
 #include "notes-tools.hpp"
 #include "notes-view-host.hpp"
+#include "theme/theme.hpp"
 #include "vicinae.hpp"
 
 class CreateNoteCommand : public BuiltinCallbackCommand {
@@ -50,8 +52,13 @@ class NotesExtension : public TypedCommandRepository<Notes::Preferences> {
 
 public:
   std::vector<Preference> preferences() const override {
-    return describePreferences<Notes::Preferences>(
+    auto preferences = describePreferences<Notes::Preferences>(
         {.defaultDirectory = (Omnicast::dataDir() / "notes").string()});
+    // An unset font size follows the application's, shown as the placeholder.
+    if (const auto fontSize = std::ranges::find(preferences, QStringLiteral("fontSize"), &Preference::name);
+        fontSize != preferences.end())
+      fontSize->setPlaceholder(QString::number(qRound(ThemeService::instance().pointSize(TextRegular))));
+    return preferences;
   }
   void initialized(const Notes::Preferences &preferences) const override { preferencesChanged(preferences); }
   void preferencesChanged(const Notes::Preferences &preferences) const override {
