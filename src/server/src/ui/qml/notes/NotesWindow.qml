@@ -35,7 +35,7 @@ Window {
     onClosing: event => event.accepted = NotesWindowHost.requestClose()
 
     Rectangle {
-        width: parent.width
+        width: parent.width - root.titlebarRightInset
         height: root.headerHeight
         color: root.translucentBackground ? Config.withAlpha(Theme.background, root.headerOpacity) : Theme.background
         DragHandler {
