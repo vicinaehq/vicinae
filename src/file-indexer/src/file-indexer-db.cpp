@@ -627,10 +627,7 @@ void FileIndexerDatabase::indexEvents(const std::vector<FileEvent> &events) {
 
     switch (event.type) {
     case FileEventType::Modify: {
-      using namespace std::chrono;
-      auto const secondsSinceEpoch =
-          static_cast<int64_t>(duration_cast<seconds>(event.eventTime.time_since_epoch()).count());
-      modifyStmt.bind(":last_modified_at", secondsSinceEpoch);
+      modifyStmt.bind(":last_modified_at", file_indexer::unixSeconds(event.eventTime));
       modifyStmt.bind(":path", event.path.c_str());
       modifyStmt.bind(":skeleton_path", skeletonDocument(event.path));
       modifyStmt.bind(":parent_id", resolveParent(event.path));
@@ -691,12 +688,8 @@ void FileIndexerDatabase::indexFiles(const std::vector<std::filesystem::path> &p
   };
 
   for (const auto &path : paths) {
-    if (auto lastModified = fs::last_write_time(path, ec); !ec) {
-      using namespace std::chrono;
-      auto sctp = clock_cast<system_clock>(lastModified);
-      auto const epoch = static_cast<int64_t>(duration_cast<seconds>(sctp.time_since_epoch()).count());
-
-      stmt.bind(":last_modified_at", epoch);
+    if (auto const lastModified = fs::last_write_time(path, ec); !ec) {
+      stmt.bind(":last_modified_at", file_indexer::unixSeconds(lastModified));
     } else {
       stmt.bindNull(":last_modified_at");
     }

@@ -1,5 +1,6 @@
 #pragma once
 #include <algorithm>
+#include <chrono>
 #include <cstdint>
 #include <cstdlib>
 #include <filesystem>
@@ -79,6 +80,12 @@ inline std::vector<std::filesystem::path> compactSubtrees(std::vector<std::files
 
   return compacted;
 }
+inline std::int64_t unixSeconds(std::filesystem::file_time_type time) {
+  using namespace std::chrono;
+  return static_cast<std::int64_t>(
+      duration_cast<seconds>(clock_cast<system_clock>(time).time_since_epoch()).count());
+}
+
 inline std::optional<int64_t> fileSizeBytesFor(const std::filesystem::path &path, bool isDirectory) {
   if (isDirectory) return std::nullopt;
 
