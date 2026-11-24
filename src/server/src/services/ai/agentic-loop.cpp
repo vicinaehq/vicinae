@@ -651,8 +651,16 @@ void Agent::recordToolResult(Id id, ToolState state, ToolOutput output) {
   output.failed = state == ToolState::Failed;
   call.output = std::move(output);
 
-  appendMessage(
-      ChatMessage{.role = ChatRole::Tool, .parts = {ToolResultPart{call.call.id, call.output->content}}});
+  const auto images = call.output->images;
+  ChatMessage message{.role = ChatRole::Tool};
+  message.parts.reserve(1 + images.size());
+  message.parts.emplace_back(ToolResultPart{call.call.id, call.output->content});
+  for (const auto &image : images)
+    message.parts.emplace_back(image);
+
+  const auto messageId = appendMessage(std::move(message));
+  for (const auto &image : images)
+    emit imageAdded(messageId, image);
   emit toolChanged(id);
 }
 

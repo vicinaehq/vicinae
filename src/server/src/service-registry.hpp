@@ -11,6 +11,7 @@ class HeadlessCommandRunner;
 class ClipboardService;
 class FontService;
 class ScreenshotService;
+class ScreenCaptureService;
 class RootItemManager;
 class ConfigService;
 class ShortcutService;
@@ -79,6 +80,7 @@ public:
   GlyphService *glyphService() const;
   FontService *fontService() const;
   ScreenshotService *screenshots() const;
+  ScreenCaptureService *screenCapture() const;
   LocalStorageService *localStorage() const;
   ExtensionManager *extensionManager() const;
   HeadlessCommandRunner *headlessCommandRunner() const;
@@ -140,6 +142,7 @@ public:
   void setToastService(std::unique_ptr<ToastService> service);
   void setFontService(std::unique_ptr<FontService> font);
   void setScreenshots(std::unique_ptr<ScreenshotService> service);
+  void setScreenCapture(std::unique_ptr<ScreenCaptureService> service);
   void setOmniDb(std::unique_ptr<OmniDatabase> service);
   void setWindowManager(std::unique_ptr<AbstractWindowManager> service);
   void setLocalStorage(std::unique_ptr<LocalStorageService> service);
@@ -184,6 +187,7 @@ private:
   std::unique_ptr<ClipboardService> m_clipman;
   std::unique_ptr<FontService> m_fontService;
   std::unique_ptr<ScreenshotService> m_screenshots;
+  std::unique_ptr<ScreenCaptureService> m_screenCapture;
   std::unique_ptr<RootItemManager> m_rootItemManager;
   std::unique_ptr<config::Manager> m_config;
   std::unique_ptr<ShortcutService> m_shortcutService;

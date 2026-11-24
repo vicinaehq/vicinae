@@ -70,13 +70,15 @@ struct CallToolParams {
   std::optional<glz::raw_json> arguments;
 };
 
-struct TextContent {
-  std::string type = "text";
-  std::string text;
+struct Content {
+  std::string type;
+  std::optional<std::string> text;
+  std::optional<std::string> data;
+  std::optional<std::string> mimeType;
 };
 
 struct CallToolResult {
-  std::vector<TextContent> content;
+  std::vector<Content> content;
   bool isError = false;
 };
 
@@ -211,7 +213,7 @@ void McpServer::callTool(const std::string &id, std::string_view params) {
   AbstractTool::RawToolTask task;
   try {
     task = tool->runRaw(call->arguments ? call->arguments->str : "{}");
-  } catch (const std::exception &error) { return respondCall(id, error.what(), true); }
+  } catch (const std::exception &error) { return respondCall(id, {.content = error.what(), .failed = true}); }
 
   m_calls.emplace_back(Call{.requestId = id, .tool = std::move(tool), .cancel = std::move(task.cancel)});
 
@@ -226,9 +228,9 @@ void McpServer::callTool(const std::string &id, std::string_view params) {
     } catch (const std::exception &error) { result = std::unexpected(error.what()); }
 
     if (result) {
-      finishCall(id, std::move(result->content), result->failed);
+      finishCall(id, std::move(*result));
     } else {
-      finishCall(id, std::move(result.error()), true);
+      finishCall(id, {.content = std::move(result.error()), .failed = true});
     }
   });
   watcher->setFuture(task.future);
@@ -246,16 +248,22 @@ void McpServer::cancel(std::string_view params) {
   if (cancelCall) cancelCall();
 }
 
-void McpServer::finishCall(const std::string &id, std::string content, bool failed) {
+void McpServer::finishCall(const std::string &id, ToolOutput output) {
   const auto call = std::ranges::find(m_calls, id, &Call::requestId);
   if (call == m_calls.end()) return;
 
   m_calls.erase(call);
-  respondCall(id, std::move(content), failed);
+  respondCall(id, std::move(output));
 }
 
-void McpServer::respondCall(const std::string &id, std::string content, bool failed) {
-  respond(id, toJson(mcp::CallToolResult{.content = {{.text = std::move(content)}}, .isError = failed}));
+void McpServer::respondCall(const std::string &id, ToolOutput output) {
+  mcp::CallToolResult result{.isError = output.failed};
+  result.content.reserve(1 + output.images.size());
+  result.content.emplace_back(mcp::Content{.type = "text", .text = std::move(output.content)});
+  for (const auto &image : output.images)
+    result.content.emplace_back(
+        mcp::Content{.type = "image", .data = image.base64.toStdString(), .mimeType = image.mimeType});
+  respond(id, toJson(result));
 }
 
 void McpServer::respond(const std::string &id, std::string_view result) {

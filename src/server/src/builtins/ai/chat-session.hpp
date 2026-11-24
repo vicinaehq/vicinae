@@ -135,6 +135,7 @@ private:
 
   void sendQuery(const std::string &query);
   bool needsVision() const;
+  AI::Capabilities modelCapabilities() const;
   bool modelSupports(AI::Capability capability) const;
   void rebuildModelSelectorItems();
   void refreshReasoning();

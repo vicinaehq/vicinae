@@ -38,6 +38,7 @@
 #include "service-registry.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/file-chooser/file-chooser-service.hpp"
+#include "services/screen-capture/screen-capture-service.hpp"
 #include "environment.hpp"
 #include "vicinae.hpp"
 #include "internal/keyboard/keyboard.hpp"
@@ -314,6 +315,20 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
             applyWindowConfig();
             tryCompaction();
           });
+
+  auto *screenCapture = m_ctx.services->screenCapture();
+  connect(screenCapture, &ScreenCaptureService::aboutToCapture, this,
+          [this, screenCapture](const QScreen *screen) {
+            if (m_hiddenForCapture || !m_window || !m_window->isVisible() || m_window->screen() != screen)
+              return;
+            m_hiddenForCapture = true;
+            m_ctx.navigation->closeWindow({.popToRootType = PopToRootType::Suspended});
+            screenCapture->waitForHiddenWindow();
+          });
+  connect(screenCapture, &ScreenCaptureService::captureFinished, this, [this] {
+    if (!std::exchange(m_hiddenForCapture, false)) return;
+    m_ctx.navigation->showWindow();
+  });
 
   auto *fileChooser = m_ctx.services->fileChooserService();
   connect(fileChooser, &FileChooserService::dialogOpened, this, [this]() {

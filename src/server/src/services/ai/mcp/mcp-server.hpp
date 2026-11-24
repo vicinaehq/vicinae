@@ -10,6 +10,7 @@ namespace AI {
 
 class AbstractTool;
 class ToolRegistry;
+struct ToolOutput;
 
 class McpServer : public QObject {
   Q_OBJECT
@@ -35,8 +36,8 @@ private:
   void listTools(const std::string &id);
   void callTool(const std::string &id, std::string_view params);
   void cancel(std::string_view params);
-  void finishCall(const std::string &id, std::string content, bool failed);
-  void respondCall(const std::string &id, std::string content, bool failed);
+  void finishCall(const std::string &id, ToolOutput output);
+  void respondCall(const std::string &id, ToolOutput output);
   void respond(const std::string &id, std::string_view result);
   void fail(const std::string &id, int code, std::string_view message);
   void notifyListChanged();

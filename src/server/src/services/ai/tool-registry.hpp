@@ -33,7 +33,7 @@ public:
   const Entry *find(std::string_view providerId, std::string_view toolId) const;
   std::unique_ptr<AbstractTool> createTool(const Entry &entry) const;
   std::vector<std::unique_ptr<AbstractTool>> createTools() const;
-  std::vector<std::string> enabledToolNames() const;
+  std::vector<std::string> enabledToolNames(Capabilities model) const;
 
   bool providerEnabled(std::string_view providerId) const;
   ToolPolicy toolPolicy(std::string_view providerId, std::string_view toolId) const;

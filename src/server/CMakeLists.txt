@@ -172,6 +172,9 @@ set(SRCS
 	src/services/screenshots/abstract-screenshot-provider.hpp
 	src/services/screenshots/screenshot-service.hpp
 	src/services/screenshots/screenshot-service.cpp
+	src/services/screen-capture/abstract-screen-capture.hpp
+	src/services/screen-capture/screen-capture-service.hpp
+	src/services/screen-capture/screen-capture-service.cpp
 	src/builtins/screenshots/screenshots-extension.hpp
 	src/builtins/screenshots/screenshot-actions.hpp
 	src/builtins/screenshots/screenshot-actions.cpp
@@ -572,6 +575,7 @@ set(SRCS
 	src/builtins/notes/notes-tools.cpp
 	src/builtins/notes/notes-view-host.hpp
 	src/builtins/system/open-tool.cpp
+	src/builtins/system/screenshot-tool.cpp
 
 	src/builtins/file/search-files-model.hpp
 	src/builtins/file/search-files-model.cpp
@@ -1259,12 +1263,27 @@ if (UNIX AND NOT APPLE)
 	wayland_system_protocol(EXT_DATA_CONTROL_XML "staging/ext-data-control/ext-data-control-v1.xml")
 	wayland_system_protocol(KEYBOARD_SHORTCUTS_INHIBIT_XML "unstable/keyboard-shortcuts-inhibit/keyboard-shortcuts-inhibit-unstable-v1.xml")
 	wayland_system_protocol(XDG_ACTIVATION_XML "staging/xdg-activation/xdg-activation-v1.xml")
+	wayland_system_protocol(EXT_IMAGE_CAPTURE_SOURCE_XML "staging/ext-image-capture-source/ext-image-capture-source-v1.xml")
+	wayland_system_protocol(EXT_IMAGE_COPY_CAPTURE_XML "staging/ext-image-copy-capture/ext-image-copy-capture-v1.xml")
+
+	# only needed to provide the ext_foreign_toplevel_* interface symbols referenced by the
+	# generated ext-image-capture-source protocol code
+	wayland_system_protocol(EXT_FOREIGN_TOPLEVEL_LIST_XML "staging/ext-foreign-toplevel-list/ext-foreign-toplevel-list-v1.xml")
+	wayland_generate_protocol(${EXT_FOREIGN_TOPLEVEL_LIST_XML})
 
 	list(APPEND LIBS xkbcommon xkbcommon-x11)
 
 	# Common Wayland support files
 	list(APPEND SRCS
 		src/internal/wayland/output-tracker.cpp
+		src/internal/wayland/shm-buffer.hpp
+		src/internal/wayland/shm-buffer.cpp
+		src/services/screen-capture/wayland/wayland-capture-job.hpp
+		src/services/screen-capture/wayland/wayland-capture-job.cpp
+		src/services/screen-capture/wayland/ext-image-copy-capture.hpp
+		src/services/screen-capture/wayland/ext-image-copy-capture.cpp
+		src/services/screen-capture/wayland/wlr-screencopy-capture.hpp
+		src/services/screen-capture/wayland/wlr-screencopy-capture.cpp
 		src/internal/wayland/layer-shell.cpp
 		src/internal/wayland/xdg-activation.cpp
 		src/services/window-material/ext-background-effect-v1-manager.cpp
@@ -1361,12 +1380,15 @@ if (UNIX AND NOT APPLE)
 		FILES
 			${EXT_BACKGROUND_EFFECT_XML}
 			${EXT_DATA_CONTROL_XML}
+			${EXT_IMAGE_CAPTURE_SOURCE_XML}
+			${EXT_IMAGE_COPY_CAPTURE_XML}
 			${KEYBOARD_SHORTCUTS_INHIBIT_XML}
 			${XDG_ACTIVATION_XML}
 			${CMAKE_SOURCE_DIR}/src/wayland-protocols/vicinae-hotkey-v1.xml
 			${CMAKE_SOURCE_DIR}/src/wayland-protocols/xx-hotkey-v1.xml
 			${CMAKE_SOURCE_DIR}/src/wayland-protocols/wlr-foreign-toplevel-management-unstable-v1.xml
 			${CMAKE_SOURCE_DIR}/src/wayland-protocols/wlr-layer-shell-unstable-v1.xml
+			${CMAKE_SOURCE_DIR}/src/wayland-protocols/wlr-screencopy-unstable-v1.xml
 	)
 endif()
 

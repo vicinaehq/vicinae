@@ -249,6 +249,7 @@ private:
   int m_dragActiveAnchor = -1;
   bool m_dragOverlayVisible = false;
   bool m_pendingLauncherFileChoice = false;
+  bool m_hiddenForCapture = false;
   QString m_searchPlaceholder;
   QUrl m_searchAccessoryUrl;
   QMetaObject::Connection m_searchAccessoryConnection;

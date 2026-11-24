@@ -1,10 +1,23 @@
 #pragma once
 
 #include <QSize>
+#include <cstdint>
 #include <optional>
 #include <string_view>
 
+struct wl_output;
+
 namespace Wayland {
+
+struct Output {
+  wl_output *proxy = nullptr;
+  std::int32_t transform = 0;
+};
+
+/**
+ * The output with the given name (e.g "DP-1"), which is how Qt names the matching QScreen.
+ */
+std::optional<Output> findOutput(std::string_view name);
 
 /**
  * Pixel size of the current mode of the output with the given name (e.g "DP-1"), adjusted for the

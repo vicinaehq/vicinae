@@ -40,6 +40,8 @@ private:
   void scan(wl_display *display) {
     m_registry = wl_display_get_registry(display);
     wl_registry_add_listener(m_registry, &m_listener, this);
+    // the first roundtrip binds the outputs, the second one receives what they have to say
+    wl_display_roundtrip(display);
     wl_display_roundtrip(display);
   }
 
@@ -105,6 +107,15 @@ private:
 } // namespace
 
 namespace Wayland {
+
+std::optional<Output> findOutput(std::string_view name) {
+  auto &tracker = OutputTracker::instance();
+  const auto it = std::ranges::find_if(tracker.m_outputs, [&](const auto &out) { return out->name == name; });
+
+  if (it == tracker.m_outputs.end()) return std::nullopt;
+
+  return Output{.proxy = (*it)->proxy, .transform = (*it)->transform};
+}
 
 std::optional<QSize> outputPixelSize(std::string_view name) {
   auto &tracker = OutputTracker::instance();

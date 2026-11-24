@@ -9,6 +9,8 @@
 #include "builtins/system/system-run-view-host.hpp"
 #include "builtins/system/bash-tool.hpp"
 #include "builtins/system/open-tool.hpp"
+#include "builtins/system/screenshot-tool.hpp"
+#include "services/screen-capture/screen-capture-service.hpp"
 #include "theme/colors.hpp"
 #include "utils.hpp"
 #include "services/app-service/app-service.hpp"
@@ -157,6 +159,17 @@ public:
          .icon = ImageURL::builtin(BuiltinIcon::ArrowNe),
          .annotations = {.destructive = false, .openWorld = true},
          .create = [] { return std::make_unique<OpenTool>(*ServiceRegistry::instance()->appDb()); }});
+    if (ServiceRegistry::instance()->screenCapture()->isAvailable()) {
+      registerTool({.id = "screenshot",
+                    .title = tr("Screenshot"),
+                    .description = tr("Look at what is on one of your screens."),
+                    .icon = ImageURL::builtin(BuiltinIcon::Screenshot),
+                    .requiredCapabilities = AI::Capability::Vision,
+                    .annotations = {.readOnly = true, .openWorld = false},
+                    .create = [] {
+                      return std::make_unique<ScreenshotTool>(*ServiceRegistry::instance()->screenCapture());
+                    }});
+    }
 
 #ifdef Q_OS_LINUX
     // set default terminal using xdg-terminal-exec

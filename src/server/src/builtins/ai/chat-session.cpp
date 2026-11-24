@@ -241,13 +241,17 @@ bool ChatSession::needsVision() const {
   });
 }
 
-bool ChatSession::modelSupports(AI::Capability capability) const {
-  if (!m_aiService || !m_selectedModel) return false;
+AI::Capabilities ChatSession::modelCapabilities() const {
+  if (!m_aiService || !m_selectedModel) return 0;
   auto *provider = m_aiService->getProviderById(m_selectedModel->provider);
-  if (!provider) return false;
+  if (!provider) return 0;
   const auto models = provider->listModels();
   const auto model = std::ranges::find(models, m_selectedModel->id, &AI::Model::id);
-  return model != models.end() && (model->caps & capability);
+  return model != models.end() ? model->caps : 0;
+}
+
+bool ChatSession::modelSupports(AI::Capability capability) const {
+  return (modelCapabilities() & capability) != 0;
 }
 
 bool ChatSession::awaitingResponse() const {
@@ -330,7 +334,8 @@ void ChatSession::sendQuery(const std::string &query) {
     }
   }
   m_exchanges.beginExchange(query, previews);
-  auto tools = modelSupports(AI::Capability::ToolCalling) ? m_services.tools()->enabledToolNames()
+  const auto capabilities = modelCapabilities();
+  auto tools = capabilities & AI::Capability::ToolCalling ? m_services.tools()->enabledToolNames(capabilities)
                                                           : std::vector<std::string>{};
   m_turn->options = {.model = m_selectedModel,
                      .tools = std::move(tools),
@@ -679,6 +684,15 @@ void ChatSession::restoreNextTurn() {
   m_exchanges.beginExchange(turn.query, attachmentItems(turn.attachments));
   std::string response;
   for (const auto &message : turn.messages) {
+    if (message.content.role == AI::ChatRole::Tool) {
+      for (const auto &part : message.content.parts) {
+        const auto *image = std::get_if<AI::ImagePart>(&part);
+        if (!image) continue;
+        m_exchanges.appendSavedResponse(std::exchange(response, {}));
+        m_exchanges.appendImage(imageSource(*image).toString());
+      }
+      continue;
+    }
     if (message.content.role != AI::ChatRole::Assistant) continue;
     for (const auto &part : message.content.parts) {
       if (const auto *text = std::get_if<AI::TextPart>(&part)) {

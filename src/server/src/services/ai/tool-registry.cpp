@@ -167,12 +167,13 @@ std::vector<std::unique_ptr<AbstractTool>> ToolRegistry::createTools() const {
   return tools;
 }
 
-std::vector<std::string> ToolRegistry::enabledToolNames() const {
+std::vector<std::string> ToolRegistry::enabledToolNames(Capabilities model) const {
   std::vector<std::string> names;
   names.reserve(m_entries.size());
 
   for (const auto &entry : m_entries) {
-    if (isEnabled(entry.name)) names.emplace_back(entry.name);
+    const auto required = entry.contribution.requiredCapabilities;
+    if ((model & required) == required && isEnabled(entry.name)) names.emplace_back(entry.name);
   }
 
   return names;

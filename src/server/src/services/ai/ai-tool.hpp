@@ -12,6 +12,8 @@
 #include <qfuture.h>
 #include <string>
 #include <optional>
+#include <vector>
+#include "chat-image.hpp"
 #include "common/json.hpp"
 
 namespace AI {
@@ -20,6 +22,7 @@ struct ToolOutput {
   std::optional<std::string> displayText;
   std::optional<std::string> statusText;
   bool failed = false;
+  std::vector<ImagePart> images;
 };
 
 struct TruncatedText {

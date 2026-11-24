@@ -20,6 +20,8 @@
 
 namespace AI::openai {
 
+constexpr std::string_view TOOL_IMAGES_NOTICE = "Images returned by the tool calls above:";
+
 struct ContentPart {
   struct ImageUrl {
     std::string url;
@@ -47,6 +49,12 @@ struct Message {
   std::optional<std::vector<ToolCall>> tool_calls;
   std::optional<std::string> tool_call_id;
 
+  static ContentPart imagePart(const ImagePart &image) {
+    return ContentPart{.type = "image_url",
+                       .image_url = ContentPart::ImageUrl{
+                           std::format("data:{};base64,{}", image.mimeType, image.base64.toStdString())}};
+  }
+
   static Message fromMessage(const ChatMessage &message) {
     Message out{.role = std::string{roleName(message.role)}};
     std::vector<ContentPart> parts;
@@ -59,11 +67,9 @@ struct Message {
         text += p->text;
       } else if (const auto *p = std::get_if<ImagePart>(&part)) {
         if (message.role == ChatRole::User) {
-          parts.emplace_back(ContentPart{.type = "image_url",
-                                         .image_url = ContentPart::ImageUrl{std::format(
-                                             "data:{};base64,{}", p->mimeType, p->base64.toStdString())}});
+          parts.emplace_back(imagePart(*p));
           hasImage = true;
-        } else {
+        } else if (message.role != ChatRole::Tool) {
           auto description = std::format("\n(image: {})\n", p->path.value_or(p->mimeType));
           text += description;
           parts.emplace_back(ContentPart{.type = "text", .text = std::move(description)});
@@ -108,10 +114,32 @@ struct ChatRequest {
   static ChatRequest make(std::string_view model, const ChatCompletionPayload &payload) {
     ChatRequest request{.model = std::string{model}, .max_tokens = payload.maxOutputTokens};
 
-    request.messages.reserve(payload.messages.size());
+    // Tool messages only hold text, so the images tools return are handed over in a user message. It has
+    // to come after the results of every call of the same step, as nothing is allowed in between them.
+    std::vector<ContentPart> toolImages;
+    const auto flushToolImages = [&] {
+      if (toolImages.empty()) return;
+      request.messages.emplace_back(
+          Message{.role = std::string{roleName(ChatRole::User)}, .content = std::exchange(toolImages, {})});
+    };
+
+    request.messages.reserve(payload.messages.size() + 1);
     for (const auto &message : payload.messages) {
+      if (message.role != ChatRole::Tool) flushToolImages();
       request.messages.emplace_back(Message::fromMessage(message));
+      if (message.role != ChatRole::Tool) continue;
+
+      for (const auto &part : message.parts) {
+        const auto *image = std::get_if<ImagePart>(&part);
+        if (!image) continue;
+        if (toolImages.empty()) {
+          toolImages.reserve(message.parts.size());
+          toolImages.emplace_back(ContentPart{.type = "text", .text = std::string{TOOL_IMAGES_NOTICE}});
+        }
+        toolImages.emplace_back(Message::imagePart(*image));
+      }
     }
+    flushToolImages();
 
     if (!payload.tools.empty()) {
       request.tools = payload.tools |

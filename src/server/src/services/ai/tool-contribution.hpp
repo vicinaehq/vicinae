@@ -5,6 +5,7 @@
 #include <optional>
 #include <string>
 #include <QString>
+#include "ai-capability.hpp"
 #include "tool-policy.hpp"
 #include "command/preference.hpp"
 #include "ui/image/url.hpp"
@@ -30,6 +31,7 @@ struct ToolContribution {
   // Deferred tools are only sent to the model once it loads them with load_tools.
   bool deferred = true;
   bool mcp = true;
+  Capabilities requiredCapabilities = 0;
   ToolAnnotations annotations;
   std::function<std::unique_ptr<AbstractTool>()> create;
 };

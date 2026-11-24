@@ -10,6 +10,7 @@
 #include "services/media-control/media-control-service.hpp"
 #include "extension/manager/extension-manager.hpp"
 #include "services/font-service/font-service.hpp"
+#include "services/screen-capture/screen-capture-service.hpp"
 #include "services/screenshots/screenshot-service.hpp"
 #include "internal/db/omni-database.hpp"
 #include "services/app-service/app-service.hpp"
@@ -62,6 +63,7 @@ WallpaperManager *ServiceRegistry::wallpaperManager() const { return m_wallpaper
 GlyphService *ServiceRegistry::glyphService() const { return m_glyphService.get(); }
 FontService *ServiceRegistry::fontService() const { return m_fontService.get(); }
 ScreenshotService *ServiceRegistry::screenshots() const { return m_screenshots.get(); }
+ScreenCaptureService *ServiceRegistry::screenCapture() const { return m_screenCapture.get(); }
 LocalStorageService *ServiceRegistry::localStorage() const { return m_localStorage.get(); }
 ExtensionManager *ServiceRegistry::extensionManager() const { return m_extensionManager.get(); }
 HeadlessCommandRunner *ServiceRegistry::headlessCommandRunner() const {
@@ -202,6 +204,9 @@ void ServiceRegistry::setToastService(std::unique_ptr<ToastService> service) {
 void ServiceRegistry::setFontService(std::unique_ptr<FontService> font) { m_fontService = std::move(font); }
 void ServiceRegistry::setScreenshots(std::unique_ptr<ScreenshotService> service) {
   m_screenshots = std::move(service);
+}
+void ServiceRegistry::setScreenCapture(std::unique_ptr<ScreenCaptureService> service) {
+  m_screenCapture = std::move(service);
 }
 void ServiceRegistry::setOmniDb(std::unique_ptr<OmniDatabase> service) { m_omniDb = std::move(service); }
 
