@@ -344,10 +344,8 @@ bool NotesWindowController::flush() {
 QString NotesWindowController::status() const {
   if (m_loading) return tr("Opening…");
   if (m_pasting) return tr("Adding attachment…");
-  if (m_saving) return tr("Saving…");
-  if (dirty()) return tr("Unsaved changes");
   if (readOnly()) return tr("Read-only");
-  return m_persisted ? tr("Saved locally") : tr("New note");
+  return {};
 }
 
 void NotesWindowController::refreshFromDisk() {

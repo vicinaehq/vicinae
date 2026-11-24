@@ -89,8 +89,12 @@ Window {
             ToolTip.delay: 600
             ToolTip.text: text
         }
-        Item {
+        Text {
             Layout.fillWidth: true
+            text: NotesWindowHost.status
+            color: Theme.textMuted
+            font.pointSize: Theme.smallerFontSize
+            elide: Text.ElideRight
         }
         ViciButton {
             id: searchButton
@@ -303,7 +307,7 @@ Window {
                     MarkdownEditor {
                         id: editor
                         anchors.fill: parent
-                        anchors.bottomMargin: findBar.visible ? findBar.height + 8 : 0
+                        anchors.bottomMargin: findBar.visible ? findBar.height + 20 : 0
                         document: NotesWindowHost.document
                         readOnly: NotesWindowHost.readOnly || NotesWindowHost.loading
                         canPasteAttachment: NotesWindowHost.canPasteAttachments
@@ -340,6 +344,7 @@ Window {
                         id: findBar
                         visible: false
                         anchors.bottom: parent.bottom
+                        anchors.bottomMargin: 12
                         anchors.right: parent.right
                         anchors.rightMargin: editor.contentPadding
                         width: parent.width - editor.contentPadding * 2
@@ -416,13 +421,6 @@ Window {
                     contentPadding: root.splitView ? 24 : Math.max(32, (width - 760) / 2)
                     topPadding: 20
                 }
-            }
-            Text {
-                Layout.fillWidth: true
-                Layout.margins: 14
-                text: NotesWindowHost.status
-                color: Theme.textMuted
-                font.pointSize: Theme.smallerFontSize
             }
         }
     }
