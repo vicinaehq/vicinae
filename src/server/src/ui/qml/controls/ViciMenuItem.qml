@@ -7,6 +7,7 @@ MenuItem {
     id: root
 
     implicitHeight: 30
+    height: visible ? implicitHeight : 0
     leftPadding: 10
     rightPadding: root.checkable ? 10 + 16 + 8 : 10
 

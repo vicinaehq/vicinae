@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <array>
 #include "chat-document-model.hpp"
 
 ChatDocumentModel::ChatDocumentModel(ChatConversationModel *conversation, QObject *parent)
@@ -46,6 +47,8 @@ QVariant ChatDocumentModel::data(const QModelIndex &index, int role) const {
   case KindRole:
     return query                                                                    ? "query"
            : !content                                                               ? "tail"
+           : content->image                                                         ? "image"
+           : content->attachment                                                    ? "attachment"
            : markdown                                                               ? "markdown"
            : local == 0 && content->tool.value(QStringLiteral("count")).toInt() > 1 ? "toolGroup"
                                                                                     : "tool";
@@ -54,9 +57,11 @@ QVariant ChatDocumentModel::data(const QModelIndex &index, int role) const {
     if (content) return QString{};
     return exchange.error.empty() ? QString{} : exchange.error.front().text;
   case BlockTypeRole:
+    if (content && content->image) return QVariant::fromValue(Markdown::BlockType::Image);
     return markdown ? content->markdown->data(content->markdown->index(local), MarkdownModel::BlockTypeRole)
                     : QVariant::fromValue(Markdown::BlockType::Paragraph);
   case BlockDataRole:
+    if (content && content->image) return QVariantMap{{QStringLiteral("src"), *content->image}};
     return markdown ? content->markdown->data(content->markdown->index(local), MarkdownModel::BlockDataRole)
                     : QVariant(QVariantMap{});
   case BlockIndexRole:
@@ -68,9 +73,10 @@ QVariant ChatDocumentModel::data(const QModelIndex &index, int role) const {
   case FailedRole:
     return !exchange.error.empty();
   case AttachmentsRole:
+    if (content && content->attachment) return *content->attachment;
     return query ? exchange.attachments : QVariantList{};
   case ToolRole: {
-    if (!content || markdown) return QVariantMap{};
+    if (!content || markdown || content->image || content->attachment) return QVariantMap{};
     const auto &group = std::get<ChatConversationModel::ToolGroup>(
         m_conversation->contents(exchange.sourceRow)[content->sourcePart]);
     const bool grouped = group.calls.size() > 1;
@@ -113,6 +119,10 @@ std::span<const DocumentPart> ChatDocumentModel::documentParts(int row) const {
   if (row == exchange.offset) return exchange.query;
   const auto *content = contentAt(exchange, row);
   if (!content) return exchange.error;
+  if (content->image || content->attachment) {
+    static const auto IMAGE_PARTS = std::to_array<DocumentPart>({{QString{}, true}});
+    return IMAGE_PARTS;
+  }
   const auto local = row - content->offset;
   if (content->markdown) return content->markdown->documentParts(local);
   return {};
@@ -161,12 +171,20 @@ void ChatDocumentModel::addContent(int row, int part) {
   auto &exchange = m_exchanges[row];
   const bool response =
       std::holds_alternative<ChatConversationModel::Response>(m_conversation->contents(row)[part]);
+  const auto *image = std::get_if<ChatConversationModel::Image>(&m_conversation->contents(row)[part]);
+  const auto *attachment =
+      std::get_if<ChatConversationModel::Attachment>(&m_conversation->contents(row)[part]);
   const int offset = exchange.offset + exchange.blocks + 1;
   if (!response) beginInsertRows({}, offset, offset);
   exchange.contents.reserve(exchange.contents.size() + 1);
   auto *markdown = response ? new MarkdownModel(this) : nullptr;
   exchange.contents.emplace_back(
-      Content{.markdown = markdown, .sourcePart = part, .offset = offset, .rows = response ? 0 : 1});
+      Content{.markdown = markdown,
+              .image = image ? std::optional(image->source) : std::nullopt,
+              .attachment = attachment ? std::optional(attachment->items) : std::nullopt,
+              .sourcePart = part,
+              .offset = offset,
+              .rows = response ? 0 : 1});
   updateOffsets();
   if (!response) endInsertRows();
   if (markdown) {
@@ -234,6 +252,12 @@ void ChatDocumentModel::updateContent(int row, int part) {
       content.markdown->setMarkdownAsync(std::move(text));
     else
       content.markdown->setMarkdown(text);
+  } else if (const auto *image = std::get_if<ChatConversationModel::Image>(&source)) {
+    content.image = image->source;
+    emit dataChanged(index(content.offset), index(content.offset), {KindRole, BlockTypeRole, BlockDataRole});
+  } else if (const auto *attachment = std::get_if<ChatConversationModel::Attachment>(&source)) {
+    content.attachment = attachment->items;
+    emit dataChanged(index(content.offset), index(content.offset), {KindRole, AttachmentsRole});
   } else {
     const auto &group = std::get<ChatConversationModel::ToolGroup>(source);
     const auto count = static_cast<int>(group.calls.size());
@@ -260,6 +284,8 @@ void ChatDocumentModel::updateContent(int row, int part) {
     bool queued = false;
     const ChatConversationModel::Tool *running = nullptr;
     const ChatConversationModel::Tool *awaiting = nullptr;
+    const ChatConversationModel::Tool *failed = nullptr;
+    const ChatConversationModel::Tool *declined = nullptr;
     std::optional<qint64> duration;
     for (const auto &tool : group.calls) {
       if (tool.durationMs) duration = duration.value_or(0) + *tool.durationMs;
@@ -271,11 +297,21 @@ void ChatDocumentModel::updateContent(int row, int part) {
         queued = true;
       else if (tool.status == QLatin1String("cancelled"))
         cancelled = true;
+      else if (tool.status == QLatin1String("failed"))
+        failed = &tool;
+      else if (tool.status == QLatin1String("declined"))
+        declined = &tool;
     }
-    const auto &current = running ? *running : awaiting ? *awaiting : group.calls.back();
+    const auto &current = running    ? *running
+                          : awaiting ? *awaiting
+                          : failed   ? *failed
+                          : declined ? *declined
+                                     : group.calls.back();
     const QString status = running     ? QStringLiteral("running")
                            : awaiting  ? QStringLiteral("awaiting_approval")
                            : queued    ? QStringLiteral("queued")
+                           : failed    ? QStringLiteral("failed")
+                           : declined  ? QStringLiteral("declined")
                            : cancelled ? QStringLiteral("cancelled")
                                        : QStringLiteral("completed");
     content.tool = {{QStringLiteral("id"), group.calls.front().id},

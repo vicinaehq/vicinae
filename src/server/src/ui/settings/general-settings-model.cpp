@@ -10,6 +10,7 @@
 #ifdef Q_OS_LINUX
 #include "internal/icon-theme-db/icon-theme-db.hpp"
 #endif
+#include <array>
 #include <QDirIterator>
 #include <QGuiApplication>
 #include <QIcon>
@@ -21,6 +22,7 @@ GeneralSettingsModel::GeneralSettingsModel(QObject *parent) : QObject(parent) {
   m_faviconServiceModel.setSections(faviconServiceItems());
   m_keybindingSchemeModel.setSections(keybindingSchemeItems());
   m_languageModel.setSections(languageItems());
+  m_popToRootModel.setSections(popToRootItems());
   refreshDynamicModels();
 
   connect(ServiceRegistry::instance()->config(), &config::Manager::configChanged, this, [this]() {
@@ -63,11 +65,6 @@ void GeneralSettingsModel::setCloseOnEscape(bool v) {
 
 bool GeneralSettingsModel::considerPreedit() const { return cfg().considerPreedit; }
 void GeneralSettingsModel::setConsiderPreedit(bool v) { cfgManager().mergeWithUser({.considerPreedit = v}); }
-
-bool GeneralSettingsModel::popToRootOnClose() const { return cfg().popToRootOnClose; }
-void GeneralSettingsModel::setPopToRootOnClose(bool v) {
-  cfgManager().mergeWithUser({.popToRootOnClose = v});
-}
 
 bool GeneralSettingsModel::popOnBackspace() const { return cfg().popOnBackspace; }
 void GeneralSettingsModel::setPopOnBackspace(bool v) { cfgManager().mergeWithUser({.popOnBackspace = v}); }
@@ -374,6 +371,40 @@ void GeneralSettingsModel::selectLanguage(const QString &id) {
     } else {
       value.language = id.toStdString();
     }
+  });
+}
+
+static constexpr auto POP_TO_ROOT_TIMEOUTS = std::to_array({5, 15, 30, 60, 90});
+static constexpr QLatin1StringView POP_TO_ROOT_IMMEDIATE = QLatin1StringView("immediate");
+static constexpr QLatin1StringView POP_TO_ROOT_NEVER = QLatin1StringView("never");
+
+static QVariant popToRootTimeoutItem(int secs) {
+  return makeDropdownItem(QString::number(secs), GeneralSettingsModel::tr("After %n seconds", nullptr, secs));
+}
+
+QVariantList GeneralSettingsModel::popToRootItems() const {
+  QVariantList items;
+  items.reserve(POP_TO_ROOT_TIMEOUTS.size() + 2);
+  items.append(makeDropdownItem(POP_TO_ROOT_IMMEDIATE, tr("Immediately")));
+  for (int const secs : POP_TO_ROOT_TIMEOUTS) {
+    items.append(popToRootTimeoutItem(secs));
+  }
+  items.append(makeDropdownItem(POP_TO_ROOT_NEVER, tr("Never")));
+  return wrapSection(tr("Pop to root"), items);
+}
+
+QVariant GeneralSettingsModel::currentPopToRoot() const {
+  if (cfg().popToRootOnClose) return makeDropdownItem(POP_TO_ROOT_IMMEDIATE, tr("Immediately"));
+  if (auto timeout = cfg().popToRootTimeout) return popToRootTimeoutItem(*timeout);
+  return makeDropdownItem(POP_TO_ROOT_NEVER, tr("Never"));
+}
+
+void GeneralSettingsModel::selectPopToRoot(const QString &id) {
+  cfgManager().updateUser([&](config::Partial<config::ConfigValue> &value) {
+    bool ok = false;
+    int const secs = id.toInt(&ok);
+    value.popToRootOnClose = id == POP_TO_ROOT_IMMEDIATE;
+    value.popToRootTimeout = ok ? std::optional{secs} : std::nullopt;
   });
 }
 

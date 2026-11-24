@@ -27,6 +27,12 @@ public:
 protected:
   ActionPanelModel *model() const { return m_model; }
 
+  /**
+   * Called with the action the user picked. The default hands it over for
+   * execution, which closes the panel: override to act while staying open.
+   */
+  virtual void activate(AbstractAction *action) { emit actionExecuted(action); }
+
 private:
   std::unique_ptr<ActionPanelState> m_state;
   ActionPanelModel *m_model = nullptr;

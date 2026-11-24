@@ -3,6 +3,7 @@
 #include <QTimer>
 #include <QWindow>
 #include <algorithm>
+#include <vector>
 
 #import <AppKit/AppKit.h>
 
@@ -10,9 +11,19 @@
 
 namespace {
 
-class DockPresenceController : public QObject {
+bool isRegularWindow(const QWindow *window) {
+  return window && window->type() == Qt::Window && !window->flags().testFlag(Qt::FramelessWindowHint);
+}
+
+class AppWindowController : public QObject {
 public:
-  explicit DockPresenceController(QObject *parent) : QObject(parent) { qGuiApp->installEventFilter(this); }
+  explicit AppWindowController(QObject *parent) : QObject(parent) {
+    m_menuShortcuts.reserve(16);
+    qGuiApp->installEventFilter(this);
+    connect(qGuiApp, &QGuiApplication::focusWindowChanged, this, [this] { updateMenuShortcuts(); });
+    updateMenuShortcuts();
+    QTimer::singleShot(0, this, [this] { updateMenuShortcuts(); });
+  }
 
 protected:
   bool eventFilter(QObject *object, QEvent *event) override {
@@ -31,32 +42,42 @@ private:
     QTimer::singleShot(0, this, [this] {
       m_updatePending = false;
       const bool hasRegularWindow =
-          std::ranges::any_of(QGuiApplication::topLevelWindows(), [](QWindow *window) {
-            return window->isVisible() && window->type() == Qt::Window &&
-                   !window->flags().testFlag(Qt::FramelessWindowHint);
-          });
+          std::ranges::any_of(QGuiApplication::topLevelWindows(),
+                              [](QWindow *window) { return window->isVisible() && isRegularWindow(window); });
       const auto policy =
           hasRegularWindow ? NSApplicationActivationPolicyRegular : NSApplicationActivationPolicyAccessory;
       if (NSApp.activationPolicy != policy) [NSApp setActivationPolicy:policy];
+      updateMenuShortcuts();
     });
   }
 
-  bool m_updatePending = false;
-};
+  void updateMenuShortcuts() {
+    for (NSMenuItem *topItem in NSApp.mainMenu.itemArray) {
+      for (NSMenuItem *item in topItem.submenu.itemArray) {
+        if ((item.submenu && item.submenu == NSApp.servicesMenu) || item.keyEquivalent.length == 0) continue;
+        if (std::ranges::none_of(m_menuShortcuts, [item](const auto &saved) { return saved.item == item; }))
+          m_menuShortcuts.emplace_back(item, item.keyEquivalent, item.keyEquivalentModifierMask);
+      }
+    }
 
-void clearMenuShortcuts(NSMenu *menu) {
-  if (!menu) return;
-  NSMenu *servicesMenu = [NSApp servicesMenu];
-  for (NSMenuItem *topItem in menu.itemArray) {
-    NSMenu *submenu = topItem.submenu;
-    if (!submenu) continue;
-    for (NSMenuItem *item in submenu.itemArray) {
-      if (item.submenu == servicesMenu) continue;
-      item.keyEquivalent = @"";
-      item.keyEquivalentModifierMask = 0;
+    auto *window = QGuiApplication::focusWindow();
+    while (window && window->type() == Qt::Popup && window->transientParent())
+      window = window->transientParent();
+    const bool enabled = isRegularWindow(window);
+    for (const auto &shortcut : m_menuShortcuts) {
+      shortcut.item.keyEquivalent = enabled ? shortcut.key : @"";
+      shortcut.item.keyEquivalentModifierMask = enabled ? shortcut.modifiers : 0;
     }
   }
-}
+
+  struct MenuShortcut {
+    NSMenuItem *item;
+    NSString *key;
+    NSEventModifierFlags modifiers;
+  };
+  std::vector<MenuShortcut> m_menuShortcuts;
+  bool m_updatePending = false;
+};
 
 } // namespace
 
@@ -66,10 +87,6 @@ void beforeGuiApplication() {
   [[NSApplication sharedApplication] setActivationPolicy:NSApplicationActivationPolicyAccessory];
 }
 
-void afterGuiApplication() {
-  new DockPresenceController(qGuiApp);
-  clearMenuShortcuts([NSApp mainMenu]);
-  dispatch_async(dispatch_get_main_queue(), ^{ clearMenuShortcuts([NSApp mainMenu]); });
-}
+void afterGuiApplication() { new AppWindowController(qGuiApp); }
 
 } // namespace AppPlatform

@@ -29,6 +29,10 @@
 class AppService;
 class AppRuntime;
 
+namespace AI {
+class BackgroundQueue;
+}
+
 class ClipboardService : public QObject, public NonCopyable {
   Q_OBJECT
 
@@ -38,6 +42,7 @@ signals:
   void itemInserted(const ClipboardHistoryEntry &entry) const;
   void selectionPinStatusChanged(const QString &id, bool pinned) const;
   void selectionKeywordsChanged(const QString &id, const QString &keywords) const;
+  void selectionMetadataGenerated(const QString &id) const;
   void selectionRemoved(const QString &id) const;
   void selectionContentChanged(const QString &id) const;
   /**
@@ -57,7 +62,7 @@ public:
   };
 
   ClipboardService(const std::filesystem::path &path, AppService &appService, AppRuntime &appRuntime,
-                   std::optional<db::EncryptionKey> key = std::nullopt);
+                   AI::BackgroundQueue &aiQueue, std::optional<db::EncryptionKey> key = std::nullopt);
 
   static QString readText();
   static Clipboard::ReadContent readContent();
@@ -66,6 +71,11 @@ public:
 
   std::optional<QString> retrieveKeywords(const QString &id);
   bool setKeywords(const QString &id, const QString &keywords);
+
+  /**
+   * Gives the selection a title and keywords written by a model, which do not make it count as tagged.
+   */
+  bool applyGeneratedMetadata(const QString &id, const QString &title, const QString &keywords);
 
   std::expected<QByteArray, OfferDecryptionError> getMainOfferData(const QString &selectionId) const;
 
@@ -117,6 +127,12 @@ public:
   void setEncryptionKey(std::optional<db::EncryptionKey> key);
   void setIgnorePasswords(bool value);
   void setIgnoredApps(std::vector<std::string> ids);
+
+  /**
+   * The vision model that gives copied images a title and keywords, as "provider:id". Without one images
+   * are left as they are.
+   */
+  void setImageTaggingModel(std::optional<std::string> model);
   bool isEncryptionReady() const;
 
   /**
@@ -142,6 +158,7 @@ private:
   QTimer m_exportDebounce;
   AppService &m_appService;
   AppRuntime &m_appRuntime;
+  AI::BackgroundQueue &m_aiQueue;
   std::optional<db::EncryptionKey> m_dbKey;
   std::shared_ptr<ClipboardDatabase> m_readDb;
   std::unique_ptr<AbstractClipboardServer> m_clipboardServer;
@@ -193,6 +210,8 @@ private:
 
   static ClipboardOfferKind getKind(const ClipboardDataOffer &offer);
 
+  void tagInsertedImage(const ClipboardHistoryEntry &entry);
+
   void runEvictionPass();
   void armEvictionTimer(std::optional<int64_t> oldestTimestamp);
 
@@ -201,6 +220,7 @@ private:
   bool m_monitoring = false;
   bool m_ignorePasswords = true;
   std::vector<std::string> m_ignoredApps;
+  std::optional<std::string> m_imageTaggingModel;
   std::optional<ClipboardSelection> m_lastSelection;
   QTimer m_restoreTimer;
   QFutureWatcher<std::expected<ClipboardHistoryEntry, QString>> m_indexingSelection;

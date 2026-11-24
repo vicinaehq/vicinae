@@ -17,6 +17,9 @@
 #include <qtmetamacros.h>
 #include <optional>
 
+class RootItemManager;
+class SettingsController;
+
 class ExtensionCommand : public AbstractCmd {
   QString _extensionId;
   QString m_extensionName;
@@ -30,6 +33,9 @@ class ExtensionCommand : public AbstractCmd {
 
 public:
   ExtensionCommand(const ExtensionManifest::Command &command) : m_command(command) {}
+
+  virtual PreferenceValues preferenceValues(const RootItemManager &rootItemManager) const;
+  virtual void openPreferences(SettingsController &settings) const;
 
   QString author() const override { return m_author; }
   QString authorSuffixed() const override {
@@ -58,6 +64,9 @@ public:
 
   std::vector<CommandArgument> arguments() const override { return m_command.arguments; }
   std::vector<Preference> preferences() const override { return m_command.preferences; }
+  PreferenceList mergedPreferences() const {
+    return preferences::merge(_extensionPreferences, m_command.preferences);
+  }
 
   bool isRaycast() const { return m_command.provenance == ExtensionManifest::Provenance::Raycast; }
   bool isVicinae() const { return m_command.provenance == ExtensionManifest::Provenance::Vicinae; }

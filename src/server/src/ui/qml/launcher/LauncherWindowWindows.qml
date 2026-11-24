@@ -20,7 +20,7 @@ LauncherWindow {
     WindowsWindow.borderColor: Theme.mainWindowBorder
 
     onActiveChanged: {
-        if (!active && visible && !Launcher.filePicking)
+        if (!active && visible && !Launcher.filePicking && !Launcher.foregroundLent())
             Launcher.nav.closeWindow();
     }
 }

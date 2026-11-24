@@ -68,6 +68,13 @@ void ViciImageItem::setRetainWhileLoading(bool retain) {
   emit retainWhileLoadingChanged();
 }
 
+void ViciImageItem::setFallbackEnabled(bool enabled) {
+  if (m_fallbackEnabled == enabled) return;
+  m_fallbackEnabled = enabled;
+  emit fallbackEnabledChanged();
+  reload();
+}
+
 void ViciImageItem::setStatus(Status s) {
   if (m_status == s) return;
   m_status = s;
@@ -77,7 +84,10 @@ void ViciImageItem::setStatus(Status s) {
 void ViciImageItem::reload() {
   m_deferredReload = false;
 
-  if (m_stream) m_stream->deleteLater();
+  if (m_stream) {
+    disconnect(m_stream, nullptr, this, nullptr);
+    m_stream->deleteLater();
+  }
   m_stream = nullptr;
 
   if (!m_resolvedUrl.isValid()) {
@@ -105,19 +115,21 @@ void ViciImageItem::reload() {
   qreal const renderScale = std::max(w, h) <= 128 ? std::max<qreal>(dpr, 2.0) : dpr;
   QSize const physicalSize(qCeil(w * renderScale), qCeil(h * renderScale));
 
-  m_stream = new ImageStream(m_resolvedUrl.imageUrl(), physicalSize,
-                             {.safetyMargins = m_safetyMargins, .cache = m_cache}, this);
+  m_stream = new ImageStream(
+      m_resolvedUrl.imageUrl(), physicalSize,
+      {.safetyMargins = m_safetyMargins, .cache = m_cache, .fallback = m_fallbackEnabled}, this);
 
   connect(m_stream, &ImageStream::frameReady, this, [this, renderScale, w, h](const QImage &frame) {
     qint64 const key = frame.cacheKey();
-    if (m_currentFrameKey == key && !m_currentFrame.isNull()) {
-      setStatus(Ready);
-      return;
-    }
     // Sources smaller than the requested physical size arrive at native resolution;
     // stamping those with the full scale would shrink their natural size by that factor.
     qreal const effectiveDpr =
         std::clamp(std::max(frame.width() / qreal(w), frame.height() / qreal(h)), 1.0, renderScale);
+    if (m_currentFrameKey == key && !m_currentFrame.isNull() &&
+        qFuzzyCompare(m_currentFrame.devicePixelRatio(), effectiveDpr)) {
+      setStatus(Ready);
+      return;
+    }
     QImage img = frame;
     img.setDevicePixelRatio(effectiveDpr);
     m_currentFrame = std::move(img);
@@ -135,7 +147,18 @@ void ViciImageItem::reload() {
     update();
   });
 
-  connect(m_stream, &ImageStream::failed, this, [this]() { setStatus(Error); });
+  connect(m_stream, &ImageStream::failed, this, [this]() {
+    if (!m_currentFrame.isNull() || m_pendingTexture) {
+      delete m_pendingTexture;
+      m_pendingTexture = nullptr;
+      m_currentFrame = {};
+      m_currentFrameKey = 0;
+      m_frameDirty = true;
+      setImplicitSize(0, 0);
+      update();
+    }
+    setStatus(Error);
+  });
 
   if (!m_stream->start()) {
     if (m_retainWhileLoading && !m_currentFrame.isNull()) {

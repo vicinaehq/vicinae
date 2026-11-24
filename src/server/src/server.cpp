@@ -18,6 +18,7 @@
 #include "icon-theme-db/icon-theme-db.hpp"
 #endif
 #include "extension/extension-interval-scheduler.hpp"
+#include "extension/headless-command-runner.hpp"
 #include "ipc/ipc-command-server.hpp"
 #include "keyboard/keybind-manager.hpp"
 #include "keyboard/keyboard.hpp"
@@ -29,6 +30,9 @@
 #include "root-search/apps/app-root-provider.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
 #include "root-search/shortcuts/shortcut-root-provider.hpp"
+#include "builtins/ai/ai-command-run.hpp"
+#include "root-search/ai-commands/ai-command-root-provider.hpp"
+#include "services/ai-commands/ai-command-store.hpp"
 #ifdef Q_OS_MACOS
 #include "root-search/apple-shortcuts/apple-shortcut-root-provider.hpp"
 #include "root-search/macos-settings/macos-settings-root-provider.hpp"
@@ -112,9 +116,11 @@
 #include "services/selection/windows-selection-service.hpp"
 #endif
 #include "services/ai/ai-service.hpp"
+#include "services/ai/background-queue.hpp"
 #include "services/ai/tool-registry.hpp"
 #include "ui/settings/settings-controller.hpp"
 #include "ui/windows/chat-window-controller.hpp"
+#include "ui/windows/notes-window-controller.hpp"
 #include "services/tray/tray-service.hpp"
 #include "ui/windows/launcher-window.hpp"
 #include "ui/windows/onboarding-window.hpp"
@@ -297,6 +303,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
 
     const auto vicinaeDbPath = Omnicast::dataDir() / "vicinae.db";
     const auto clipboardDbPath = Omnicast::dataDir() / "clipboard.db";
+    const auto notesDirectory = Omnicast::dataDir() / "notes";
     auto keys = db::prepareEncryption(currentConfig.encryptSensitiveData, {vicinaeDbPath, clipboardDbPath});
 
     auto omniDb = std::make_unique<OmniDatabase>(vicinaeDbPath, keys.database);
@@ -305,8 +312,10 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     auto windowManager = std::make_unique<WindowManager>();
     auto appService = std::make_unique<AppService>(*omniDb.get());
     auto appRuntime = std::make_unique<AppRuntime>(*windowManager, *appService);
-    auto clipboardManager =
-        std::make_unique<ClipboardService>(clipboardDbPath, *appService, *appRuntime, keys.database);
+    auto ai = std::make_unique<AI::Service>(*localStorage);
+    auto aiBackgroundQueue = std::make_unique<AI::BackgroundQueue>(*ai);
+    auto clipboardManager = std::make_unique<ClipboardService>(clipboardDbPath, *appService, *appRuntime,
+                                                               *aiBackgroundQueue, keys.database);
     clipboardManager->setEncryptionKey(keys.clipboard);
 #ifdef Q_OS_LINUX
     auto inputServer = std::make_unique<LinuxInputServer>();
@@ -417,7 +426,6 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     registry->setUpdateService(
         std::make_unique<UpdateService>(*registry->toastService(), std::move(updateInstaller)));
     registry->setWallpaperManager(std::make_unique<WallpaperManager>());
-    auto ai = std::make_unique<AI::Service>(*registry->localStorage());
 #ifdef LOCAL_AI
     auto localModels = std::make_unique<LocalModelRegistry>();
     ai->addProvider(std::make_unique<AI::LocalProvider>(*localModels));
@@ -426,6 +434,11 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     registry->setDictation(
         std::make_unique<DictationService>(Omnicast::dataDir(), *ai, *registry->mediaControl(), *registry));
     registry->setAI(std::move(ai));
+    registry->setAiBackgroundQueue(std::move(aiBackgroundQueue));
+    registry->setAiCommands(std::make_unique<AiCommandStore>(Omnicast::dataDir() / "ai-commands.json"));
+    registry->setNotes(std::make_unique<Notes::Store>(
+        notesDirectory, readPreferences<Notes::Preferences>(
+                            currentConfig.providerPreferences("notes").value_or(PreferenceValues{}))));
     registry->setConversations(
         std::make_unique<AI::ConversationStore>(Omnicast::dataDir() / "conversations"));
     QObject::connect(registry->conversations(), &AI::ConversationStore::errorOccurred,
@@ -484,6 +497,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
 
     root->loadProvider(std::make_unique<AppRootProvider>(*registry->appDb()));
     root->loadProvider(std::make_unique<ShortcutRootProvider>(*registry->shortcuts()));
+    root->loadProvider(std::make_unique<AiCommandRootProvider>(*registry->aiCommands()));
     root->loadProvider(std::make_unique<ScriptRootProvider>(*registry->scriptDb()));
     root->loadProvider(std::make_unique<BrowserTabProvider>(*registry->browserExtension()));
 #ifdef Q_OS_MACOS
@@ -513,6 +527,8 @@ int startServer(const ServerLaunchOptions &launchOpts) {
   ctx.settings = std::make_unique<SettingsController>(ctx);
   ctx.services = ServiceRegistry::instance();
   ctx.chat = std::make_unique<ChatWindowController>(ctx);
+  ctx.aiCommands = std::make_unique<AiCommandRunner>(ctx);
+  ctx.notes = std::make_unique<NotesWindowManager>(ctx);
 
   IpcCommandServer commandServer(&ctx);
 
@@ -550,6 +566,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
         toast = toasts->currentToast();
       });
 
+  ctx.services->setHeadlessCommandRunner(std::make_unique<HeadlessCommandRunner>(ctx));
   ExtensionIntervalScheduler intervalScheduler(ctx);
   intervalScheduler.rebuild();
 
@@ -620,6 +637,8 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     }
 
     ctx.navigation->setPopToRootOnClose(next.popToRootOnClose);
+    ctx.navigation->setPopToRootTimeout(
+        next.popToRootTimeout.transform([](int secs) { return std::chrono::seconds{secs}; }));
     ctx.navigation->setCloseOnFocusLoss(next.closeOnFocusLoss);
 #ifdef Q_OS_LINUX
     ctx.services->inputServer()->setEnabled(next.inputServer.enabled);

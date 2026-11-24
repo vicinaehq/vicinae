@@ -1,7 +1,7 @@
 #include "file-indexer/incremental-scanner.hpp"
 #include "file-indexer/filesystem-walker.hpp"
 #include "file-indexer/log.hpp"
-#include <chrono>
+#include "file-indexer/util.hpp"
 #include <deque>
 #include <memory>
 #include <ranges>
@@ -74,13 +74,8 @@ IncrementalScanner::getScannableDirectories(const fs::path &path, std::optional<
 bool IncrementalScanner::shouldProcessEntry(const fs::directory_entry &entry, int64_t cutOffSeconds) const {
   std::error_code ec;
 
-  if (auto lastModified = fs::last_write_time(entry, ec); !ec) {
-    using namespace std::chrono;
-    auto sctp = clock_cast<system_clock>(lastModified);
-    auto const lastModifiedSeconds =
-        static_cast<int64_t>(duration_cast<seconds>(sctp.time_since_epoch()).count());
-
-    return lastModifiedSeconds >= cutOffSeconds || !m_readDb.tracksFile(entry.path());
+  if (auto const lastModified = fs::last_write_time(entry, ec); !ec) {
+    return file_indexer::unixSeconds(lastModified) >= cutOffSeconds || !m_readDb.tracksFile(entry.path());
   }
 
   return true;

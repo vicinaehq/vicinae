@@ -1,5 +1,7 @@
+#include "services/notes/notes-store.hpp"
 #include "services/ai/conversation-store.hpp"
 #include "service-registry.hpp"
+#include "services/ai-commands/ai-command-store.hpp"
 #include "services/dictation/dictation-service.hpp"
 #ifdef Q_OS_LINUX
 #include "services/input-server/linux-input-server.hpp"
@@ -41,7 +43,9 @@
 #include "services/file-chooser/file-chooser-service.hpp"
 #include "services/news/news-service.hpp"
 #include "services/ai/ai-service.hpp"
+#include "services/ai/background-queue.hpp"
 #include "services/ai/tool-registry.hpp"
+#include "extension/headless-command-runner.hpp"
 #include "services/local-model-registry/local-model-registry.hpp"
 #include "config/config.hpp"
 
@@ -60,6 +64,9 @@ FontService *ServiceRegistry::fontService() const { return m_fontService.get(); 
 ScreenshotService *ServiceRegistry::screenshots() const { return m_screenshots.get(); }
 LocalStorageService *ServiceRegistry::localStorage() const { return m_localStorage.get(); }
 ExtensionManager *ServiceRegistry::extensionManager() const { return m_extensionManager.get(); }
+HeadlessCommandRunner *ServiceRegistry::headlessCommandRunner() const {
+  return m_headlessCommandRunner.get();
+}
 ClipboardService *ServiceRegistry::clipman() const { return m_clipman.get(); }
 AppService *ServiceRegistry::appDb() const { return m_appDb.get(); }
 ToastService *ServiceRegistry::toastService() const { return m_toastService.get(); }
@@ -112,6 +119,12 @@ void ServiceRegistry::setTools(std::unique_ptr<AI::ToolRegistry> registry) { m_t
 
 void ServiceRegistry::setAI(std::unique_ptr<AI::Service> service) { m_ai = std::move(service); }
 
+AI::BackgroundQueue *ServiceRegistry::aiBackgroundQueue() const { return m_aiBackgroundQueue.get(); }
+
+void ServiceRegistry::setAiBackgroundQueue(std::unique_ptr<AI::BackgroundQueue> queue) {
+  m_aiBackgroundQueue = std::move(queue);
+}
+
 LocalModelRegistry *ServiceRegistry::localModels() const { return m_localModels.get(); }
 
 void ServiceRegistry::setLocalModels(std::unique_ptr<LocalModelRegistry> registry) {
@@ -122,6 +135,12 @@ DictationService *ServiceRegistry::dictation() const { return m_dictation.get();
 
 void ServiceRegistry::setDictation(std::unique_ptr<DictationService> service) {
   m_dictation = std::move(service);
+}
+
+AiCommandStore *ServiceRegistry::aiCommands() const { return m_aiCommands.get(); }
+
+void ServiceRegistry::setAiCommands(std::unique_ptr<AiCommandStore> store) {
+  m_aiCommands = std::move(store);
 }
 
 UpdateService *ServiceRegistry::updateService() const { return m_updateService.get(); }
@@ -188,6 +207,9 @@ void ServiceRegistry::setOmniDb(std::unique_ptr<OmniDatabase> service) { m_omniD
 
 void ServiceRegistry::setLocalStorage(std::unique_ptr<LocalStorageService> service) {
   m_localStorage = std::move(service);
+}
+void ServiceRegistry::setHeadlessCommandRunner(std::unique_ptr<HeadlessCommandRunner> runner) {
+  m_headlessCommandRunner = std::move(runner);
 }
 void ServiceRegistry::setExtensionManager(std::unique_ptr<ExtensionManager> service) {
   m_extensionManager = std::move(service);
@@ -270,3 +292,6 @@ void ServiceRegistry::setGlobalShortcuts(std::unique_ptr<GlobalShortcutService> 
 }
 
 ServiceRegistry *ServiceRegistry::instance() { return s_instance; }
+
+Notes::Store *ServiceRegistry::notes() const { return m_notes.get(); }
+void ServiceRegistry::setNotes(std::unique_ptr<Notes::Store> store) { m_notes = std::move(store); }

@@ -3,6 +3,7 @@
 #include "service-registry.hpp"
 #include "services/app-runtime/app-runtime.hpp"
 #include "services/clipboard/clipboard-service.hpp"
+#include "services/dictation/dictation-rewrite.hpp"
 #include "services/dictation/dictation-service.hpp"
 #include "services/paste/paste-service.hpp"
 #include "services/snippet/snippet-service.hpp"
@@ -15,8 +16,7 @@ DictationSession::DictationSession(ServiceRegistry &services, TranscriptionSetup
                                    Dictation::DictationAction action, PasteService::Target pasteTarget,
                                    QObject *parent)
     : QObject(parent), m_services(services), m_setup(std::move(setup)),
-      m_session(*services.dictation(), this),
-      m_rewrite(services.dictation()->ai(), *services.dictation()->vocabulary(), this), m_action(action),
+      m_session(*services.dictation(), this), m_rewrite(services.dictation()->ai(), this), m_action(action),
       m_pasteTarget(pasteTarget) {
   connect(&m_session, &TranscriptionSession::audioLevelChanged, this, &DictationSession::audioLevelChanged);
   connect(&m_session, &TranscriptionSession::elapsedTimeChanged, this, &DictationSession::elapsedTimeChanged);
@@ -24,11 +24,11 @@ DictationSession::DictationSession(ServiceRegistry &services, TranscriptionSetup
   connect(&m_session, &TranscriptionSession::transcribed, this, &DictationSession::handleTranscript);
   connect(&m_session, &TranscriptionSession::failed, this, &DictationSession::finishWithMessage);
   connect(&m_session, &TranscriptionSession::cancelled, this, &DictationSession::finish);
-  connect(&m_rewrite, &DictationRewrite::finished, this, [this](const QString &text) {
+  connect(&m_rewrite, &TextRewrite::finished, this, [this](const QString &text) {
     deliver(text, {.style = m_styleName});
     finish();
   });
-  connect(&m_rewrite, &DictationRewrite::failed, this, [this](const QString &reason) {
+  connect(&m_rewrite, &TextRewrite::failed, this, [this](const QString &reason) {
     qWarning() << "Dictation: rewrite failed:" << reason;
     deliver(m_transcript.text);
     finishWithMessage(tr("Used original text"));
@@ -85,7 +85,8 @@ void DictationSession::handleTranscript(const Transcript &transcript) {
   qInfo() << "Dictation: rewriting for" << (app ? app->id() : QStringLiteral("<unknown>")) << "with style"
           << style->name;
   m_styleName = style->name;
-  m_rewrite.start(*style, transcript.text);
+  m_rewrite.start(
+      Dictation::rewriteRequest(*style, m_services.dictation()->vocabulary()->entries(), transcript.text));
   emit stateChanged();
 }
 

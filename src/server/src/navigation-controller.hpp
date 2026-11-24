@@ -12,12 +12,14 @@
 #include "ui/image/url.hpp"
 #include <QString>
 #include <QPointer>
+#include <QTimer>
 #include <chrono>
 #include <cstdint>
 #include <numeric>
 #include <qevent.h>
 
 class DictationSession;
+class HudActivity;
 class BaseView;
 class DialogContentWidget;
 class ActionPanelView;
@@ -119,6 +121,7 @@ signals:
   void loadingChanged(bool value) const;
   void showHudRequested(const QString &title, const std::optional<ImageURL> &icon);
   void dictationHudRequested(DictationSession *session);
+  void activityHudRequested(HudActivity *activity);
 
   void completionValuesChanged(const ArgumentValues &values) const;
 
@@ -158,6 +161,7 @@ public:
   QWindow *window() const { return m_window; }
 
   void setPopToRootOnClose(bool value);
+  void setPopToRootTimeout(std::optional<std::chrono::seconds> timeout);
 
   bool hasCompleter() const;
 
@@ -234,6 +238,7 @@ public:
    */
   void showHud(const QString &title, const std::optional<ImageURL> &icon = std::nullopt);
   void showDictationHud(DictationSession *session);
+  void showActivityHud(HudActivity *activity);
 
   void launch(const std::shared_ptr<AbstractCmd> &cmd);
   void launch(const std::shared_ptr<AbstractCmd> &cmd, const ArgumentValues &arguments);
@@ -287,9 +292,12 @@ private:
   struct PendingPopToRoot {
     PopToRootType type = PopToRootType::Immediate;
     bool clearSearch = false;
+    std::chrono::system_clock::time_point closedAt;
   };
 
   void applyPopToRoot(const PendingPopToRoot &popToRoot);
+  void schedulePopToRootWhileClosed();
+  void popToRootWhileClosed();
 
   ViewState *findViewState(const BaseView *view);
   const ViewState *findViewState(const BaseView *view) const;
@@ -299,6 +307,8 @@ private:
   bool m_windowActivated = false;
   bool m_isPanelOpened = false;
   bool m_popToRootOnClose = false;
+  std::optional<std::chrono::seconds> m_popToRootTimeout;
+  QTimer m_popToRootTimer;
   bool m_instantDismiss = false;
   bool m_closeOnFocusLoss = false;
   QWindow *m_window = nullptr;

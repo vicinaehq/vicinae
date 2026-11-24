@@ -15,6 +15,8 @@ ChatComposer {
     message: session.attachmentMessage
     modelItems: session.modelSelectorItems
     currentModel: session.modelSelectorCurrentItem
+    reasoningItems: session.reasoningItems
+    currentReasoning: session.currentReasoning
     toolApproval: session.toolApproval
     onSubmitted: text => {
         if (session.send(text)) {
@@ -24,6 +26,7 @@ ChatComposer {
     }
     onCancelled: session.cancel()
     onModelActivated: item => session.selectModel(item.id)
+    onReasoningActivated: item => session.selectReasoning(item.id)
     onToolApproved: always => session.approveTool(always)
     onToolDeclined: session.declineTool()
 }

@@ -150,10 +150,13 @@ export type DMenuRequest = {
 	height?: number;
 	noFooter: boolean;
 	password: boolean;
+	actions: string[];
 }
 
 export type DMenuResponse = {
 	output: string;
+	action?: number;
+	query: string;
 }
 
 export type BrowserInitRequest = {

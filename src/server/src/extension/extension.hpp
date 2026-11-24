@@ -10,10 +10,15 @@
 #include <qstringview.h>
 #include <qjsonarray.h>
 
+class ExtensionCommand;
+
 class Extension : public AbstractCommandRepository {
 private:
   std::vector<std::shared_ptr<AbstractCmd>> m_commands;
   ExtensionManifest m_manifest;
+
+  void configureCommand(ExtensionCommand &command) const;
+  std::shared_ptr<ExtensionCommand> makeToolCommand(const ExtensionManifest::Tool &tool) const;
 
 public:
   Extension() {}
@@ -28,6 +33,8 @@ public:
   std::filesystem::path installedPath() const;
   PreferenceList preferences() const override;
   std::vector<std::shared_ptr<AbstractCmd>> commands() const override;
+  std::vector<AI::ToolContribution> tools() const override;
+  QString toolNamespace() const override;
   QString author() const override;
   const ExtensionManifest &manifest() const;
 };

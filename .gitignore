@@ -11,6 +11,7 @@ extension-manager/runtime/node_modules
 /vgcore*
 .env
 .direnv
+.DS_Store
 
 *.tar.gz
 !extra/icons/vicinae-icon-theme.tar.gz

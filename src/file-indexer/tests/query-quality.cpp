@@ -1,5 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 #include <chrono>
+#include <cstdint>
 #include <filesystem>
 #include <fstream>
 #include <optional>
@@ -293,6 +294,30 @@ TEST_CASE("indexed entries persist file size and refresh time") {
   CHECK(db.retrieveIndexedAt(dir).value_or(0) > 0);
 }
 
+TEST_CASE("indexed modification times are unix seconds") {
+  auto const &env = qualityEnv();
+  fs::path const file = env.root / "mtime-probe" / "zqx-mtime-probe.dat";
+  fs::create_directories(file.parent_path());
+  { std::ofstream{file} << "probe"; }
+
+  using namespace std::chrono;
+  constexpr std::int64_t MTIME = 1'700'000'000;
+  fs::last_write_time(file, clock_cast<fs::file_time_type::clock>(sys_seconds{seconds{MTIME}}));
+
+  FileIndexerDatabase db;
+  FileEvent const event{
+      .type = FileEventType::Modify,
+      .path = file,
+      .eventTime = fs::last_write_time(file),
+      .isDirectory = false,
+      .sizeBytes = 5,
+  };
+  db.indexEvents({event});
+  CHECK(db.retrieveIndexedLastModified(file) == MTIME);
+
+  db.indexEvents({{.type = FileEventType::Delete, .path = file, .eventTime = {}}});
+}
+
 TEST_CASE("query results include indexed file categories") {
   CHECK(categoryOf("invoice", "invoice.xlsx") == IndexedFileCategory::Document);
   CHECK(categoryOf("vacation", "VACATION.JPG") == IndexedFileCategory::Image);
@@ -339,4 +364,40 @@ TEST_CASE("skeleton: short skeleton tokens are kept in phrase matches") {
 TEST_CASE("exact path component substring wins, mid-word filename subsequence is dropped") {
   CHECK(rankOf("oled", "4k-oled/jellyfish-amoled.png") == 1);
   CHECK(rankOf("oled", "icons/SymbolEditor.svg") == -1);
+}
+
+TEST_CASE("re-indexing an unchanged entry leaves its row untouched") {
+  auto const &env = qualityEnv();
+  fs::path const file = env.root / "upsert-probe" / "zqx-upsert-probe.dat";
+  fs::create_directories(file.parent_path());
+  { std::ofstream{file} << "probe"; }
+
+  FileEvent const event{
+      .type = FileEventType::Modify,
+      .path = file,
+      .eventTime = fs::last_write_time(file),
+      .isDirectory = false,
+      .sizeBytes = 5,
+  };
+  FileIndexerDatabase db;
+  auto const markStale = [&] {
+    auto stmt = db.database().prepare("UPDATE indexed_file SET indexed_at = 0 WHERE path = :path");
+    stmt.bind(":path", file.c_str());
+    REQUIRE(stmt.exec());
+  };
+
+  db.indexEvents({event});
+  markStale();
+
+  db.indexEvents({event});
+  CHECK(db.retrieveIndexedAt(file) == 0);
+
+  auto changed = event;
+  changed.sizeBytes = 6;
+  db.indexEvents({changed});
+  CHECK(db.retrieveIndexedAt(file).value_or(0) > 0);
+  CHECK(db.retrieveIndexedSizeBytes(file) == 6);
+
+  db.indexEvents({{.type = FileEventType::Delete, .path = file, .eventTime = {}}});
+  CHECK_FALSE(db.tracksFile(file));
 }

@@ -9,10 +9,19 @@ Item {
     property int contentPadding: 12
     property int topPadding: contentPadding
     property string fontFamily: ""
+    property real fontSize: Theme.regularFontSize
+    property real headingScale: 1.0
+    property real codeFontSize: fontSize * 0.9
     property alias contentHeight: view.contentHeight
     readonly property alias document: view.document
+    readonly property alias flickable: view
     property bool _autoScroll: false
     focus: true
+
+    MarkdownImagePreview {
+        id: imagePreview
+        actions: root.model
+    }
 
     function scrollUp() {
         view.flick(0, 800);
@@ -46,7 +55,7 @@ Item {
             id: view
             anchors.fill: parent
             documentModel: root.model
-            layoutKey: [Theme.fontFamily, Theme.monoFontFamily, Theme.regularFontSize, Theme.smallerFontSize, root.fontFamily, root.contentPadding]
+            layoutKey: [Theme.fontFamily, Theme.monoFontFamily, Theme.regularFontSize, Theme.smallerFontSize, root.fontFamily, root.fontSize, root.headingScale, root.codeFontSize, root.contentPadding]
             topMargin: root.topPadding
             bottomMargin: root.contentPadding
             ViciWheelHandler {
@@ -72,7 +81,11 @@ Item {
                     blockIndex: blockDelegate.index
                     mdModel: root.model
                     fontFamily: root.fontFamily
+                    fontSize: root.fontSize
+                    headingScale: root.headingScale
+                    codeFontSize: root.codeFontSize
                     maxImageHeight: root.height * 0.7
+                    onImagePreviewRequested: (source, link) => imagePreview.show(source, link)
                 }
             }
             onContentHeightChanged: {

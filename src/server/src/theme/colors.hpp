@@ -20,6 +20,7 @@ enum SemanticColor : std::uint8_t {
   MainWindowBorder,
   MainWindowOuterBorder,
   SettingsWindowBorder,
+  MainWindowShadowColor,
 
   StatusBarBackground,
 
@@ -90,6 +91,25 @@ enum SemanticColor : std::uint8_t {
   InvalidTint,
 
   ShortcutIndicatorBorder,
+
+  SyntaxKeyword,
+  SyntaxControlFlow,
+  SyntaxFunction,
+  SyntaxType,
+  SyntaxString,
+  SyntaxNumber,
+  SyntaxConstant,
+  SyntaxAttribute,
+  SyntaxPreprocessor,
+  SyntaxSpecial,
+  SyntaxError,
+  SyntaxComment,
+  SyntaxHeading,
+  SyntaxEmphasis,
+  SyntaxLink,
+  SyntaxLinkTarget,
+  SyntaxInlineCode,
+  SyntaxMarker,
 };
 
 struct DynamicColor {

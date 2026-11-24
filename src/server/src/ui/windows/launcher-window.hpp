@@ -128,6 +128,7 @@ public:
   bool commandHeld() const { return m_commandHeld; }
 
   Q_INVOKABLE void expand();
+  Q_INVOKABLE static bool foregroundLent();
   Q_INVOKABLE void forwardSearchText(const QString &text);
   Q_INVOKABLE void handleTab();
   Q_INVOKABLE bool forwardKey(int key, int modifiers = 0, int scanCode = 0);
@@ -139,7 +140,6 @@ public:
   Q_INVOKABLE void positionOnCursorScreen();
   Q_INVOKABLE bool restoreWindowPosition();
   Q_INVOKABLE void prepareShow();
-  Q_INVOKABLE void finalizeShow();
   Q_INVOKABLE void beginWindowDrag();
   Q_INVOKABLE void updateWindowDrag();
   Q_INVOKABLE void endWindowDrag();
@@ -225,7 +225,6 @@ private:
   bool m_compacted = false;
   void refreshQuickAIAvailability();
   void updateCanAskAI();
-  void updateCanAskAI(const QString &searchText);
 
   bool m_atRoot = true;
   bool m_quickAIAvailable = false;
@@ -272,6 +271,7 @@ private:
   QObject *m_overlayHost = nullptr;
 
   bool m_closeOnFocusLoss = false;
+  bool m_cloakedWhileHidden = false;
   int m_lsLayer = 2;                 // LayerShellQt::Window::LayerTop
   int m_lsKeyboardInteractivity = 2; // LayerShellQt::Window::KeyboardInteractivityOnDemand
   bool m_hasCompleter = false;

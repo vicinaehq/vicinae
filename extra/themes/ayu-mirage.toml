@@ -25,6 +25,20 @@ red = "#F27983"               # VCS removed/error
 yellow = "#FFD173"            # Function
 cyan = "#95E6CB"              # Regexp
 
+[colors.syntax]
+keyword = "colors.accents.orange"
+control_flow = "colors.accents.orange"
+function = "colors.accents.yellow"
+type = "colors.accents.blue"
+constant = "colors.accents.purple"
+attribute = "colors.accents.blue"
+preprocessor = "colors.accents.red"
+special = "colors.accents.cyan"
+heading = "colors.accents.yellow"
+emphasis = "colors.accents.purple"
+link = "colors.accents.cyan"
+link_target = "colors.accents.blue"
+
 [colors.list.item.selection]
 background = "#414a60"
 secondary_background = "#3E4759"

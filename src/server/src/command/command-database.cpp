@@ -1,3 +1,4 @@
+#include "builtins/notes/notes-extension.hpp"
 #include "command/command-database.hpp"
 #include "builtins/browser/browser-extension.hpp"
 #include "builtins/clipboard/clipboard-extension.hpp"
@@ -51,6 +52,7 @@ CommandDatabase::CommandDatabase(const ServiceRegistry &services) {
 
   registerRepository<ThemeExtension>();
   registerRepository<FontExtension>();
+  registerRepository<NotesExtension>();
   if (services.screenshots()->isAvailable()) registerRepository<ScreenshotsExtension>();
   registerRepository<DeveloperExtension>();
 
