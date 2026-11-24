@@ -501,6 +501,11 @@ void DocumentLayout::layoutVisible(std::optional<Anchor> anchor) {
   if (m_updating || !isComponentComplete() || (!m_viewport && !m_embedded) || !m_model || !m_delegate ||
       !m_delegate->isReady())
     return;
+  // Delegates can only be polished inside a window, which an unloaded view no longer has.
+  if (!window()) {
+    polish();
+    return;
+  }
   m_updating = true;
   emit updatingChanged();
   if (!anchor) anchor = readingAnchor();
@@ -524,7 +529,7 @@ void DocumentLayout::layoutVisible(std::optional<Anchor> anchor) {
 }
 
 void DocumentLayout::measurePending() {
-  if (!m_viewport || !m_model || !m_delegate || !m_delegate->isReady() || m_updating) return;
+  if (!window() || !m_viewport || !m_model || !m_delegate || !m_delegate->isReady() || m_updating) return;
   if (m_lastScroll.isValid() && m_lastScroll.elapsed() < SCROLL_IDLE_MS) {
     m_measureTimer.start(SCROLL_IDLE_MS - m_lastScroll.elapsed());
     return;

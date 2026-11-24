@@ -36,6 +36,27 @@ yellow = "#c9a76e"
 cyan = "#18a5b3"
 purple = "#bc8cff"
 
+# Optional syntax colors; omitted values derive from the theme's accents.
+[colors.syntax]
+keyword = "#8eb7e8"
+control_flow = "#c6a0db"
+function = "#e6c384"
+type = "#7fc5c0"
+string = "#b2c98f"
+number = "#e9aa80"
+constant = "#c4a7e7"
+attribute = "#9abfdd"
+preprocessor = "#d99ca7"
+special = "#e6c384"
+error = "#ef8b82"
+comment = "#868b98"
+heading = "#e6c384"
+emphasis = "#d99ca7"
+link = "#7fc5c0"
+link_target = "#96a9c8"
+inline_code = "#e9aa80"
+marker = "#8eb7e8"
+
 # For now, shortcuts cannot have their own dedicated background
 [colors.shortcut]
 border = "colors.core.border"

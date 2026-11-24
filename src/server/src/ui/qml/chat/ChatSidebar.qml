@@ -141,12 +141,10 @@ Item {
                     anchors.rightMargin: 10
                     anchors.bottomMargin: 6
                     text: sectionHeader.section
-                    color: Config.withAlpha(Theme.foreground, 0.45)
+                    color: Theme.textMuted
                     font.family: Theme.fontFamily
-                    font.pointSize: Theme.smallerFontSize * 0.85
-                    font.weight: Font.DemiBold
-                    font.capitalization: Font.AllUppercase
-                    font.letterSpacing: 0.4
+                    font.pointSize: Theme.smallerFontSize
+                    font.weight: Font.Medium
                     elide: Text.ElideRight
                 }
             }
@@ -166,9 +164,9 @@ Item {
                 }
                 ListView.onReused: pooled = false
                 width: history.width
-                height: 32
-                radius: 6
-                color: selected ? Config.withAlpha(Theme.foreground, 0.10) : rowHover.hovered ? Config.withAlpha(Theme.foreground, 0.04) : "transparent"
+                height: 34
+                radius: 8
+                color: selected ? Config.withAlpha(Theme.foreground, 0.08) : rowHover.hovered ? Config.withAlpha(Theme.foreground, 0.04) : "transparent"
                 border.width: ListView.isCurrentItem && history.activeFocus ? 1 : 0
                 border.color: Theme.inputBorderFocus
                 Accessible.role: Accessible.ListItem

@@ -160,6 +160,10 @@ public:
   void save(const ConversationInfo &info, const ConversationTurn &turn) {
     open();
     saveFiles(info.id, turn.attachments);
+    for (const auto &message : turn.messages)
+      for (const auto &part : message.content.parts)
+        if (const auto *resource = std::get_if<ResourcePart>(&part); resource && resource->data)
+          writeFile(m_directory / resourcePath(info.id, *resource), *resource->data);
     auto tx = m_db.transaction();
 
     auto conversation = prepare(R"(
@@ -174,8 +178,8 @@ public:
     execute(conversation);
 
     auto record = prepare(R"(
-      INSERT INTO turn(id,conversation_id,position,query,status,model,model_label,thinking,max_steps,started_at,finished_at,error)
-      VALUES(:id,:conversation,:position,:query,:status,:model,:label,:thinking,:steps,:started,:finished,:error)
+      INSERT INTO turn(id,conversation_id,position,query,status,model,model_label,thinking,max_steps,started_at,finished_at,error,reasoning_effort)
+      VALUES(:id,:conversation,:position,:query,:status,:model,:label,:thinking,:steps,:started,:finished,:error,:reasoning)
       ON CONFLICT(id) DO UPDATE SET status=excluded.status,model_label=excluded.model_label,
         finished_at=excluded.finished_at,error=excluded.error
     )");
@@ -187,6 +191,7 @@ public:
     record.bind(":model", modelName(turn.options.model));
     record.bind(":label", turn.modelLabel);
     record.bind(":thinking", static_cast<int>(turn.options.thinking));
+    record.bind(":reasoning", turn.options.reasoningEffort);
     record.bind(":steps", turn.options.maxSteps);
     record.bind(":started", turn.startedAt);
     record.bind(":finished", turn.finishedAt);
@@ -218,6 +223,7 @@ public:
       for (const auto &[index, part] : vicinae::enumerate(message.content.parts)) {
         const auto kind = std::holds_alternative<TextPart>(part)       ? "text"
                           : std::holds_alternative<ImagePart>(part)    ? "image"
+                          : std::holds_alternative<ResourcePart>(part) ? "resource"
                           : std::holds_alternative<ToolCallPart>(part) ? "tool_call"
                                                                        : "tool_result";
         auto item =
@@ -232,6 +238,22 @@ public:
           auto value = prepare("INSERT INTO text_part(part_id,text) VALUES(:id,:text)");
           value.bind(":id", partId);
           value.bind(":text", text->text);
+          execute(value);
+        } else if (const auto *resource = std::get_if<ResourcePart>(&part)) {
+          auto value = prepare("INSERT INTO resource_part(part_id,id,name,mime_type,uri,path,status) "
+                               "VALUES(:part,:id,:name,:mime,:uri,:path,:status)");
+          value.bind(":part", partId);
+          value.bind(":id", resource->id);
+          value.bind(":name", resource->name);
+          value.bind(":mime", resource->mimeType);
+          value.bind(":uri", resource->uri);
+          value.bind(":path",
+                     resource->data
+                         ? std::optional(resourcePath(info.id, *resource).string())
+                         : resource->path.transform([this](const auto &path) {
+                             return std::filesystem::path(path).lexically_relative(m_directory).string();
+                           }));
+          value.bind(":status", static_cast<int>(resource->status));
           execute(value);
         } else if (std::holds_alternative<ImagePart>(part)) {
           while (imageIndex < turn.attachments.size() && !turn.attachments[imageIndex].data.isImage())
@@ -296,7 +318,7 @@ public:
     result.turns.reserve(32);
 
     auto turns = prepare(R"(
-      SELECT id,position,query,status,model,model_label,thinking,max_steps,started_at,finished_at,error
+      SELECT id,position,query,status,model,model_label,thinking,max_steps,started_at,finished_at,error,reasoning_effort
       FROM turn WHERE conversation_id=:conversation ORDER BY position
     )");
     turns.bind(":conversation", id);
@@ -314,6 +336,7 @@ public:
       turn.startedAt = turns.columnInt64(8);
       if (!turns.isNull(9)) turn.finishedAt = turns.columnInt64(9);
       turn.error = readOptional(turns, 10);
+      turn.options.reasoningEffort = readOptional(turns, 11);
       turn.messages.reserve(16);
       turn.calls.reserve(8);
 
@@ -393,7 +416,7 @@ private:
   }
 
   void removeOrphanedFiles() {
-    auto query = prepare("SELECT id FROM attachment");
+    auto query = prepare("SELECT id FROM attachment UNION SELECT id FROM resource_part");
     std::unordered_set<std::string> attachments;
     attachments.reserve(64);
     while (next(query))
@@ -417,6 +440,11 @@ private:
         if (!std::filesystem::exists(path)) writeFile(path, QByteArray::fromBase64(image->base64));
       }
     }
+  }
+
+  std::filesystem::path resourcePath(std::string_view conversation, const ResourcePart &resource) const {
+    return std::filesystem::path("attachments") / conversation / resource.id / "original" /
+           QFileInfo(QString::fromStdString(resource.name.value_or("attachment"))).fileName().toStdString();
   }
 
   void saveAttachments(std::string_view conversation, const ConversationTurn &turn) {
@@ -481,13 +509,15 @@ private:
       auto parts = prepare(R"(
         SELECT p.kind,t.text,i.attachment_id,
           c.provider_id,c.name,c.arguments,c.summary,c.status,c.duration_ms,
-          r.content,r.display_text,r.status_text,r.failed,rc.provider_id
+          r.content,r.display_text,r.status_text,r.failed,rc.provider_id,
+          f.id,f.name,f.mime_type,f.uri,f.path,f.status
         FROM message_part p
         LEFT JOIN text_part t ON t.part_id=p.id
         LEFT JOIN image_part i ON i.part_id=p.id
         LEFT JOIN tool_call c ON c.part_id=p.id
         LEFT JOIN tool_result r ON r.part_id=p.id
         LEFT JOIN tool_call rc ON rc.part_id=r.call_part_id
+        LEFT JOIN resource_part f ON f.part_id=p.id
         WHERE p.message_id=:message ORDER BY p.position
       )");
       parts.bind(":message", query.columnInt64(0));
@@ -495,12 +525,21 @@ private:
         const auto kind = parts.columnText(0);
         if (kind == "text") {
           message.content.parts.emplace_back(TextPart{parts.columnText(1)});
+        } else if (kind == "resource") {
+          ResourcePart resource{.id = parts.columnText(14),
+                                .name = readOptional(parts, 15),
+                                .mimeType = readOptional(parts, 16),
+                                .uri = readOptional(parts, 17),
+                                .status = static_cast<ResourcePart::Status>(parts.columnInt(19))};
+          if (auto path = readOptional(parts, 18)) resource.path = (m_directory / *path).string();
+          message.content.parts.emplace_back(std::move(resource));
         } else if (kind == "image") {
           const auto attachment =
               std::ranges::find(turn.attachments, parts.columnText(2), &ConversationAttachment::id);
           if (attachment == turn.attachments.end()) throw std::runtime_error("Missing image attachment");
           const auto &image = std::get<FileAttachment::Image>(attachment->data.contents);
-          message.content.parts.emplace_back(ImagePart{image.mimeType, image.base64});
+          attachment->userProvided = message.content.role == ChatRole::User;
+          message.content.parts.emplace_back(ImagePart{image.mimeType, image.base64, attachment->path});
         } else if (kind == "tool_call") {
           Agent::ToolCall call{.id = nextId++,
                                .call = {parts.columnText(3), parts.columnText(4), parts.columnText(5)},
@@ -555,15 +594,16 @@ QFuture<Result<Conversation>> ConversationStore::load(std::string id) {
   return submit(m_worker, [worker = m_worker, id = std::move(id)] { return worker->load(id); });
 }
 
-void ConversationStore::save(ConversationInfo info, ConversationTurn turn) {
-  submit(m_worker, [worker = m_worker, info = std::move(info), turn = std::move(turn)] {
-    worker->save(info, turn);
-  }).then(this, [this](const Result<void> &result) {
-    if (result)
-      emit changed();
-    else
-      emit errorOccurred(QString::fromStdString(result.error()));
-  });
+QFuture<Result<void>> ConversationStore::save(ConversationInfo info, ConversationTurn turn) {
+  return submit(m_worker, [worker = m_worker, info = std::move(info),
+                           turn = std::move(turn)] { worker->save(info, turn); })
+      .then(this, [this](Result<void> result) {
+        if (result)
+          emit changed();
+        else
+          emit errorOccurred(QString::fromStdString(result.error()));
+        return result;
+      });
 }
 
 void ConversationStore::setModel(std::string id, std::optional<ModelRef> model) {

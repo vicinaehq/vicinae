@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 import Vicinae
 
@@ -11,13 +12,15 @@ Rectangle {
     property string status: "queued"
     property var durationMs: null
     property bool expanded: false
-    property bool compactStatus: false
     property var resultStatusText: null
     signal toggled
 
     readonly property bool running: status === "running"
+    readonly property bool showDisclosure: expanded || mouse.containsMouse || activeFocus
+    readonly property bool succeeded: status === "succeeded" || status === "completed"
+    readonly property bool hasResultStatus: resultStatusText !== null && resultStatusText !== undefined && resultStatusText.length > 0
     property string statusText: {
-        if (resultStatusText !== null && resultStatusText !== undefined)
+        if (hasResultStatus)
             return resultStatusText;
         switch (status) {
         case "running":
@@ -46,9 +49,11 @@ Rectangle {
     }
     readonly property string statusLabel: durationText.length > 0 ? qsTr("%1 · %2").arg(statusText).arg(durationText) : statusText
 
-    implicitHeight: subtitle.length > 0 ? 50 : 32
+    implicitHeight: Math.max(28, titleText.implicitHeight + 10)
     radius: 6
-    color: mouse.containsMouse || activeFocus ? Theme.listItemHoverBg : "transparent"
+    color: mouse.containsMouse || activeFocus ? Config.withAlpha(Theme.foreground, 0.035) : "transparent"
+    border.width: activeFocus ? 1 : 0
+    border.color: Theme.buttonFocusOutline
     activeFocusOnTab: true
     Accessible.role: Accessible.Button
     Accessible.name: root.subtitle.length > 0 ? qsTr("%1 — %2 — %3").arg(root.title).arg(root.subtitle).arg(root.statusLabel) : qsTr("%1 — %2").arg(root.title).arg(root.statusLabel)
@@ -62,54 +67,58 @@ Rectangle {
         anchors.leftMargin: 6
         anchors.rightMargin: 8
         spacing: 8
-        ViciImage {
-            Layout.preferredWidth: 12
-            Layout.preferredHeight: 12
-            source: Img.icon(root.expanded ? BuiltinIcon.ChevronDown : BuiltinIcon.ChevronRight).withFillColor(Theme.textMuted)
-        }
-        ViciImage {
+        Item {
             Layout.preferredWidth: 14
             Layout.preferredHeight: 14
-            source: root.iconSource || Img.icon(BuiltinIcon.WrenchScrewdriver).withFillColor(Theme.textMuted)
-        }
-        ColumnLayout {
-            Layout.fillWidth: true
-            spacing: 2
-            Text {
-                Layout.fillWidth: true
-                text: root.title.replace(/\s+/g, " ")
-                textFormat: Text.PlainText
-                elide: Text.ElideRight
-                font.family: Theme.fontFamily
-                font.pointSize: Theme.smallerFontSize
-                color: Theme.foreground
+            ViciImage {
+                anchors.fill: parent
+                visible: !root.running
+                source: root.showDisclosure ? Img.icon(root.expanded ? BuiltinIcon.ChevronDown : BuiltinIcon.ChevronRight).withFillColor(Theme.textMuted) : root.iconSource || Img.icon(BuiltinIcon.WrenchScrewdriver).withFillColor(Theme.textMuted)
             }
-            Text {
-                Layout.fillWidth: true
-                visible: root.subtitle.length > 0
-                text: root.subtitle.replace(/\s+/g, " ")
-                textFormat: Text.PlainText
-                elide: Text.ElideRight
-                font.family: Theme.monoFontFamily
-                font.pointSize: Theme.smallerFontSize
-                color: Theme.textMuted
+            ViciSpinner {
+                anchors.fill: parent
+                visible: root.running
             }
-        }
-        ViciSpinner {
-            Layout.preferredWidth: 14
-            Layout.preferredHeight: 14
-            visible: root.running
         }
         Text {
-            Layout.maximumWidth: root.width * 0.45
-            text: root.compactStatus && (root.status === "succeeded" || root.status === "completed") && root.durationText.length > 0 ? root.durationText : root.statusLabel
+            id: titleText
+            Layout.maximumWidth: root.subtitle.length > 0 ? root.width * 0.4 : root.width * 0.7
+            text: root.title.replace(/\s+/g, " ")
             textFormat: Text.PlainText
             elide: Text.ElideRight
             font.family: Theme.fontFamily
             font.pointSize: Theme.smallerFontSize
-            color: root.status === "failed" ? Theme.danger : Theme.textMuted
+            color: root.running ? Theme.foreground : Theme.textMuted
+        }
+        Text {
+            Layout.fillWidth: true
+            visible: root.subtitle.length > 0
+            text: root.subtitle.replace(/\s+/g, " ")
+            textFormat: Text.PlainText
+            elide: Text.ElideRight
+            font.family: Theme.monoFontFamily
+            font.pointSize: Theme.smallerFontSize * 0.92
+            color: Theme.textMuted
+        }
+        Item {
+            Layout.fillWidth: true
+            visible: root.subtitle.length === 0
+        }
+        Text {
+            Layout.maximumWidth: root.width * 0.4
+            visible: (!root.succeeded && !root.running) || root.hasResultStatus
+            text: root.statusText
+            textFormat: Text.PlainText
+            elide: Text.ElideRight
+            font.family: Theme.fontFamily
+            font.pointSize: Theme.smallerFontSize
+            color: root.status === "failed" ? Theme.danger : root.status === "awaiting_approval" ? Theme.accent : Theme.textMuted
         }
     }
+    ToolTip.visible: mouse.containsMouse && !root.expanded
+    ToolTip.text: root.subtitle.length > 0 ? qsTr("%1\n%2").arg(root.subtitle).arg(root.statusLabel) : root.statusLabel
+    ToolTip.delay: 700
+
     MouseArea {
         id: mouse
         anchors.fill: parent

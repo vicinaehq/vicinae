@@ -1,10 +1,17 @@
 #pragma once
+#include <QTimer>
+#include <chrono>
 #include "command/command.hpp"
 #include "command/command-types.hpp"
 #include "extension/extension-command.hpp"
 #include "extension/manager/extension-manager.hpp"
 #include "generated/tsapi.hpp"
+#include <expected>
+#include <functional>
+#include <glaze/json/generic.hpp>
 #include <qlogging.h>
+
+class ExtUIService;
 
 class ExtensionManagerBus : public tsapi::AbstractTransport {
 public:
@@ -30,12 +37,34 @@ class ExtensionLogger : public tsapi::AbstractLogger {
 };
 
 class ExtensionCommandRuntime : public CommandContext {
+public:
+  using RunResult = std::expected<std::string, std::string>;
+  using RunCallback = std::function<void(RunResult)>;
+
+  struct ToolCall {
+    glz::generic input;
+  };
+
+  static constexpr std::chrono::minutes HEADLESS_TIMEOUT{1};
+
+private:
   void initialize();
   PreferenceValues resolvePreferenceValues(PreferenceValues values) const;
+  std::optional<std::string> missingRequiredPreference(const PreferenceValues &values) const;
+  void finish(RunResult result);
 
 public:
   void load(const LaunchProps &props) override;
   void unload() override;
+
+  // the runtime deletes itself once the command finishes
+  void setHeadless(RunCallback onFinished) {
+    m_headless = true;
+    m_onFinished = std::move(onFinished);
+  }
+  void cancel(std::string reason) { finish(std::unexpected(std::move(reason))); }
+
+  void setToolCall(ToolCall call) { m_toolCall = std::move(call); }
 
   ExtensionCommandRuntime(const std::shared_ptr<ExtensionCommand> &command);
 
@@ -45,11 +74,12 @@ private:
   std::unique_ptr<tsapi::RpcTransport> m_transport;
   std::shared_ptr<ExtensionCommand> m_command;
   tsapi::Server *m_server = nullptr;
+  ExtUIService *m_ui = nullptr;
 
   std::string m_sessionId;
   bool m_isDevMode = false;
   bool m_headless = false;
-
-public:
-  void setHeadless(bool value) { m_headless = value; }
+  RunCallback m_onFinished;
+  QTimer m_timeout;
+  std::optional<ToolCall> m_toolCall;
 };

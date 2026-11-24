@@ -84,7 +84,8 @@ if (LOCAL_AI)
 endif()
 
 
-list(APPEND LIBS KF6::SyntaxHighlighting)
+add_subdirectory(${CMAKE_SOURCE_DIR}/src/lib/markdown-editor ${CMAKE_BINARY_DIR}/src/lib/markdown-editor)
+list(APPEND LIBS KF6::SyntaxHighlighting vicinae::editor vicinae-editorplugin)
 
 if (NOT WIN32)
 	list(APPEND LIBS vicinae::xdgpp)
@@ -201,6 +202,8 @@ set(SRCS
 	src/root-search/extensions/extension-root-provider.cpp
 	src/root-search/shortcuts/shortcut-root-provider.hpp
 	src/root-search/shortcuts/shortcut-root-provider.cpp
+	src/root-search/ai-commands/ai-command-root-provider.hpp
+	src/root-search/ai-commands/ai-command-root-provider.cpp
 	src/root-search/apps/app-root-provider.hpp
 	src/root-search/apps/app-root-provider.cpp
 
@@ -252,6 +255,8 @@ set(SRCS
 	src/services/clipboard/clipboard-service.hpp
 	src/services/clipboard/clipboard-encrypter.cpp
 	src/services/clipboard/clipboard-service.cpp
+	src/services/clipboard/clipboard-image-labels.hpp
+	src/services/clipboard/clipboard-image-labels.cpp
 
 	src/services/local-storage/local-storage-service.hpp
 	src/services/local-storage/local-storage.cpp
@@ -288,6 +293,11 @@ set(SRCS
 
 	src/extension/extension.hpp
 	src/extension/extension.cpp
+	src/extension/extension-tool.hpp
+	src/extension/extension-preferences.hpp
+	src/extension/extension-tool.cpp
+	src/extension/headless-command-runner.hpp
+	src/extension/headless-command-runner.cpp
 
 	src/extension/extension-command.hpp
 	src/extension/extension-command.cpp
@@ -334,6 +344,14 @@ set(SRCS
 	./database/vicinae/migrations.qrc
 	./database/clipboard/migrations.qrc
 	./database/conversations/migrations.qrc
+	src/services/notes/notes-preferences.hpp
+	src/services/notes/notes-store.hpp
+	src/services/notes/notes-store.cpp
+	src/services/notes/notes-attachments.hpp
+	src/services/notes/notes-attachments.cpp
+	src/services/notes/notes-front-matter.hpp
+	src/services/notes/notes-front-matter.cpp
+	src/ui/windows/notes-window-controller.cpp
 
 
 	src/internal/keyboard/keybind-manager.hpp
@@ -404,6 +422,14 @@ set(SRCS
 	src/builtins/ai/chat-document-model.hpp
 	src/builtins/ai/chat-conversation-model.hpp
 	src/builtins/ai/chat-conversation-model.cpp
+	src/builtins/ai/ai-commands.hpp
+	src/builtins/ai/ai-commands.cpp
+	src/builtins/ai/ai-command-run.hpp
+	src/builtins/ai/ai-command-run.cpp
+	src/builtins/ai/ai-command-form-view-host.hpp
+	src/builtins/ai/ai-command-form-view-host.cpp
+	src/builtins/ai/ai-commands-view-host.hpp
+	src/builtins/ai/ai-commands-view-host.cpp
 	src/builtins/dictation/dictation.hpp
 	src/builtins/dictation/dictation-preferences.hpp
 	src/builtins/dictation/dictation-extension.hpp
@@ -466,6 +492,8 @@ set(SRCS
 	src/services/dictation/dictation-styles.cpp
 	src/services/dictation/dictation-rewrite.hpp
 	src/services/dictation/dictation-rewrite.cpp
+	src/services/ai-commands/ai-command-store.hpp
+	src/services/ai-commands/ai-command-store.cpp
 	src/services/root-item-manager/visit-tracker.cpp
 	
 	src/services/app-service/app-service.hpp
@@ -541,6 +569,8 @@ set(SRCS
 	src/builtins/vicinae/theme-tools.cpp
 	src/builtins/clipboard/clipboard-tools.cpp
 	src/builtins/file/file-tools.cpp
+	src/builtins/notes/notes-tools.cpp
+	src/builtins/notes/notes-view-host.hpp
 	src/builtins/system/open-tool.cpp
 
 	src/builtins/file/search-files-model.hpp
@@ -647,6 +677,10 @@ set(SRCS
 	src/services/ai/ai-preferences.hpp
 	src/services/ai/ai-provider-types.hpp
 	src/services/ai/ai-service.cpp
+	src/services/ai/text-rewrite.hpp
+	src/services/ai/text-rewrite.cpp
+	src/services/ai/background-queue.hpp
+	src/services/ai/background-queue.cpp
 	src/services/ai/agentic-loop.hpp
 	src/services/ai/agentic-loop.cpp
 	src/services/ai/history-compaction.cpp
@@ -663,6 +697,11 @@ set(SRCS
 	src/services/ai/cli/cli-process.hpp
 	src/services/ai/cli/cli-process.cpp
 	src/services/ai/acp/acp-provider.hpp
+	src/services/ai/acp/acp-content.hpp
+	src/services/ai/chat-image.hpp
+	src/services/ai/chat-resource.hpp
+	src/services/ai/ai-reasoning.hpp
+	src/services/ai/acp/acp-config.hpp
 	src/services/ai/acp/acp-provider.cpp
 	src/services/ai/mcp/mcp-server.hpp
 	src/services/ai/mcp/mcp-server.cpp
@@ -858,6 +897,7 @@ set(SRCS
 	src/ui/views/edit-keywords-view-host.cpp
 	src/ui/windows/hud-bridge.hpp
 	src/ui/windows/hud-bridge.cpp
+	src/ui/windows/hud-activity.hpp
 
 	src/ui/windows/chat-window.hpp
 	src/ui/windows/chat-window.cpp
@@ -1419,6 +1459,7 @@ set(VICINAE_QML_FILES
 	src/ui/qml/views/ChatGreeting.qml
 	src/ui/qml/views/ChatTranscript.qml
 	src/ui/qml/chat/ChatWindow.qml
+	src/ui/qml/notes/NotesWindow.qml
 	src/ui/qml/chat/ChatSidebar.qml
 	src/ui/qml/chat/ChatConversation.qml
 	src/ui/qml/views/QuickAIView.qml
@@ -1462,6 +1503,7 @@ set(VICINAE_QML_FILES
 	src/ui/qml/views/AliasFormView.qml
 	src/ui/qml/views/VocabularyFormView.qml
 	src/ui/qml/views/DictationStyleFormView.qml
+	src/ui/qml/views/AiCommandFormView.qml
 	src/ui/qml/views/ShortcutFormView.qml
 	src/ui/qml/form/PlaceholderCompleter.qml
 	src/ui/qml/form/PlaceholderHighlight.qml
@@ -1482,6 +1524,8 @@ set(VICINAE_QML_FILES
 	src/ui/qml/markdown/MdList.qml
 	src/ui/qml/markdown/MdTable.qml
 	src/ui/qml/markdown/MdImage.qml
+	src/ui/qml/markdown/MarkdownImageMenu.qml
+	src/ui/qml/markdown/MarkdownImagePreview.qml
 	src/ui/qml/markdown/MdHorizontalRule.qml
 	src/ui/qml/markdown/MdHtmlBlock.qml
 	src/ui/qml/markdown/MdBlockquote.qml
@@ -1571,6 +1615,7 @@ if(APPLE)
 		src/ui/qml/controls/PopupItemBackgroundMacOS.qml
 		src/ui/qml/controls/GlassSurfaceMacOS.qml
 		src/ui/qml/chat/ChatWindowMacOS.qml
+		src/ui/qml/notes/NotesWindowMacOS.qml
 		src/ui/qml/settings/SettingsWindowMacOS.qml
 	)
 	set_source_files_properties(src/ui/qml/controls/MaterialColorsMacOS.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
@@ -1579,6 +1624,7 @@ endif()
 if(WIN32)
 	list(APPEND VICINAE_QML_FILES
 		src/ui/qml/chat/ChatWindowWindows.qml
+		src/ui/qml/notes/NotesWindowWindows.qml
 		src/ui/qml/settings/SettingsWindowWindows.qml
 		src/ui/qml/launcher/LauncherWindowWindows.qml
 		src/ui/qml/hud/HudWindowWindows.qml
@@ -1592,6 +1638,7 @@ foreach(qml_file IN LISTS VICINAE_QML_FILES)
 endforeach()
 
 set(VICINAE_QML_SOURCES
+	src/ui/windows/notes-window-controller.hpp
 	src/ui/quick/attachment-model.hpp
 	src/ui/quick/attachment-content.hpp
 	src/ui/quick/source-blend-rect.hpp
@@ -1645,11 +1692,12 @@ endif()
 
 qt_add_qml_module(${TARGET}
 	URI Vicinae
+	IMPORT_PATH ${CMAKE_BINARY_DIR}/qml
 	VERSION 1.0
 	RESOURCE_PREFIX /qt/qml
 	QML_FILES ${VICINAE_QML_FILES}
 	SOURCES ${VICINAE_QML_SOURCES}
-	DEPENDENCIES QtQuick
+	DEPENDENCIES QtQuick Vicinae.Editor
 	NO_PLUGIN
 )
 
@@ -1764,13 +1812,14 @@ file(GLOB_RECURSE VICINAE_I18N_SOURCES CONFIGURE_DEPENDS
 	${CMAKE_CURRENT_SOURCE_DIR}/src/*.mm)
 
 qt_add_translations(${TARGET}
-	SOURCE_TARGETS ${TARGET}
+	SOURCE_TARGETS ${TARGET} vicinae-editor
 	TS_FILE_BASE vicinae
 	TS_FILES
 		${CMAKE_CURRENT_SOURCE_DIR}/translations/vicinae_de.ts
 		${CMAKE_CURRENT_SOURCE_DIR}/translations/vicinae_es_ES.ts
 		${CMAKE_CURRENT_SOURCE_DIR}/translations/vicinae_fr.ts
 		${CMAKE_CURRENT_SOURCE_DIR}/translations/vicinae_it.ts
+		${CMAKE_CURRENT_SOURCE_DIR}/translations/vicinae_ko.ts
 		${CMAKE_CURRENT_SOURCE_DIR}/translations/vicinae_pl.ts
 		${CMAKE_CURRENT_SOURCE_DIR}/translations/vicinae_ru.ts
 		${CMAKE_CURRENT_SOURCE_DIR}/translations/vicinae_uk.ts
@@ -1802,8 +1851,11 @@ if (BUILD_TESTS AND UNIX AND NOT APPLE)
 		src/services/builtin-icon/builtin-icon.cpp
 		src/services/audio-control/pactl/pactl-audio-control.cpp
 		src/services/clipboard/clipboard-mime.cpp
+		src/services/extension-registry/extension-manifest.cpp
+		src/utils/utils.cpp
 		tests/pactl-audio-control.cpp
 		tests/clipboard-mime.cpp
+		tests/extension-manifest.cpp
 	)
 	target_link_libraries(${TEST_TARGET} PRIVATE vicinae::common Qt6::Concurrent glaze::glaze)
 	target_link_libraries(${TEST_TARGET} PRIVATE Catch2::Catch2WithMain Qt6::Core Qt6::Gui)
@@ -1812,6 +1864,22 @@ endif()
 
 if(BUILD_TESTS)
 	find_package(Qt6 REQUIRED COMPONENTS Test)
+	qt_add_executable(vicinae-notes-tests
+		tests/notes-invariants.cpp
+		src/services/notes/notes-preferences.hpp
+		src/services/notes/notes-store.hpp
+		src/services/notes/notes-store.cpp
+		src/services/notes/notes-attachments.hpp
+		src/services/notes/notes-attachments.cpp
+		src/services/notes/notes-front-matter.hpp
+		src/services/notes/notes-front-matter.cpp
+		src/builtins/notes/notes-tools.hpp
+		src/builtins/notes/notes-tools.cpp
+	)
+	target_include_directories(vicinae-notes-tests PRIVATE src src/internal src/utils)
+	target_link_libraries(vicinae-notes-tests PRIVATE vicinae::editor vicinae::common vicinae::fuzzy Qt6::Test glaze::glaze)
+	target_link_libraries(vicinae-notes-tests PRIVATE ${CMARK_LIBRARY})
+	target_compile_features(vicinae-notes-tests PRIVATE cxx_std_23)
 	qt_add_executable(vicinae-document-tests
 		tests/document-invariants.cpp
 		src/builtins/ai/chat-conversation-model.cpp
@@ -1821,6 +1889,6 @@ if(BUILD_TESTS)
 		src/ui/quick/math-renderer.cpp
 		src/ui/quick/math-renderer.hpp
 	)
-	target_link_libraries(vicinae-document-tests PRIVATE JKQTMathText6 Qt6::Quick Qt6::Svg Qt6::Test)
+	target_link_libraries(vicinae-document-tests PRIVATE JKQTMathText6 Qt6::Quick Qt6::Svg Qt6::Test glaze::glaze)
 	target_compile_features(vicinae-document-tests PRIVATE cxx_std_23)
 endif()

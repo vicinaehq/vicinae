@@ -1,3 +1,4 @@
+#include <utility>
 #include <QTextBoundaryFinder>
 #include <QJsonDocument>
 #include <algorithm>
@@ -89,6 +90,43 @@ void ChatConversationModel::appendSavedResponse(std::string text) {
   const auto size = text.size();
   contents.reserve(contents.size() + 1);
   contents.emplace_back(Response{std::move(text), size, true});
+  emit contentAdded(rowCount() - 1, contents.size() - 1);
+}
+
+std::optional<int> ChatConversationModel::appendImage(QString source) {
+  if (m_exchanges.empty()) return std::nullopt;
+  flushResponse();
+  auto &contents = m_exchanges.back().contents;
+  contents.reserve(contents.size() + 1);
+  contents.emplace_back(Image{std::move(source)});
+  const int content = static_cast<int>(contents.size()) - 1;
+  emit contentAdded(rowCount() - 1, content);
+  return content;
+}
+
+void ChatConversationModel::setImageSource(int exchange, int content, QString source) {
+  if (exchange < 0 || std::cmp_greater_equal(exchange, m_exchanges.size())) return;
+  auto &contents = m_exchanges[exchange].contents;
+  if (content < 0 || std::cmp_greater_equal(content, contents.size())) return;
+  auto *image = std::get_if<Image>(&contents[content]);
+  if (!image) return;
+  image->source = std::move(source);
+  emit contentChanged(exchange, content);
+}
+
+void ChatConversationModel::appendAttachment(QVariantMap item) {
+  if (m_exchanges.empty()) return;
+  flushResponse();
+  auto &contents = m_exchanges.back().contents;
+  if (!contents.empty()) {
+    if (auto *attachments = std::get_if<Attachment>(&contents.back())) {
+      attachments->items.emplaceBack(std::move(item));
+      emit contentChanged(rowCount() - 1, contents.size() - 1);
+      return;
+    }
+  }
+  contents.reserve(contents.size() + 1);
+  contents.emplace_back(Attachment{{std::move(item)}});
   emit contentAdded(rowCount() - 1, contents.size() - 1);
 }
 

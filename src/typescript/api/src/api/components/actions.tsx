@@ -14,7 +14,7 @@ import {
 	showInFileBrowser,
 	trash,
 } from "../utils";
-import type { Form } from "./form";
+import { DatePickerType, type Form } from "./form";
 import { Icon } from "../icon";
 import { closeMainWindow } from "../controls";
 import { ActionPanel } from "./action-pannel";
@@ -420,6 +420,7 @@ export const Action = Object.assign(ActionRoot, {
 	ToggleQuickLook,
 	CreateSnippet,
 	PickDate: Object.assign(PickDate, {
+		Type: DatePickerType,
 		// TODO: to implement too
 		isFullDay: () => false,
 	}),

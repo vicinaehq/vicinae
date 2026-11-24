@@ -11,6 +11,7 @@ Item {
     readonly property real contentWidth: Math.min(width - 32, 720)
     readonly property real sideMargin: (width - contentWidth) / 2
     property string expandedCommandId: ""
+    property string expandedToolKey: ""
     property string _focusedCommandId: ""
     property string _focusedToolKey: ""
     readonly property string subpageRoot: {
@@ -77,6 +78,10 @@ Item {
             return;
         Settings.pendingToolKey = "";
         root._focusedToolKey = pending;
+        if (root.extModel.tools[row].hasPreferences) {
+            root.expandedToolKey = pending;
+            root.extModel.loadToolPreferences(root.extModel.tools[row].id);
+        }
         focusFlash.restart();
         _scrollTo(() => toolRepeater.itemAt(row));
     }
@@ -454,7 +459,7 @@ Item {
                         required property var modelData
                         required property int index
                         Layout.fillWidth: true
-                        implicitHeight: toolRow.implicitHeight
+                        implicitHeight: toolContent.implicitHeight
 
                         Rectangle {
                             anchors.fill: parent
@@ -473,13 +478,37 @@ Item {
                             }
                         }
 
-                        ToolSettingsRow {
-                            id: toolRow
+                        ColumnLayout {
+                            id: toolContent
                             width: parent.width
-                            tool: toolDelegate.modelData
-                            policyItems: root.extModel.toolPolicyItems
-                            showSeparator: toolDelegate.index < root.extModel.tools.length - 1
-                            onPolicySelected: policy => root.extModel.setToolPolicy(toolDelegate.modelData.id, policy)
+                            spacing: 0
+
+                            ToolSettingsRow {
+                                tool: toolDelegate.modelData
+                                expanded: root.expandedToolKey === toolDelegate.modelData.key
+                                policyItems: root.extModel.toolPolicyItems
+                                showSeparator: !expanded && toolDelegate.index < root.extModel.tools.length - 1
+                                onPolicySelected: policy => root.extModel.setToolPolicy(toolDelegate.modelData.id, policy)
+                                onPreferencesRequested: {
+                                    if (expanded) {
+                                        root.expandedToolKey = "";
+                                    } else {
+                                        root.expandedToolKey = toolDelegate.modelData.key;
+                                        root.extModel.loadToolPreferences(toolDelegate.modelData.id);
+                                    }
+                                }
+                            }
+
+                            Loader {
+                                Layout.fillWidth: true
+                                Layout.leftMargin: 18
+                                Layout.bottomMargin: active ? 12 : 0
+                                active: toolDelegate.modelData.hasPreferences && root.expandedToolKey === toolDelegate.modelData.key
+                                visible: active
+                                sourceComponent: SettingsPreferenceForm {
+                                    prefModel: root.extModel.toolPreferenceModel
+                                }
+                            }
                         }
                     }
                 }

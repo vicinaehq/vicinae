@@ -14,7 +14,7 @@ Window {
     readonly property list<Item> titlebarControls: [sidebar.titlebarControls, showSidebarButton, titleEditor, newChatButton, moreButton]
     property real headerHeight: 44
     property bool frostedHeader: true
-    readonly property real contentPadding: Math.max(24, (width - sidebarWidth - 800) / 2)
+    readonly property real contentPadding: Math.max(24, (width - sidebarWidth - 720) / 2)
     width: 1120
     height: 780
     minimumWidth: 720
@@ -25,7 +25,7 @@ Window {
     WindowMaterial.enabled: Platform.supports("windowMaterial")
 
     Shortcut {
-        sequences: [StandardKey.Close]
+        sequences: [StandardKey.Close, StandardKey.Quit]
         onActivated: root.close()
     }
     Shortcut {
@@ -100,7 +100,7 @@ Window {
                 anchors.bottom: parent.bottom
                 width: parent.width
                 height: 1
-                color: Config.withAlpha(Theme.foreground, 0.09)
+                color: Config.withAlpha(Theme.foreground, 0.05)
             }
 
             MouseArea {
@@ -173,6 +173,9 @@ Window {
                     iconSource: Img.icon(BuiltinIcon.Ellipsis).withFillColor(Theme.textMuted)
                     accessibleName: qsTr("Conversation actions")
                     activeFocusOnTab: true
+                    ToolTip.visible: hovered
+                    ToolTip.text: accessibleName
+                    ToolTip.delay: 600
                     onClicked: conversationMenu.popup(moreButton, 0, moreButton.height)
                     ViciMenu {
                         id: conversationMenu

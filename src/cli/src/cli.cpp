@@ -1,3 +1,4 @@
+#include <cstdlib>
 #include <filesystem>
 #include <glaze/core/opts.hpp>
 #include <glaze/core/reflect.hpp>
@@ -593,9 +594,19 @@ class DMenuCommand : public AbstractCommandLineCommand {
     app->add_flag("--no-metadata", m_req.noMetadata, "Do not show metadata section in quick look");
     app->add_flag("--no-footer", m_req.noFooter, "Hide the status bar footer");
     app->add_flag("--password", m_req.password, "Redact the search bar input");
+    app->add_option(
+        "--action", m_req.actions,
+        std::format(
+            "Add a custom action, as [SHORTCUT:]TITLE (e.g. control+E:Edit). Can be repeated multiple times.",
+            MAX_ACTIONS, FIRST_ACTION_EXIT_CODE, FIRST_ACTION_EXIT_CODE + 1));
   }
 
   bool run(CLI::App *) override {
+    if (m_req.actions.size() > MAX_ACTIONS) {
+      std::println(std::cerr, "At most {} actions can be passed", MAX_ACTIONS);
+      return false;
+    }
+
     m_req.rawContent = vicinae::slurp(std::cin);
 
     const auto res =
@@ -605,6 +616,10 @@ class DMenuCommand : public AbstractCommandLineCommand {
       std::println(std::cerr, "Failed to invoke dmenu: {}", res.error());
       return false;
     }
+    if (res->action) {
+      std::println(std::cout, "{}\n{}", res->output, res->query);
+      std::exit(FIRST_ACTION_EXIT_CODE + *res->action);
+    }
     if (res->output.empty()) { return false; }
 
     std::println(std::cout, "{}", res->output);
@@ -612,6 +627,9 @@ class DMenuCommand : public AbstractCommandLineCommand {
   }
 
 private:
+  static constexpr std::size_t MAX_ACTIONS = 19;
+  static constexpr int FIRST_ACTION_EXIT_CODE = 10;
+
   ipc::DMenuRequest m_req;
 };
 

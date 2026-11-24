@@ -9,8 +9,9 @@ Rectangle {
     property bool removable: false
     signal removeRequested(int attachmentId)
     signal previewRequested(var content)
-    activeFocusOnTab: root.attachment.content.image
-    Accessible.role: root.attachment.content.image ? Accessible.Button : Accessible.StaticText
+    readonly property bool actionable: root.attachment.content.image || root.attachment.content.canOpen
+    activeFocusOnTab: actionable
+    Accessible.role: actionable ? Accessible.Button : Accessible.StaticText
     Accessible.name: root.attachment.name
     Accessible.description: root.attachment.error || root.attachment.detail || ""
     Accessible.onPressAction: root.openPreview()
@@ -20,6 +21,8 @@ Rectangle {
     function openPreview() {
         if (root.attachment.content.image)
             root.previewRequested(root.attachment.content);
+        else if (root.attachment.content.canOpen)
+            root.attachment.content.open();
     }
 
     ContextMenu.menu: AttachmentMenu {
@@ -40,7 +43,7 @@ Rectangle {
         anchors.fill: parent
         enabled: !root.DocumentScope.measuring
         acceptedButtons: Qt.LeftButton
-        cursorShape: root.attachment.content.image ? Qt.PointingHandCursor : Qt.ArrowCursor
+        cursorShape: root.actionable ? Qt.PointingHandCursor : Qt.ArrowCursor
         onClicked: root.openPreview()
     }
 

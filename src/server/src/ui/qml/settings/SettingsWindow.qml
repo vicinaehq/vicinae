@@ -59,7 +59,7 @@ Window {
     title: qsTr("Vicinae Settings")
 
     Shortcut {
-        sequences: [StandardKey.Close]
+        sequences: [StandardKey.Close, StandardKey.Quit]
         onActivated: root.close()
     }
 

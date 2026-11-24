@@ -57,6 +57,7 @@ private:
   Q_PROPERTY(QColor loadingBar READ loadingBar NOTIFY changed)
   Q_PROPERTY(QColor buttonPrimaryBg READ buttonPrimaryBg NOTIFY changed)
   Q_PROPERTY(QColor buttonPrimaryHoverBg READ buttonPrimaryHoverBg NOTIFY changed)
+  Q_PROPERTY(QColor csdShadowColor READ csdShadowColor NOTIFY changed)
   Q_PROPERTY(qreal surfaceOpacity READ surfaceOpacity CONSTANT)
   Q_PROPERTY(qreal regularFontSize READ regularFontSize NOTIFY changed)
   Q_PROPERTY(qreal smallerFontSize READ smallerFontSize NOTIFY changed)
@@ -115,6 +116,7 @@ public:
   QColor loadingBar() const { return resolve(SemanticColor::LoadingBar); }
   QColor buttonPrimaryBg() const { return resolve(SemanticColor::ButtonPrimaryBackground); }
   QColor buttonPrimaryHoverBg() const { return resolve(SemanticColor::ButtonPrimaryHoverBackground); }
+  QColor csdShadowColor() const { return resolve(SemanticColor::MainWindowShadowColor); }
 
   static constexpr qreal surfaceOpacity() { return 0.6; }
   qreal regularFontSize() const { return ThemeService::instance().pointSize(TextRegular); }

@@ -36,7 +36,7 @@ ColumnLayout {
                 Text {
                     Layout.alignment: Qt.AlignTop
                     Layout.topMargin: 2
-                    text: root.ordered ? (root.startNumber + itemDelegate.index) + "." : "\u2022"
+                    text: itemDelegate.modelData.checked !== undefined ? (itemDelegate.modelData.checked ? "☑" : "☐") : root.ordered ? (root.startNumber + itemDelegate.index) + "." : "\u2022"
                     color: Theme.textMuted
                     font.pointSize: root.fontSize
                     Binding on font.family {

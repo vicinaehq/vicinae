@@ -8,7 +8,7 @@
 ActionListView::ActionListView(QObject *parent)
     : ActionPanelView(parent), m_state(std::make_unique<ActionPanelState>()),
       m_model(new ActionPanelModel(m_state.get(), this)) {
-  connect(m_model, &ActionPanelModel::actionExecuted, this, &ActionListView::actionExecuted);
+  connect(m_model, &ActionPanelModel::actionExecuted, this, &ActionListView::activate);
   connect(m_model, &ActionPanelModel::closeRequested, this, &ActionListView::closeRequested);
   connect(m_model, &ActionPanelModel::submenuActivated, this, &ActionPanelView::submenuActivated);
 }

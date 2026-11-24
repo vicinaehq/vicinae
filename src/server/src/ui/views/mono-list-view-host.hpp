@@ -1,6 +1,7 @@
 #pragma once
 #include <optional>
 #include <QString>
+#include <QUrl>
 #include <QVariantList>
 #include "ui/views/detail-list-view-host.hpp"
 #include "ui/views/fuzzy-section.hpp"
@@ -9,6 +10,7 @@
 struct ListItemDetail {
   QVariantList metadata;
   QString markdown;
+  QUrl baseUrl;
 };
 
 /**
@@ -25,6 +27,7 @@ public:
 
   bool hasDetail() const final { return m_detail.has_value(); }
   QString detailContent() const final { return m_detail ? m_detail->markdown : QString(); }
+  QUrl detailBaseUrl() const final { return m_detail ? m_detail->baseUrl : QUrl(); }
   QVariantList detailMetadata() const final { return m_detail ? m_detail->metadata : QVariantList(); }
   bool detailMarkdown() const final { return true; }
 

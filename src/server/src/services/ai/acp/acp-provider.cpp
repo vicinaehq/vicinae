@@ -1,10 +1,14 @@
 #include "acp-provider.hpp"
+#include "acp-content.hpp"
+#include "acp-config.hpp"
 #include <algorithm>
 #include <array>
+#include <cctype>
 #include <charconv>
 #include <format>
 #include <ranges>
 #include <span>
+#include <unordered_set>
 #include <glaze/json.hpp>
 #include <QCryptographicHash>
 #include <QProcess>
@@ -15,10 +19,8 @@
 #include "services/ai/cli/cli-process.hpp"
 #include "services/ai/history-compaction.hpp"
 
-namespace AI {
-
 // not anonymous: glaze can't reflect types with internal linkage
-namespace acp {
+namespace AI::acp {
 
 struct Incoming {
   std::optional<glz::raw_json> id;
@@ -45,26 +47,8 @@ struct InitializeResult {
   std::optional<AgentCapabilities> agentCapabilities;
 };
 
-struct ConfigChoice {
-  std::string value;
-  std::optional<std::string> name;
-  std::optional<std::string> description;
-};
-
-// a choice, or a group of them
-struct ConfigEntry {
-  std::optional<std::string> value;
-  std::optional<std::string> name;
-  std::optional<std::string> description;
-  std::optional<std::vector<ConfigChoice>> options;
-};
-
-struct ConfigOption {
-  std::string id;
-  std::optional<std::string> category;
-  std::optional<std::string> type;
-  std::optional<glz::raw_json> currentValue;
-  std::optional<std::vector<ConfigEntry>> options;
+struct ConfigResult {
+  std::optional<glz::raw_json> configOptions;
 };
 
 struct NewSessionResult {
@@ -72,21 +56,18 @@ struct NewSessionResult {
   std::optional<glz::raw_json> configOptions;
 };
 
-struct ContentBlock {
-  std::optional<std::string> type;
-  std::optional<std::string> text;
+struct ClaudeCodeMeta {
+  std::optional<std::string> toolName;
 };
 
-struct ToolContent {
-  std::optional<std::string> type;
-  std::optional<ContentBlock> content;
-  std::optional<std::string> path;
-  std::optional<std::string> newText;
+struct UpdateMeta {
+  std::optional<ClaudeCodeMeta> claudeCode;
 };
 
 // `content` is a content block for messages and a list of tool contents for tool calls
 struct Update {
   std::optional<std::string> sessionUpdate;
+  std::optional<glz::raw_json> configOptions;
   std::optional<glz::raw_json> content;
   std::optional<std::string> toolCallId;
   std::optional<std::string> title;
@@ -94,6 +75,8 @@ struct Update {
   std::optional<std::string> status;
   std::optional<glz::raw_json> rawInput;
   std::optional<glz::raw_json> rawOutput;
+  // agent specific, kept raw so that an unexpected shape doesn't drop the whole update
+  std::optional<glz::raw_json> meta;
 };
 
 struct SessionNotification {
@@ -155,11 +138,21 @@ struct SessionRef {
   std::string sessionId;
 };
 
-} // namespace acp
+} // namespace AI::acp
+
+// NOLINTBEGIN(readability-identifier-naming)
+template <> struct glz::meta<AI::acp::Update> {
+  static constexpr std::string_view rename_key(std::string_view key) { return key == "meta" ? "_meta" : key; }
+};
+// NOLINTEND(readability-identifier-naming)
+
+namespace AI {
 
 namespace {
 
 constexpr glz::opts LENIENT{.error_on_unknown_keys = false};
+constexpr std::string_view MCP_SERVER_NAME = "vicinae";
+constexpr auto MCP_TOOL_PREFIXES = std::to_array<std::string_view>({"mcp__vicinae__", "vicinae/"});
 constexpr std::size_t MAX_TOOL_OUTPUT = std::size_t{16} * 1024;
 constexpr std::string_view CANCELLED = R"({"outcome":{"outcome":"cancelled"}})";
 constexpr std::string_view DEFAULT_MODEL = "default";
@@ -230,11 +223,44 @@ template <typename T> std::expected<T, std::string> fromJson(std::string_view js
 std::vector<acp::McpServerStdio> mcpServers() {
   const auto helper = vicinae::findHelperProgram("vicinae-mcp");
   if (!helper) return {};
-  return {
-      {.name = "vicinae", .command = helper->string(), .args = {"--socket", vicinae::serverSocketName()}}};
+  return {{.name = std::string{MCP_SERVER_NAME},
+           .command = helper->string(),
+           .args = {"--socket", vicinae::serverSocketName()}}};
 }
 
 bool present(const std::optional<glz::raw_json> &json) { return json && json->str != "null"; }
+
+/**
+ * The name of the Vicinae tool an agent calls through our MCP server, if any. Agents don't report it the same
+ * way: claude-agent-acp names it `mcp__vicinae__<tool>` in `_meta.claudeCode.toolName`, codex-acp titles the
+ * call `Tool: vicinae/<tool>`.
+ */
+std::optional<std::string> vicinaeToolName(const acp::Update &update) {
+  const auto isNameChar = [](char c) {
+    return std::isalnum(static_cast<unsigned char>(c)) || c == '_' || c == '-';
+  };
+
+  const auto extract = [&](std::string_view text) -> std::optional<std::string> {
+    for (const auto prefix : MCP_TOOL_PREFIXES) {
+      for (auto pos = text.find(prefix); pos != std::string_view::npos; pos = text.find(prefix, pos + 1)) {
+        if (pos > 0 && isNameChar(text.at(pos - 1))) continue;
+        const auto rest = text.substr(pos + prefix.size());
+        const auto name = rest.substr(0, std::ranges::find_if_not(rest, isNameChar) - rest.begin());
+        if (!name.empty()) return std::string{name};
+      }
+    }
+    return std::nullopt;
+  };
+
+  if (update.meta) {
+    if (const auto meta = fromJson<acp::UpdateMeta>(update.meta->str);
+        meta && meta->claudeCode && meta->claudeCode->toolName) {
+      if (auto name = extract(*meta->claudeCode->toolName)) return name;
+    }
+  }
+
+  return update.title.and_then(extract);
+}
 
 std::string truncated(std::string_view text) { return std::string(truncateUtf8(text, MAX_TOOL_OUTPUT).text); }
 
@@ -303,6 +329,8 @@ void appendBlocks(std::vector<acp::PromptBlock> &blocks, const ChatMessage &mess
       text(std::format("(used tool {} with {})", call->name, call->arguments));
     } else if (const auto *result = std::get_if<ToolResultPart>(&part)) {
       text(std::format("(tool result: {})", result->content));
+    } else if (const auto *resource = std::get_if<ResourcePart>(&part)) {
+      text(resource->describe());
     }
   }
 }
@@ -336,12 +364,9 @@ std::vector<acp::PromptBlock> makePrompt(std::string_view instructions, const Ch
   return blocks;
 }
 
-std::optional<std::string> toolOutput(std::string_view json) {
-  auto contents = fromJson<std::vector<acp::ToolContent>>(json);
-  if (!contents) return std::nullopt;
-
+std::optional<std::string> toolOutput(std::span<const acp::ToolContent> contents) {
   std::string out;
-  for (const auto &content : *contents) {
+  for (const auto &content : contents) {
     std::string piece;
     if (content.type == "content" && content.content && content.content->text) {
       piece = *content.content->text;
@@ -362,10 +387,10 @@ class AcpChatStream : public AbstractChatCompletionStream {
 public:
   AcpChatStream(AcpProvider *provider, std::optional<std::string> sessionId, std::string modelId,
                 std::vector<acp::PromptBlock> prompt, QByteArray history, ChatMessage message, Model model,
-                bool oneShot)
+                bool oneShot, std::optional<std::string> reasoningEffort, ThinkingMode thinking)
       : m_provider(provider), m_sessionId(std::move(sessionId)), m_modelId(std::move(modelId)),
         m_prompt(std::move(prompt)), m_history(std::move(history)), m_message(std::move(message)),
-        m_oneShot(oneShot) {
+        m_reasoningEffort(std::move(reasoningEffort)), m_thinking(thinking), m_oneShot(oneShot) {
     setModel(std::move(model));
   }
 
@@ -417,6 +442,8 @@ public:
   const std::optional<std::string> &sessionId() const { return m_sessionId; }
   void setSessionId(std::string id) { m_sessionId = std::move(id); }
   const std::string &modelId() const { return m_modelId; }
+  const std::optional<std::string> &reasoningEffort() const { return m_reasoningEffort; }
+  ThinkingMode thinking() const { return m_thinking; }
   std::string promptJson() const { return toJson(acp::PromptParams{*m_sessionId, m_prompt}); }
   QByteArray fingerprint() const { return chainExchange(m_history, m_message, m_text); }
 
@@ -427,9 +454,13 @@ public:
     if (kind == "agent_message_chunk") {
       if (!present(update.content)) return;
       auto block = fromJson<acp::ContentBlock>(update.content->str);
-      if (!block || block->type != "text" || !block->text || block->text->empty()) return;
-      m_text += *block->text;
-      emit dataAdded(*block->text);
+      if (!block) return;
+      if (block->type == "text" && block->text && !block->text->empty()) {
+        m_text += *block->text;
+        emit dataAdded(*block->text);
+      } else if (block->type != "text") {
+        publishMedia(acp::mediaContent(*block));
+      }
     } else if (kind == "agent_thought_chunk") {
       emit activityChanged(ResponseActivity::Thinking);
     } else if (kind == "tool_call" || kind == "tool_call_update") {
@@ -467,6 +498,13 @@ public:
   }
 
 private:
+  void publishMedia(const acp::Media &media) {
+    if (const auto *image = std::get_if<ImagePart>(&media))
+      emit imageAdded(*image);
+    else
+      emit resourceAdded(std::get<ResourcePart>(media));
+  }
+
   struct Permission {
     std::string requestId;
     std::string callId;
@@ -476,14 +514,20 @@ private:
   std::optional<std::string> reportTool(const acp::Update &update) {
     if (!update.toolCallId) return std::nullopt;
 
-    auto [entry, inserted] = m_tools.try_emplace(*update.toolCallId);
+    const auto &callId = *update.toolCallId;
+    auto [entry, inserted] = m_tools.try_emplace(callId);
     auto *tool = &entry->second;
     if (inserted) {
       tool->call.id = QUuid::createUuid().toString(QUuid::WithoutBraces).toStdString();
       tool->call.name = "other";
     }
 
-    if (update.kind) tool->call.name = *update.kind;
+    if (auto name = vicinaeToolName(update)) {
+      tool->call.name = std::move(*name);
+      m_vicinaeCalls.insert(callId);
+    } else if (update.kind && !m_vicinaeCalls.contains(callId)) {
+      tool->call.name = *update.kind;
+    }
     if (update.title) tool->title = *update.title;
     if (present(update.rawInput)) tool->call.arguments = update.rawInput->str;
     if (update.status) {
@@ -492,12 +536,21 @@ private:
                                                    : ToolActivity::Status::Running;
     }
     if (present(update.content)) {
-      if (auto output = toolOutput(update.content->str)) tool->output = std::move(output);
+      if (auto contents = fromJson<std::vector<acp::ToolContent>>(update.content->str)) {
+        tool->output = toolOutput(*contents);
+        m_toolMedia[*update.toolCallId].replace(*contents);
+      }
     }
     if (!tool->output && present(update.rawOutput)) tool->output = truncated(update.rawOutput->str);
 
     auto id = tool->call.id;
+    auto media = tool->status != ToolActivity::Status::Running ? m_toolMedia[*update.toolCallId].takeNew()
+                                                               : std::vector<acp::Media>{};
     emit toolActivityChanged(*tool);
+    for (const auto &item : media) {
+      if (!m_active) break;
+      publishMedia(item);
+    }
     return id;
   }
 
@@ -509,7 +562,11 @@ private:
   ChatMessage m_message;
   std::string m_text;
   std::unordered_map<std::string, ToolActivity> m_tools;
+  std::unordered_set<std::string> m_vicinaeCalls;
+  std::unordered_map<std::string, acp::ToolMedia> m_toolMedia;
   std::vector<Permission> m_permissions;
+  std::optional<std::string> m_reasoningEffort;
+  ThinkingMode m_thinking;
   bool m_oneShot = false;
   bool m_active = false;
 };
@@ -584,6 +641,8 @@ void AcpProvider::configure(const PreferenceValues &values) {
   m_name = std::move(name);
   stop("The agent was reconfigured.");
   m_models.clear();
+  m_reasoning.clear();
+  m_preparingModels.clear();
   m_modelOption.reset();
   m_defaultModel.reset();
   m_available = false;
@@ -807,6 +866,9 @@ void AcpProvider::handleRequest(const std::string &id, std::string_view method, 
 void AcpProvider::handleUpdate(std::string_view params) {
   auto notification = fromJson<acp::SessionNotification>(params);
   if (!notification) return;
+  if (notification->update.sessionUpdate == "config_option_update" &&
+      present(notification->update.configOptions))
+    readSessionConfig(notification->sessionId, notification->update.configOptions->str);
   const auto *session = findSession(notification->sessionId);
   if (session && session->stream) session->stream->handleUpdate(notification->update);
 }
@@ -843,6 +905,8 @@ void AcpProvider::newSession(std::function<void(std::expected<std::string, RpcEr
             .fingerprint = QByteArray{},
             .model = m_defaultModel.value_or(std::string{}),
         });
+        readSessionConfig(result->sessionId,
+                          present(result->configOptions) ? result->configOptions->str : "[]");
         handler(std::move(result->sessionId));
       },
       STARTUP_TIMEOUT);
@@ -892,6 +956,73 @@ void AcpProvider::readModels(std::string_view json) {
   if (same) return;
   m_models = std::move(models);
   emit modelsUpdated();
+}
+
+void AcpProvider::readSessionConfig(const std::string &sessionId, std::string_view json) {
+  auto *session = findSession(sessionId);
+  const auto options = fromJson<std::vector<acp::ConfigOption>>(json);
+  if (!session || !options) return;
+  for (const auto &option : *options) {
+    if (option.category == "model" && present(option.currentValue))
+      if (auto model = fromJson<std::string>(option.currentValue->str)) session->model = std::move(*model);
+  }
+  session->reasoning = acp::reasoningOptions(*options);
+  const auto previous = m_reasoning.find(session->model);
+  if (previous != m_reasoning.end() && previous->second == session->reasoning) return;
+  m_reasoning[session->model] = session->reasoning;
+  emit modelsUpdated();
+}
+
+void AcpProvider::applyModelSwitch(const std::string &sessionId, const std::string &model,
+                                   std::string_view result) {
+  auto *session = findSession(sessionId);
+  if (!session) return;
+  session->model = model;
+  if (auto config = fromJson<acp::ConfigResult>(result); config && present(config->configOptions)) {
+    readSessionConfig(sessionId, config->configOptions->str);
+    return;
+  }
+  session->reasoning = reasoningOptions(model);
+}
+
+std::optional<ReasoningOptions> AcpProvider::reasoningOptions(std::string_view modelId) const {
+  const auto entry = m_reasoning.find(std::string(modelId));
+  return entry == m_reasoning.end() ? std::nullopt : entry->second;
+}
+
+void AcpProvider::prepareReasoning(std::string_view modelId) {
+  const std::string model(modelId);
+  if (!m_available || m_reasoning.contains(model) || !m_preparingModels.emplace(model).second) return;
+  connectAgent([this, model](std::expected<void, ProviderStatus> ready) {
+    if (!ready) {
+      m_preparingModels.erase(model);
+      return;
+    }
+    newSession([this, model](std::expected<std::string, RpcError> id) {
+      if (!id) {
+        m_preparingModels.erase(model);
+        return;
+      }
+      auto *session = findSession(*id);
+      if (!session || session->model == model || !m_modelOption) {
+        m_reasoning.try_emplace(model, std::nullopt);
+        m_preparingModels.erase(model);
+        updateIdle();
+        return;
+      }
+      session->busy = true;
+      request(
+          "session/set_config_option", toJson(acp::SetConfigOptionParams{*id, *m_modelOption, model}),
+          [this, id = *id, model](Response response) {
+            if (response) applyModelSwitch(id, model, *response);
+            if (auto *session = findSession(id)) session->busy = false;
+            m_reasoning.try_emplace(model, std::nullopt);
+            m_preparingModels.erase(model);
+            updateIdle();
+          },
+          STARTUP_TIMEOUT);
+    });
+  });
 }
 
 void AcpProvider::runTurn(AcpChatStream *stream) {
@@ -948,21 +1079,69 @@ void AcpProvider::prompt(Session &session, AcpChatStream *stream) {
             [this, id](Response response) { finishTurn(id, std::move(response)); });
   };
 
+  const auto configureReasoning = [this, id = session.id, send] {
+    auto *session = findSession(id);
+    if (!session || !session->stream || !session->stream->active()) {
+      send();
+      return;
+    }
+    const auto &stream = session->stream;
+    auto effort = stream->reasoningEffort();
+    if (!session->reasoning) {
+      send();
+      return;
+    }
+    const auto &options = *session->reasoning;
+    if (!effort) {
+      const auto requested = stream->thinking() == ThinkingMode::None   ? "none"
+                             : stream->thinking() == ThinkingMode::Low  ? "low"
+                             : stream->thinking() == ThinkingMode::High ? "high"
+                                                                        : "medium";
+      if (std::ranges::contains(options.choices, requested, &ReasoningChoice::id)) effort = requested;
+    }
+    if (!effort || effort == options.current) {
+      send();
+      return;
+    }
+    if (!std::ranges::contains(options.choices, *effort, &ReasoningChoice::id)) {
+      finishTurn(id, std::unexpected(RpcError{.message = tr("The selected reasoning level is no longer "
+                                                            "available. Choose another level and try again.")
+                                                             .toStdString()}));
+      return;
+    }
+    request(
+        "session/set_config_option", toJson(acp::SetConfigOptionParams{id, options.id, *effort}),
+        [this, id, effort = *effort, send](Response response) {
+          if (!response) {
+            finishTurn(id, std::move(response));
+            return;
+          }
+          if (auto *session = findSession(id); session && session->reasoning)
+            session->reasoning->current = effort;
+          if (auto result = fromJson<acp::ConfigResult>(*response); result && present(result->configOptions))
+            readSessionConfig(id, result->configOptions->str);
+          send();
+        },
+        STARTUP_TIMEOUT);
+  };
+
   const auto &model = stream->modelId();
   if (!m_modelOption || model == session.model) {
-    send();
+    configureReasoning();
     return;
   }
 
-  request("session/set_config_option", toJson(acp::SetConfigOptionParams{session.id, *m_modelOption, model}),
-          [this, id = session.id, model, send](Response response) {
-            if (response) {
-              if (auto *session = findSession(id)) session->model = model;
-              send();
-            } else {
-              finishTurn(id, std::move(response));
-            }
-          });
+  request(
+      "session/set_config_option", toJson(acp::SetConfigOptionParams{session.id, *m_modelOption, model}),
+      [this, id = session.id, model, configureReasoning](Response response) {
+        if (response) {
+          applyModelSwitch(id, model, *response);
+          configureReasoning();
+        } else {
+          finishTurn(id, std::move(response));
+        }
+      },
+      STARTUP_TIMEOUT);
 }
 
 void AcpProvider::finishTurn(const std::string &sessionId, Response response) {
@@ -1080,7 +1259,7 @@ AcpProvider::createChatCompletion(std::string_view modelId, const ChatCompletion
 
   return std::make_shared<AcpChatStream>(this, session ? std::optional(session->id) : std::nullopt, model->id,
                                          std::move(prompt), std::move(fingerprint), std::move(message),
-                                         *model, payload.oneShot);
+                                         *model, payload.oneShot, payload.reasoningEffort, payload.thinking);
 }
 
 QFuture<TranscriptionResult> AcpProvider::transcribe(Audio::Recording, const TranscriptionOptions &) {

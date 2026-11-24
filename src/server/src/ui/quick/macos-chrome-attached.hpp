@@ -3,6 +3,7 @@
 #include <QObject>
 #include <QPointer>
 #include <QQmlListProperty>
+#include <QRectF>
 #include <QString>
 #include <QWindow>
 #include <qqmlregistration.h>
@@ -23,6 +24,7 @@ class MacOSWindowAttached : public QObject {
   Q_PROPERTY(bool transparentTitlebar READ transparentTitlebar WRITE setTransparentTitlebar NOTIFY
                  transparentTitlebarChanged)
   Q_PROPERTY(bool compactToolbar READ compactToolbar WRITE setCompactToolbar NOTIFY compactToolbarChanged)
+  Q_PROPERTY(QRectF titlebarButtonsRect READ titlebarButtonsRect NOTIFY titlebarButtonsRectChanged)
   Q_PROPERTY(QQmlListProperty<QQuickItem> titlebarControls READ titlebarControls CONSTANT)
   Q_PROPERTY(bool followsWindowActiveState READ followsWindowActiveState WRITE setFollowsWindowActiveState
                  NOTIFY followsWindowActiveStateChanged)
@@ -37,6 +39,7 @@ signals:
   void borderWidthChanged();
   void transparentTitlebarChanged();
   void compactToolbarChanged();
+  void titlebarButtonsRectChanged();
   void followsWindowActiveStateChanged();
 
 public:
@@ -72,6 +75,7 @@ public:
 
   bool compactToolbar() const { return m_compactToolbar; }
   void setCompactToolbar(bool value);
+  QRectF titlebarButtonsRect() const { return m_titlebarButtonsRect; }
 
   QQmlListProperty<QQuickItem> titlebarControls();
 
@@ -100,6 +104,7 @@ private:
   void apply();
   void revert();
   void removeTitlebarMonitor();
+  void updateTitlebarMetrics();
   void trackWindow(QWindow *window);
   void onWindowChanged(QQuickWindow *window);
   bool eventFilter(QObject *obj, QEvent *event) override;
@@ -115,6 +120,7 @@ private:
   int m_borderWidth = 0;
   bool m_transparentTitlebar = false;
   bool m_compactToolbar = false;
+  QRectF m_titlebarButtonsRect;
   std::vector<QPointer<QQuickItem>> m_titlebarControls;
   void *m_titlebarMonitor = nullptr;
   bool m_followsWindowActiveState = false;

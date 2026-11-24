@@ -14,6 +14,8 @@ FocusScope {
     property alias font: editor.font
     property var modelItems: []
     property var currentModel: null
+    property var reasoningItems: []
+    property var currentReasoning: null
     property AttachmentModel attachments: null
     property bool submissionEnabled: true
     property string message: ""
@@ -28,17 +30,18 @@ FocusScope {
     signal previewRequested(var content)
     signal cancelled
     signal modelActivated(var item)
+    signal reasoningActivated(var item)
     signal toolApproved(bool always)
     signal toolDeclined
 
     readonly property bool canSubmit: !busy && submissionEnabled && (attachments?.ready ?? true) && (editor.text.trim().length > 0 || (attachments?.count ?? 0) > 0)
     readonly property real lineHeight: Math.ceil(fontMetrics.height)
-    readonly property real _verticalPadding: compact ? 9 : 10
-    readonly property real _leftPadding: compact ? 18 : 14
-    readonly property real _rightPadding: 8
-    readonly property real _controlHeight: 28
-    readonly property real _spacing: 6
-    readonly property real _radius: compact ? Math.min(height / 2, 24) : 14
+    readonly property real _verticalPadding: compact ? 9 : 12
+    readonly property real _leftPadding: compact ? 18 : 16
+    readonly property real _rightPadding: compact ? 8 : 12
+    readonly property real _controlHeight: compact ? 28 : 32
+    readonly property real _spacing: compact ? 6 : 10
+    readonly property real _radius: compact ? Math.min(height / 2, 24) : 18
     readonly property real _editorHeight: Math.max(lineHeight, Math.min(editor.contentHeight, lineHeight * maxRows))
     readonly property real _inlineEditorWidth: width - _leftPadding - _rightPadding - controls.width - _spacing
     readonly property bool expanded: !compact || (editor.text.length > 0 && (editor.text.includes("\n") || textMetrics.advanceWidth > _inlineEditorWidth))
@@ -91,17 +94,33 @@ FocusScope {
         anchors.fill: parent
         visible: root.floating
         radius: root._radius
-        blur: 20
-        offset.y: 4
-        color: Qt.rgba(0, 0, 0, Theme.isDark ? 0.3 : 0.12)
+        blur: 16
+        offset.y: 3
+        color: Qt.rgba(0, 0, 0, Theme.isDark ? 0.18 : 0.06)
     }
 
     FormInputFrame {
         anchors.fill: parent
+        visible: !root.floating
         filled: true
         focused: editor.editing
         radius: root._radius
         opaque: true
+    }
+
+    Rectangle {
+        anchors.fill: parent
+        visible: root.floating
+        radius: root._radius
+        color: Qt.tint(Theme.background, Config.withAlpha(Theme.foreground, 0.045))
+        border.width: 1
+        border.color: Config.withAlpha(Theme.foreground, editor.editing ? 0.24 : 0.12)
+
+        Behavior on border.color {
+            ColorAnimation {
+                duration: 140
+            }
+        }
     }
 
     MouseArea {
@@ -209,10 +228,11 @@ FocusScope {
 
         SearchableDropdown {
             id: modelSelector
-            Layout.preferredWidth: Math.min(preferredWidth, root.width * 0.55)
+            Layout.preferredWidth: Math.min(preferredWidth, root.width * (reasoningSelector.visible ? 0.36 : 0.55))
             Layout.alignment: Qt.AlignVCenter
             compact: true
             flat: true
+            activeFocusOnTab: true
             preferredPopupEdge: Qt.TopEdge
             popupAnchor: root
             popupSurface: "modelSelector"
@@ -222,6 +242,28 @@ FocusScope {
             items: root.modelItems
             currentItem: root.currentModel
             onActivated: item => root.modelActivated(item)
+            onPopupClosed: editor.forceActiveFocus()
+        }
+
+        SearchableDropdown {
+            id: reasoningSelector
+            visible: root.reasoningItems.length > 0
+            Layout.preferredWidth: Math.min(preferredWidth, root.width * 0.23)
+            Layout.alignment: Qt.AlignVCenter
+            compact: true
+            flat: true
+            readOnly: root.busy
+            activeFocusOnTab: true
+            preferredPopupEdge: Qt.TopEdge
+            popupAnchor: root
+            popupSurface: "modelSelector"
+            popupFollowsTrigger: true
+            popupMinimumWidth: Math.min(240, root.width)
+            placeholder: qsTr("Reasoning")
+            Accessible.name: qsTr("Reasoning effort: %1").arg(root.currentReasoning?.displayName ?? "")
+            items: root.reasoningItems
+            currentItem: root.currentReasoning
+            onActivated: item => root.reasoningActivated(item)
             onPopupClosed: editor.forceActiveFocus()
         }
 

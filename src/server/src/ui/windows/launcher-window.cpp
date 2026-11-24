@@ -50,6 +50,7 @@
 #include <QScreen>
 #include <QWindow>
 #include <QKeyEvent>
+#include <utility>
 #include <qcoreevent.h>
 #include <qlogging.h>
 #include <algorithm>
@@ -99,6 +100,7 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
   connect(services->rootItemManager(), &RootItemManager::itemsChanged, this,
           &LauncherWindow::refreshQuickAIAvailability);
   connect(this, &LauncherWindow::atRootChanged, this, [this] { updateCanAskAI(); });
+  connect(this, &LauncherWindow::completerChanged, this, [this] { updateCanAskAI(); });
   refreshQuickAIAvailability();
 
   m_commandHoldTimer.setSingleShot(true);
@@ -127,6 +129,14 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
 
   connect(nav, &NavigationController::currentViewChanged, this,
           [this](const NavigationController::ViewState &) { handleCurrentViewChanged(); });
+
+  auto cloakIfHidden = [this]() {
+    if (!m_window || m_window->isVisible() || m_cloakedWhileHidden) return;
+    LauncherWindowPlatform::cloak(m_window);
+    m_cloakedWhileHidden = true;
+  };
+  connect(nav, &NavigationController::currentViewChanged, this, cloakIfHidden);
+  connect(nav, &NavigationController::searchTextTampered, this, cloakIfHidden);
 
   connect(nav, &NavigationController::loadingChanged, this, [this](bool loading) {
     if (m_isLoading != loading) {
@@ -277,6 +287,7 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
   if (m_hudBridge) {
     connect(nav, &NavigationController::showHudRequested, m_hudBridge, &HudBridge::show);
     connect(nav, &NavigationController::dictationHudRequested, m_hudBridge, &HudBridge::showDictation);
+    connect(nav, &NavigationController::activityHudRequested, m_hudBridge, &HudBridge::showActivity);
   }
 
   auto *toast = m_ctx.services->toastService();
@@ -406,7 +417,12 @@ void LauncherWindow::handleVisibilityChanged(bool visible) {
   if (visible) {
     applyWindowConfig();
     tryCompaction();
+    // On macOS the QML window has already made itself visible, and show() would also reset the window
+    // state: AppKit reports the fixed-size panel as zoomed, so Qt would animate an un-zoom that blocks
+    // for ~40 ms and can move the window.
+#ifndef Q_OS_MACOS
     m_window->show();
+#endif
     m_window->raise();
     LauncherWindowPlatform::grantForeground();
     m_window->requestActivate();
@@ -468,9 +484,16 @@ void LauncherWindow::loadRoot() {
       if (m_pendingLauncherFileChoice || LauncherWindowPlatform::foregroundLent()) return;
       m_ctx.navigation->setWindowActivated(m_window->isActive());
     });
+    connect(m_window, &QWindow::visibleChanged, this, [this](bool visible) {
+      if (visible && std::exchange(m_cloakedWhileHidden, false)) {
+        LauncherWindowPlatform::uncloakAfterNextFrame(m_window);
+      }
+    });
     m_window->installEventFilter(this);
   }
 }
+
+bool LauncherWindow::foregroundLent() { return LauncherWindowPlatform::foregroundLent(); }
 
 void LauncherWindow::unloadRoot() {
   if (m_dragOverlayVisible) endWindowDrag();
@@ -801,20 +824,8 @@ void LauncherWindow::applyShowPlacement() {
   if (!restoreWindowPosition()) positionOnCursorScreen();
 }
 
-// AppKit shifts this panel ~40px upward after orderFront (source unidentified, immune to
-// animationBehavior=None), hence: show at opacity 0, re-assert placement next tick, reveal.
 void LauncherWindow::prepareShow() {
-  if (!m_window) return;
-  m_window->setOpacity(0.0);
-  applyShowPlacement();
-}
-
-void LauncherWindow::finalizeShow() {
-  QTimer::singleShot(0, this, [this]() {
-    if (!m_window) return;
-    applyShowPlacement();
-    m_window->setOpacity(1.0);
-  });
+  if (m_window) applyShowPlacement();
 }
 
 void LauncherWindow::beginWindowDrag() {

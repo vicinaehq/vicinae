@@ -3,6 +3,8 @@
 #include <mutex>
 #include <QClipboard>
 #include <QGuiApplication>
+#include <QBuffer>
+#include <QMimeData>
 #include <QRegularExpression>
 #include <QUrlQuery>
 #include <cmark-gfm.h>
@@ -15,6 +17,10 @@
 #include "markdown-math.hpp"
 #include "services/font-service/font-service.hpp"
 #include "ui/image/image-url.hpp"
+#include "ui/image/image-stream.hpp"
+#include "ui/views/drag-utils.hpp"
+#include "services/clipboard/clipboard-service.hpp"
+#include "services/toast/toast-service.hpp"
 #include "ui/quick/syntax-highlighter.hpp"
 #include "service-registry.hpp"
 #include "services/app-service/app-service.hpp"
@@ -71,10 +77,7 @@ QString imageProviderUrl(const QString &rawUrl) {
     return imgUrl.toString();
   }
 
-  if (scheme == "file") {
-    auto path = url.host().isEmpty() ? url.path() : url.host() + url.path();
-    return ImageURL::local(path).toString();
-  }
+  if (scheme == "file") return ImageURL::local(url.toLocalFile()).toString();
 
   if (scheme.isEmpty()) return ImageURL::local(rawUrl).toString();
 
@@ -83,7 +86,6 @@ QString imageProviderUrl(const QString &rawUrl) {
 
 struct InlineContext {
   const QString &inlineCodeFg;
-  const QString &inlineCodeBg;
   const QString &linkColor;
   const QString &textColor;
   const QString &monoFamily;
@@ -111,9 +113,8 @@ QString renderOneInline(cmark_node *cur, const InlineContext &ctx) {
     break;
 
   case CMARK_NODE_CODE:
-    result += QStringLiteral("<code style=\"color:%1;background-color:%2;"
-                             "font-family:'%3',monospace;\">")
-                  .arg(ctx.inlineCodeFg, ctx.inlineCodeBg, ctx.monoFamily);
+    result += QStringLiteral("<code style=\"color:%1;font-family:'%2',monospace;font-size:small;\">")
+                  .arg(ctx.inlineCodeFg, ctx.monoFamily);
     result += QString::fromUtf8(cmark_node_get_literal(cur)).toHtmlEscaped();
     result += QStringLiteral("</code>");
     break;
@@ -198,6 +199,8 @@ QVariantList buildListItems(cmark_node *listNode, const InlineContext &ctx) {
 QVariantMap buildListItem(cmark_node *itemNode, const InlineContext &ctx) {
   QVariantMap entry;
   QVariantList children;
+  if (std::strcmp(cmark_node_get_type_string(itemNode), "tasklist") == 0)
+    entry[QStringLiteral("checked")] = cmark_gfm_extensions_get_tasklist_item_checked(itemNode);
 
   for (auto *child = cmark_node_first_child(itemNode); child; child = cmark_node_next(child)) {
     auto type = cmark_node_get_type(child);
@@ -259,7 +262,7 @@ struct HtmlBlockResult {
   std::vector<QVariantMap> extractedImages;
 };
 
-void processHtmlNodes(pugi::xml_node node, HtmlBlockResult &result) {
+void processHtmlNodes(pugi::xml_node node, HtmlBlockResult &result, const QUrl &baseUrl) {
   for (auto cur = node.first_child(); cur; cur = cur.next_sibling()) {
     if (cur.type() == pugi::node_element) {
       if (std::strcmp(cur.name(), "img") == 0) {
@@ -291,14 +294,15 @@ void processHtmlNodes(pugi::xml_node node, HtmlBlockResult &result) {
         }
         if (!src.isEmpty()) {
           QVariantMap img;
-          img[QStringLiteral("src")] = imageProviderUrl(src);
+          img[QStringLiteral("src")] =
+              imageProviderUrl(baseUrl.isEmpty() ? src : baseUrl.resolved(QUrl(src)).toString());
           img[QStringLiteral("alt")] = QString();
           if (w > 0) img[QStringLiteral("width")] = w;
           if (h > 0) img[QStringLiteral("height")] = h;
           result.extractedImages.push_back(img);
         }
       } else {
-        processHtmlNodes(cur, result);
+        processHtmlNodes(cur, result, baseUrl);
       }
     } else if (cur.type() == pugi::node_pcdata) {
       QString const text = QString::fromUtf8(cur.value()).trimmed();
@@ -315,7 +319,7 @@ MarkdownModel::MarkdownModel(QObject *parent) : DocumentModel(parent) {
     rebuildInlineStyles();
     if (!m_markdown.isEmpty()) {
       if (m_async)
-        setMarkdownAsync(m_markdown);
+        setMarkdownAsync(m_markdown, m_incremental);
       else
         setMarkdown(m_markdown);
     }
@@ -350,14 +354,12 @@ QHash<int, QByteArray> MarkdownModel::roleNames() const {
 void MarkdownModel::rebuildInlineStyles() {
   ++m_styleGeneration;
   auto &theme = ThemeService::instance().theme();
-  m_styles.inlineCodeFg = theme.resolve(SemanticColor::Foreground).name(QColor::HexRgb);
-  auto inlineCodeBg = theme.resolve(SemanticColor::Foreground);
-  inlineCodeBg.setAlphaF(0.08);
-  m_styles.inlineCodeBg = inlineCodeBg.name(QColor::HexArgb);
+  const auto palette = syntax::paletteForTheme(theme);
+  m_styles.inlineCodeFg = palette.readable(palette.inlineCode).name(QColor::HexRgb);
   m_styles.linkColor = theme.resolve(SemanticColor::LinkDefault).name(QColor::HexRgb);
   m_styles.textColor = theme.resolve(SemanticColor::Foreground).name(QColor::HexRgb);
   m_styles.monoFamily = ServiceRegistry::instance()->fontService()->builtinMonoFontFamily();
-  m_styles.syntax = syntax::buildStyleMap(theme);
+  m_styles.syntax = palette.styles();
   m_styles.dark = theme.isDark();
 }
 
@@ -377,6 +379,8 @@ std::vector<MarkdownModel::Block> MarkdownModel::parseBlocks(const QString &mark
     cmark_parser_attach_syntax_extension(parser, tableExt);
   if (auto *strikethroughExt = cmark_find_syntax_extension("strikethrough"))
     cmark_parser_attach_syntax_extension(parser, strikethroughExt);
+  if (auto *tasklistExt = cmark_find_syntax_extension("tasklist"))
+    cmark_parser_attach_syntax_extension(parser, tasklistExt);
 
   cmark_parser_attach_syntax_extension(parser, markdown_math::extension());
 
@@ -384,12 +388,24 @@ std::vector<MarkdownModel::Block> MarkdownModel::parseBlocks(const QString &mark
   cmark_node *root = cmark_parser_finish(parser);
   cmark_parser_free(parser);
 
+  if (!styles.baseUrl.isEmpty()) {
+    auto *iter = cmark_iter_new(root);
+    while (cmark_iter_next(iter) != CMARK_EVENT_DONE) {
+      if (cmark_iter_get_event_type(iter) != CMARK_EVENT_ENTER) continue;
+      auto *node = cmark_iter_get_node(iter);
+      const auto type = cmark_node_get_type(node);
+      if (type != CMARK_NODE_IMAGE && type != CMARK_NODE_LINK) continue;
+      const QUrl url(QString::fromUtf8(cmark_node_get_url(node)));
+      if (url.isRelative()) cmark_node_set_url(node, styles.baseUrl.resolved(url).toEncoded().constData());
+    }
+    cmark_iter_free(iter);
+  }
+
   for (auto *node = cmark_node_first_child(root); node; node = cmark_node_next(node)) {
     const auto firstBlock = blocks.size();
     math::Resources resources;
     resources.reserve(8);
-    InlineContext ctx{styles.inlineCodeFg, styles.inlineCodeBg, styles.linkColor,
-                      styles.textColor,    styles.monoFamily,   resources};
+    InlineContext ctx{styles.inlineCodeFg, styles.linkColor, styles.textColor, styles.monoFamily, resources};
     auto type = cmark_node_get_type(node);
 
     switch (type) {
@@ -522,7 +538,7 @@ std::vector<MarkdownModel::Block> MarkdownModel::parseBlocks(const QString &mark
       if (parseResult) {
         auto root = doc.first_child();
         HtmlBlockResult result;
-        processHtmlNodes(root, result);
+        processHtmlNodes(root, result, styles.baseUrl);
 
         for (auto &img : result.extractedImages)
           blocks.push_back({Markdown::BlockType::Image, img});
@@ -694,13 +710,47 @@ void MarkdownModel::setMarkdown(const QString &markdown) {
   setLoading(false);
 }
 
-void MarkdownModel::applyBlocks(const QString &markdown, std::vector<Block> blocks) {
+void MarkdownModel::applyBlocks(const QString &markdown, std::vector<Block> blocks, bool incremental) {
   const bool appended = !m_renderedMarkdown.isEmpty() && markdown.startsWith(m_renderedMarkdown);
   m_renderedMarkdown = markdown;
+  if (appended) emit blocksAppended();
+  if (incremental) {
+    const int oldCount = static_cast<int>(m_blocks.size());
+    const int newCount = static_cast<int>(blocks.size());
+    const auto equal = [&](int before, int after) {
+      return m_blocks[before].type == blocks[after].type && m_blocks[before].data == blocks[after].data;
+    };
+    int first = 0;
+    while (first < std::min(oldCount, newCount) && equal(first, first))
+      ++first;
+    int oldEnd = oldCount;
+    int newEnd = newCount;
+    while (oldEnd > first && newEnd > first && equal(oldEnd - 1, newEnd - 1)) {
+      --oldEnd;
+      --newEnd;
+    }
+    const int commonEnd = std::min(oldEnd, newEnd);
+    for (int row = first; row < commonEnd; ++row)
+      m_blocks[row] = std::move(blocks[row]);
+    if (first < commonEnd)
+      emit dataChanged(index(first), index(commonEnd - 1), {BlockTypeRole, BlockDataRole});
+    if (commonEnd < oldEnd) {
+      beginRemoveRows({}, commonEnd, oldEnd - 1);
+      m_blocks.erase(m_blocks.begin() + commonEnd, m_blocks.begin() + oldEnd);
+      endRemoveRows();
+    }
+    if (commonEnd < newEnd) {
+      beginInsertRows({}, commonEnd, newEnd - 1);
+      m_blocks.reserve(blocks.size());
+      m_blocks.insert(m_blocks.begin() + commonEnd, std::make_move_iterator(blocks.begin() + commonEnd),
+                      std::make_move_iterator(blocks.begin() + newEnd));
+      endInsertRows();
+    }
+    return;
+  }
   if (appended) {
     const int oldCount = static_cast<int>(m_blocks.size());
     const int newCount = static_cast<int>(blocks.size());
-    emit blocksAppended();
 
     int common = 0;
     while (common < std::min(oldCount, newCount) && m_blocks[common].type == blocks[common].type) {
@@ -735,26 +785,38 @@ void MarkdownModel::setLoading(bool loading) {
   emit loadingChanged();
 }
 
-void MarkdownModel::setMarkdownAsync(QString markdown) {
+void MarkdownModel::setMarkdownAsync(QString markdown, bool incremental) {
   ++m_parseGeneration;
   m_async = true;
+  m_incremental = incremental;
   m_markdown = std::move(markdown);
   setLoading(true);
   if (!m_parseRunning) startParse();
+}
+
+void MarkdownModel::setBaseUrl(const QUrl &url) {
+  if (m_styles.baseUrl == url) return;
+  m_styles.baseUrl = url;
+  emit baseUrlChanged();
+  ++m_styleGeneration;
+  if (!m_markdown.isEmpty()) setMarkdownAsync(m_markdown, true);
 }
 
 void MarkdownModel::startParse() {
   m_parseRunning = true;
   const auto generation = m_parseGeneration;
   const auto styleGeneration = m_styleGeneration;
+  const auto incremental = m_incremental;
   const auto markdown = m_markdown;
   QtConcurrent::run([markdown, styles = m_styles] {
     return parseBlocks(markdown, styles);
-  }).then(this, [this, generation, styleGeneration, markdown](std::vector<Block> blocks) {
+  }).then(this, [this, generation, styleGeneration, markdown, incremental](std::vector<Block> blocks) {
     m_parseRunning = false;
     if (!m_async) return;
-    if (styleGeneration == m_styleGeneration && m_markdown.startsWith(markdown))
-      applyBlocks(markdown, std::move(blocks));
+    // Publish completed previews even while typing.
+    const bool liveUpdate = incremental && m_incremental;
+    if (styleGeneration == m_styleGeneration && (liveUpdate || m_markdown.startsWith(markdown)))
+      applyBlocks(markdown, std::move(blocks), incremental);
     if (generation != m_parseGeneration)
       startParse();
     else
@@ -764,7 +826,59 @@ void MarkdownModel::startParse() {
 
 void MarkdownModel::openLink(const QString &url) {
   auto *appDb = ServiceRegistry::instance()->appDb();
-  if (!appDb->openTarget(url)) qWarning() << "MarkdownModel: failed to open link" << url;
+  const auto resolved = m_styles.baseUrl.isEmpty() ? url : m_styles.baseUrl.resolved(QUrl(url)).toString();
+  if (!appDb->openTarget(resolved)) qWarning() << "MarkdownModel: failed to open link" << resolved;
+}
+
+void MarkdownModel::copyImage(const QString &source) {
+  const ImageURL url(source);
+  if (!url.isValid()) return;
+  if (m_copyStream) m_copyStream->deleteLater();
+  auto *stream = new ImageStream(url, {}, {.fallback = false}, this);
+  m_copyStream = stream;
+  const auto fail = [] {
+    ServiceRegistry::instance()->toastService()->failure(tr("Could not copy the image."));
+  };
+  connect(stream, &ImageStream::failed, this, [stream, fail] {
+    stream->deleteLater();
+    fail();
+  });
+  connect(stream, &ImageStream::frameReady, this, [this, stream, fail](const QImage &image) {
+    disconnect(stream, nullptr, this, nullptr);
+    stream->deleteLater();
+    QtConcurrent::run([image] {
+      QByteArray bytes;
+      QBuffer buffer(&bytes);
+      buffer.open(QIODevice::WriteOnly);
+      return image.save(&buffer, "PNG") ? std::optional(std::move(bytes)) : std::nullopt;
+    }).then(this, [fail](std::optional<QByteArray> bytes) {
+      if (!bytes) return fail();
+      auto *mime = new QMimeData;
+      mime->setData(QStringLiteral("image/png"), *bytes);
+      if (!ServiceRegistry::instance()->clipman()->copyQMimeData(mime, {.concealed = false})) fail();
+    });
+  });
+  stream->start();
+}
+
+void MarkdownModel::dragImage(const QString &source, QObject *dragSource) {
+  const ImageURL url(source);
+  if (!url.isValid() || !dragSource) return;
+  if (m_dragStream) m_dragStream->deleteLater();
+  auto *stream = new ImageStream(url, {}, {.fallback = false}, this);
+  m_dragStream = stream;
+  connect(stream, &ImageStream::failed, stream, &QObject::deleteLater);
+  connect(stream, &ImageStream::frameReady, this,
+          [this, stream, url, dragSource = QPointer(dragSource)](const QImage &image) {
+            disconnect(stream, nullptr, this, nullptr);
+            stream->deleteLater();
+            if (!dragSource || !(QGuiApplication::mouseButtons() & Qt::LeftButton)) return;
+            auto mime = std::make_unique<QMimeData>();
+            mime->setImageData(image);
+            if (url.type() == ImageURLType::Local) mime->setUrls({QUrl::fromLocalFile(url.name())});
+            DragUtils::startDrag(dragSource, std::move(mime), url);
+          });
+  stream->start();
 }
 
 QString MarkdownModel::copyCodeBlock(int blockIndex) {
