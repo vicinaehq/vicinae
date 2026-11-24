@@ -43,6 +43,7 @@
 #include "services/file-chooser/file-chooser-service.hpp"
 #include "services/news/news-service.hpp"
 #include "services/ai/ai-service.hpp"
+#include "services/ai/background-queue.hpp"
 #include "services/ai/tool-registry.hpp"
 #include "extension/headless-command-runner.hpp"
 #include "services/local-model-registry/local-model-registry.hpp"
@@ -117,6 +118,12 @@ AI::ToolRegistry *ServiceRegistry::tools() const { return m_tools.get(); }
 void ServiceRegistry::setTools(std::unique_ptr<AI::ToolRegistry> registry) { m_tools = std::move(registry); }
 
 void ServiceRegistry::setAI(std::unique_ptr<AI::Service> service) { m_ai = std::move(service); }
+
+AI::BackgroundQueue *ServiceRegistry::aiBackgroundQueue() const { return m_aiBackgroundQueue.get(); }
+
+void ServiceRegistry::setAiBackgroundQueue(std::unique_ptr<AI::BackgroundQueue> queue) {
+  m_aiBackgroundQueue = std::move(queue);
+}
 
 LocalModelRegistry *ServiceRegistry::localModels() const { return m_localModels.get(); }
 

@@ -55,6 +55,7 @@ class Manager;
 
 namespace AI {
 class Service;
+class BackgroundQueue;
 class ToolRegistry;
 class ConversationStore;
 }; // namespace AI
@@ -111,6 +112,7 @@ public:
   AppRuntime *appRuntime() const;
   GlobalShortcutService *globalShortcuts() const;
   AI::Service *ai() const;
+  AI::BackgroundQueue *aiBackgroundQueue() const;
   AI::ToolRegistry *tools() const;
   AI::ConversationStore *conversations() const;
   Notes::Store *notes() const;
@@ -163,6 +165,7 @@ public:
   void setAppRuntime(std::unique_ptr<AppRuntime> service);
   void setGlobalShortcuts(std::unique_ptr<GlobalShortcutService> service);
   void setAI(std::unique_ptr<AI::Service>);
+  void setAiBackgroundQueue(std::unique_ptr<AI::BackgroundQueue> queue);
   void setConversations(std::unique_ptr<AI::ConversationStore> store);
   void setTools(std::unique_ptr<AI::ToolRegistry> registry);
   void setLocalModels(std::unique_ptr<LocalModelRegistry> registry);
@@ -215,6 +218,7 @@ private:
   std::unique_ptr<GlobalShortcutService> m_globalShortcuts;
   std::unique_ptr<LocalModelRegistry> m_localModels;
   std::unique_ptr<AI::Service> m_ai;
+  std::unique_ptr<AI::BackgroundQueue> m_aiBackgroundQueue;
   std::unique_ptr<DictationService> m_dictation;
   std::unique_ptr<AiCommandStore> m_aiCommands;
   std::unique_ptr<AI::ToolRegistry> m_tools;

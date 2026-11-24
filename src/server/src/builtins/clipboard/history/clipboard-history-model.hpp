@@ -31,7 +31,7 @@ public:
 
   QVariant customData(int i, int role) const override {
     if (role == IsPinned) return m_entries[i].pinnedAt != 0;
-    if (role == IsTagged) return !m_entries[i].keywords.isEmpty();
+    if (role == IsTagged) return !m_entries[i].keywords.isEmpty() && !m_entries[i].keywordsGenerated;
     return {};
   }
 

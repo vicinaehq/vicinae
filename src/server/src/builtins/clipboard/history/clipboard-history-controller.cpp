@@ -8,6 +8,8 @@ ClipboardHistoryController::ClipboardHistoryController(ClipboardService *clipboa
           &ClipboardHistoryController::handleClipboardChanged);
   connect(clipboard, &ClipboardService::selectionKeywordsChanged, this,
           &ClipboardHistoryController::handleClipboardChanged);
+  connect(clipboard, &ClipboardService::selectionMetadataGenerated, this,
+          &ClipboardHistoryController::handleClipboardChanged);
   connect(clipboard, &ClipboardService::selectionRemoved, this,
           &ClipboardHistoryController::handleClipboardChanged);
   connect(clipboard, &ClipboardService::allSelectionsRemoved, this,

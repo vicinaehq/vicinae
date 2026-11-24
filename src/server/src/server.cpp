@@ -116,6 +116,7 @@
 #include "services/selection/windows-selection-service.hpp"
 #endif
 #include "services/ai/ai-service.hpp"
+#include "services/ai/background-queue.hpp"
 #include "services/ai/tool-registry.hpp"
 #include "ui/settings/settings-controller.hpp"
 #include "ui/windows/chat-window-controller.hpp"
@@ -311,8 +312,10 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     auto windowManager = std::make_unique<WindowManager>();
     auto appService = std::make_unique<AppService>(*omniDb.get());
     auto appRuntime = std::make_unique<AppRuntime>(*windowManager, *appService);
-    auto clipboardManager =
-        std::make_unique<ClipboardService>(clipboardDbPath, *appService, *appRuntime, keys.database);
+    auto ai = std::make_unique<AI::Service>(*localStorage);
+    auto aiBackgroundQueue = std::make_unique<AI::BackgroundQueue>(*ai);
+    auto clipboardManager = std::make_unique<ClipboardService>(clipboardDbPath, *appService, *appRuntime,
+                                                               *aiBackgroundQueue, keys.database);
     clipboardManager->setEncryptionKey(keys.clipboard);
 #ifdef Q_OS_LINUX
     auto inputServer = std::make_unique<LinuxInputServer>();
@@ -423,7 +426,6 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     registry->setUpdateService(
         std::make_unique<UpdateService>(*registry->toastService(), std::move(updateInstaller)));
     registry->setWallpaperManager(std::make_unique<WallpaperManager>());
-    auto ai = std::make_unique<AI::Service>(*registry->localStorage());
 #ifdef LOCAL_AI
     auto localModels = std::make_unique<LocalModelRegistry>();
     ai->addProvider(std::make_unique<AI::LocalProvider>(*localModels));
@@ -432,6 +434,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     registry->setDictation(
         std::make_unique<DictationService>(Omnicast::dataDir(), *ai, *registry->mediaControl(), *registry));
     registry->setAI(std::move(ai));
+    registry->setAiBackgroundQueue(std::move(aiBackgroundQueue));
     registry->setAiCommands(std::make_unique<AiCommandStore>(Omnicast::dataDir() / "ai-commands.json"));
     registry->setNotes(std::make_unique<Notes::Store>(
         notesDirectory, readPreferences<Notes::Preferences>(
