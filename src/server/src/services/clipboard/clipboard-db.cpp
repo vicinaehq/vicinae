@@ -3,12 +3,19 @@
 #include "vicinae.hpp"
 #include <chrono>
 #include <filesystem>
+#include <format>
 #include <qlogging.h>
 #include <sstream>
+#include <string_view>
 
 extern "C" int vicinaeFuzzyTrigramInit(sqlite3 *, char **, const void *);
 
 static constexpr qsizetype MAX_INDEXED_CONTENT_SIZE = 1 << 16;
+
+// a selection the user neither pinned nor gave keywords to: the only kind that gets evicted or mass deleted
+// when tagged selections are preserved
+static constexpr std::string_view UNTAGGED_SELECTION =
+    "pinned_at IS NULL AND (keywords == '' OR keywords_generated = 1)";
 
 // fuzzy_trigram strips separators: a term without a 3+ run of word chars ("->>", "a!b")
 // yields no trigrams, so MATCH would find nothing and the instr scan must be used instead
@@ -91,9 +98,10 @@ PaginatedResponse<ClipboardHistoryEntry> ClipboardDatabase::query(int limit, int
         o.url_host,
         o.encryption_type,
         s.total_count,
-        s.keywords
+        s.keywords,
+        s.keywords_generated
       FROM (
-        SELECT id, pinned_at, updated_at, kind, preferred_mime_type, keywords,
+        SELECT id, pinned_at, updated_at, kind, preferred_mime_type, keywords, keywords_generated,
                COUNT(*) OVER() as total_count
         FROM selection
         ORDER BY pinned_at DESC, updated_at DESC
@@ -119,7 +127,8 @@ PaginatedResponse<ClipboardHistoryEntry> ClipboardDatabase::query(int limit, int
         o.url_host,
         o.encryption_type,
         COUNT(*) OVER() as count,
-        selection.keywords
+        selection.keywords,
+        selection.keywords_generated
       FROM selection
       JOIN data_offer o
         ON o.selection_id = selection.id
@@ -157,6 +166,7 @@ PaginatedResponse<ClipboardHistoryEntry> ClipboardDatabase::query(int limit, int
                               .textPreview = stmt.columnQString(2),
                               .pinnedAt = stmt.columnUInt64(3),
                               .keywords = stmt.columnQString(11),
+                              .keywordsGenerated = stmt.columnInt(12) != 0,
                               .md5sum = stmt.columnQString(4),
                               .updatedAt = stmt.columnUInt64(5),
                               .size = stmt.columnUInt64(6),
@@ -190,12 +200,54 @@ std::optional<QString> ClipboardDatabase::retrieveKeywords(const QString &id) {
 
 bool ClipboardDatabase::setKeywords(const QString &id, const QString &keywords) {
   return transaction([&](auto *) {
-    auto stmt = m_db.prepare("UPDATE selection SET keywords = :keywords WHERE id = :id");
+    auto stmt =
+        m_db.prepare("UPDATE selection SET keywords = :keywords, keywords_generated = 0 WHERE id = :id");
     stmt.bind(":id", id);
     stmt.bind(":keywords", keywords);
 
     if (!stmt.exec()) {
       qWarning() << "Failed to set keywords for id" << id << stmt.lastError().c_str();
+      return false;
+    }
+
+    return true;
+  });
+}
+
+bool ClipboardDatabase::applyGeneratedMetadata(const QString &id, const QString &title,
+                                               const QString &keywords) {
+  return transaction([&](auto *) {
+    auto offer = m_db.prepare(R"(
+      SELECT o.id, o.text_preview
+      FROM data_offer o
+      JOIN selection s ON s.id = o.selection_id
+      WHERE s.id = :id AND o.mime_type = s.preferred_mime_type
+    )");
+    offer.bind(":id", id);
+
+    if (!offer.step()) return false;
+
+    const auto offerId = offer.columnQString(0);
+    const auto previousTitle = offer.columnQString(1);
+
+    auto unindex = m_db.prepare("DELETE FROM selection_fts WHERE selection_id = :id AND content = :content");
+    unindex.bind(":id", id);
+    unindex.bind(":content", previousTitle);
+
+    auto rename = m_db.prepare("UPDATE data_offer SET text_preview = :title WHERE id = :id");
+    rename.bind(":id", offerId);
+    rename.bind(":title", title);
+
+    // keywords the user typed while the model was running are left alone
+    auto tag = m_db.prepare(R"(
+      UPDATE selection SET keywords = :keywords, keywords_generated = 1
+      WHERE id = :id AND (keywords == '' OR keywords_generated = 1)
+    )");
+    tag.bind(":id", id);
+    tag.bind(":keywords", keywords);
+
+    if (!unindex.exec() || !rename.exec() || !indexSelectionContent(id, title) || !tag.exec()) {
+      qWarning() << "Failed to apply generated metadata for id" << id << m_db.lastError().c_str();
       return false;
     }
 
@@ -219,19 +271,20 @@ std::optional<RemovedSelections> ClipboardDatabase::removeAll(bool preserveTagge
 
   RemovedSelections removed;
 
-  auto stmt = m_db.prepare(R"(
+  auto stmt = m_db.prepare(std::format(R"(
     SELECT o.selection_id, o.id
     FROM data_offer o
     JOIN selection s ON s.id = o.selection_id
-    WHERE s.pinned_at IS NULL AND s.keywords == ''
+    WHERE {}
     ORDER BY o.selection_id
-  )");
+  )",
+                                       UNTAGGED_SELECTION));
 
   while (stmt.step()) {
     removed.add(stmt.columnQString(0), stmt.columnQString(1));
   }
 
-  if (!m_db.exec("DELETE FROM selection WHERE pinned_at IS NULL AND keywords == ''")) return std::nullopt;
+  if (!m_db.exec(std::format("DELETE FROM selection WHERE {}", UNTAGGED_SELECTION))) return std::nullopt;
 
   tx.commit();
 
@@ -402,7 +455,6 @@ void ClipboardDatabase::runMigrations() {
 }
 
 RemovedSelections ClipboardDatabase::evictOlderThan(std::chrono::seconds secs, bool preserveTagged) {
-  constexpr auto PRESERVE_TAGGED_WHERE = " AND pinned_at IS NULL AND keywords == ''";
   RemovedSelections evicted{};
 
   evicted.offers.reserve(0xF);
@@ -418,7 +470,7 @@ RemovedSelections ClipboardDatabase::evictOlderThan(std::chrono::seconds secs, b
 	WHERE unixepoch() - s.updated_at > :threshold
   )";
 
-    if (preserveTagged) { oss << PRESERVE_TAGGED_WHERE; }
+    if (preserveTagged) { oss << " AND " << UNTAGGED_SELECTION; }
 
     oss << " ORDER BY o.selection_id";
 
@@ -438,7 +490,7 @@ RemovedSelections ClipboardDatabase::evictOlderThan(std::chrono::seconds secs, b
 
     oss << "DELETE FROM selection WHERE unixepoch() - updated_at > :threshold";
 
-    if (preserveTagged) { oss << PRESERVE_TAGGED_WHERE; }
+    if (preserveTagged) { oss << " AND " << UNTAGGED_SELECTION; }
 
     auto stmt = m_db.prepare(oss.str());
 
@@ -458,7 +510,7 @@ RemovedSelections ClipboardDatabase::evictOlderThan(std::chrono::seconds secs, b
 std::optional<int64_t> ClipboardDatabase::oldestEvictableTimestamp(bool preserveTagged) {
   std::string query = "SELECT MIN(updated_at) FROM selection";
 
-  if (preserveTagged) { query += " WHERE pinned_at IS NULL AND keywords == ''"; }
+  if (preserveTagged) { query += std::format(" WHERE {}", UNTAGGED_SELECTION); }
 
   auto stmt = m_db.prepare(query);
 

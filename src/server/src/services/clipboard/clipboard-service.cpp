@@ -27,7 +27,9 @@
 #include "clipboard-server-factory.hpp"
 #include <quuid.h>
 #include "fuzzy/fuzzy-searchable.hpp"
+#include "services/ai/background-queue.hpp"
 #include "services/clipboard/clipboard-db.hpp"
+#include "services/clipboard/clipboard-image-labels.hpp"
 #include "vicinae.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/app-runtime/app-runtime.hpp"
@@ -583,6 +585,51 @@ bool ClipboardService::setKeywords(const QString &id, const QString &keywords) {
   return true;
 }
 
+bool ClipboardService::applyGeneratedMetadata(const QString &id, const QString &title,
+                                              const QString &keywords) {
+  if (!openDatabase().applyGeneratedMetadata(id, title, keywords)) return false;
+
+  emit selectionMetadataGenerated(id);
+
+  return true;
+}
+
+void ClipboardService::setImageTaggingModel(std::optional<std::string> model) {
+  m_imageTaggingModel = std::move(model);
+  if (!m_imageTaggingModel) m_aiQueue.cancel(this);
+}
+
+void ClipboardService::tagInsertedImage(const ClipboardHistoryEntry &entry) {
+  // a selection that was already in the history comes back without an id
+  if (!m_imageTaggingModel || entry.id.isEmpty() || !entry.mimeType.startsWith(QLatin1String("image/")))
+    return;
+
+  auto image = getMainOfferData(entry.id);
+  if (!image) return;
+
+  const auto applyLabels = [this, id = entry.id](const AI::Result<QString> &response) {
+    if (!response) {
+      qWarning() << "Failed to tag clipboard image:" << response.error().c_str();
+      return;
+    }
+
+    if (const auto labels = ClipboardImageLabels::parse(*response)) {
+      applyGeneratedMetadata(id, labels->title, labels->keywords);
+    } else {
+      qWarning() << "Failed to tag clipboard image: the model did not follow the expected format";
+    }
+  };
+
+  QtConcurrent::run(ClipboardImageLabels::request, *m_imageTaggingModel, std::move(*image))
+      .then(this, [this, applyLabels](std::optional<TextRewrite::Request> request) {
+        if (!request || !m_imageTaggingModel) return;
+
+        if (!m_aiQueue.submit(std::move(*request), this, applyLabels)) {
+          qWarning() << "Too many AI requests are waiting, leaving a clipboard image untagged";
+        }
+      });
+}
+
 ClipboardSelection &ClipboardService::sanitizeSelection(ClipboardSelection &selection) {
   {
     std::ranges::sort(selection.offers, [](auto &&a, auto &&b) {
@@ -931,8 +978,9 @@ bool ClipboardService::removeAllSelections() {
 AbstractClipboardServer *ClipboardService::clipboardServer() const { return m_clipboardServer.get(); }
 
 ClipboardService::ClipboardService(const std::filesystem::path &path, AppService &appService,
-                                   AppRuntime &appRuntime, std::optional<db::EncryptionKey> key)
-    : m_appService(appService), m_appRuntime(appRuntime), m_dbKey(key) {
+                                   AppRuntime &appRuntime, AI::BackgroundQueue &aiQueue,
+                                   std::optional<db::EncryptionKey> key)
+    : m_appService(appService), m_appRuntime(appRuntime), m_aiQueue(aiQueue), m_dbKey(key) {
   m_dataDir = path.parent_path() / "clipboard-data";
   m_exportDir = Omnicast::runtimeDir() / "clipboard-open";
 
@@ -984,7 +1032,10 @@ ClipboardService::ClipboardService(const std::filesystem::path &path, AppService
   connect(&m_historyEvictionTimer, &QTimer::timeout, this, &ClipboardService::runEvictionPass);
   connect(&m_indexingSelection, &decltype(m_indexingSelection)::finished, this, [this]() {
     if (m_indexingSelection.isCanceled()) return;
-    if (auto result = m_indexingSelection.result()) { emit itemInserted(*result); }
+    if (auto result = m_indexingSelection.result()) {
+      emit itemInserted(*result);
+      tagInsertedImage(*result);
+    }
 
     if (m_evictionThreshold && !m_historyEvictionTimer.isActive()) {
       const auto now = std::chrono::duration_cast<std::chrono::seconds>(

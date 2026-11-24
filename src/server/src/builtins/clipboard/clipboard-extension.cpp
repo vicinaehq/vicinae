@@ -96,4 +96,8 @@ void ClipboardExtension::preferencesChanged(const ClipboardPreferences &preferen
 #ifndef Q_OS_MACOS
   clipman->setIgnorePasswords(preferences.ignorePasswords);
 #endif
+
+  clipman->setImageTaggingModel(preferences.imageTaggingModel == AI::NO_MODEL
+                                    ? std::nullopt
+                                    : std::optional(preferences.imageTaggingModel));
 }

@@ -9,6 +9,9 @@
 #include "builtins/clipboard/history/clipboard-history-model.hpp"
 #include "command/preference-schema.hpp"
 #include "service-registry.hpp"
+#include "services/ai/ai-model-selector-utils.hpp"
+#include "services/ai/ai-preferences.hpp"
+#include "services/ai/ai-service.hpp"
 #include "services/paste/paste-service.hpp"
 
 enum class ClipboardEviction { Never, FifteenMinutes, OneHour, OneDay, OneWeek, OneMonth, OneYear };
@@ -55,6 +58,7 @@ struct ClipboardPreferences {
   std::vector<std::string> ignoredApps;
   ClipboardEviction evictionThreshold = ClipboardEviction::Never;
   bool eraseOnStartup = false;
+  std::string imageTaggingModel = std::string(AI::NO_MODEL);
 };
 
 template <> struct PreferenceSchema<ClipboardPreferences> {
@@ -101,6 +105,24 @@ public:
   PreferenceMeta eraseOnStartup{
       .title = tr("Erase on startup"),
       .description = tr("Erase clipboard history every time the vicinae server is started"),
+  };
+  PreferenceMeta imageTaggingModel{
+      .title = tr("Image tagging model"),
+      .description = tr("Model used to automatically title and tag copied images"),
+      .required = false,
+      .sections =
+          [] {
+            auto sections =
+                buildModelDropdownSections(ServiceRegistry::instance()->ai(), AI::Capability::Vision);
+            sections.insert(sections.begin(),
+                            Preference::DropdownData::Section{
+                                .options = {Preference::DropdownData::Option{
+                                    .title = tr("None"),
+                                    .value = QString::fromUtf8(AI::NO_MODEL.data(),
+                                                               static_cast<qsizetype>(AI::NO_MODEL.size())),
+                                }}});
+            return sections;
+          },
   };
 };
 

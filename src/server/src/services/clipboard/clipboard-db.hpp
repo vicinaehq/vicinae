@@ -61,6 +61,8 @@ struct ClipboardHistoryEntry {
   QString textPreview;
   uint64_t pinnedAt;
   QString keywords;
+  // written by a model rather than by the user
+  bool keywordsGenerated = false;
   QString md5sum;
   uint64_t updatedAt;
   uint64_t size;
@@ -114,6 +116,12 @@ public:
 
   bool setKeywords(const QString &id, const QString &keywords);
   std::optional<QString> retrieveKeywords(const QString &id);
+
+  /**
+   * Gives the selection a title and keywords written by a model. Unlike keywords set by the user, these do
+   * not make the selection count as tagged. Fails if the selection is gone.
+   */
+  bool applyGeneratedMetadata(const QString &id, const QString &title, const QString &keywords);
 
   bool setPinned(const QString &id, bool pinned);
   bool tryBubbleUpSelection(const QString &idLike);

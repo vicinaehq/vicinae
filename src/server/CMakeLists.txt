@@ -255,6 +255,8 @@ set(SRCS
 	src/services/clipboard/clipboard-service.hpp
 	src/services/clipboard/clipboard-encrypter.cpp
 	src/services/clipboard/clipboard-service.cpp
+	src/services/clipboard/clipboard-image-labels.hpp
+	src/services/clipboard/clipboard-image-labels.cpp
 
 	src/services/local-storage/local-storage-service.hpp
 	src/services/local-storage/local-storage.cpp
@@ -677,6 +679,8 @@ set(SRCS
 	src/services/ai/ai-service.cpp
 	src/services/ai/text-rewrite.hpp
 	src/services/ai/text-rewrite.cpp
+	src/services/ai/background-queue.hpp
+	src/services/ai/background-queue.cpp
 	src/services/ai/agentic-loop.hpp
 	src/services/ai/agentic-loop.cpp
 	src/services/ai/history-compaction.cpp

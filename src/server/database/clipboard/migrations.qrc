@@ -2,5 +2,6 @@
     <qresource prefix="database/clipboard">
         <file>migrations/001_init.sql</file>
         <file>migrations/002_trigram_fts.sql</file>
+        <file>migrations/003_generated_keywords.sql</file>
     </qresource>
 </RCC>
