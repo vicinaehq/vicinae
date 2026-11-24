@@ -15,6 +15,7 @@
 #include "ui/action-panel/action-panel-state.hpp"
 #include "ui/quick/completion-model.hpp"
 #include "ui/views/mono-list-view-host.hpp"
+#include "ui/views/view-utils.hpp"
 #include "ui/windows/notes-window-controller.hpp"
 
 class NotesViewHost : public MonoListViewHost<Notes::Note> {
@@ -73,20 +74,11 @@ public:
   std::optional<ImageURL> displayIcon(const ItemType &) const override {
     return ImageURL::builtin(BuiltinIcon::Feather).setBackgroundTint(SemanticColor::Yellow);
   }
-  AccessoryList displayAccessories(const ItemType &note) const override {
-    AccessoryList accessories;
-    accessories.reserve(MAX_VISIBLE_TAGS + 1);
-    for (const auto &tag : note.tags | std::views::take(MAX_VISIBLE_TAGS))
-      accessories.emplace_back(ListAccessory{
-          .text = QString::fromStdString(tag), .color = notes_tags::color(tag), .fillBackground = true});
-    if (note.tags.size() > MAX_VISIBLE_TAGS)
-      accessories.emplace_back(
-          ListAccessory{.text = QStringLiteral("+%1").arg(note.tags.size() - MAX_VISIBLE_TAGS)});
-    return accessories;
-  }
+  AccessoryList displayAccessories(const ItemType &) const override { return {}; }
   bool hasDetailPane() const override { return true; }
   std::optional<ListItemDetail> displayDetail(const ItemType &note) const override {
-    return ListItemDetail{.markdown = QString::fromUtf8(Notes::body(note.markdown)),
+    return ListItemDetail{.metadata = tagMetadata(note),
+                          .markdown = QString::fromUtf8(Notes::body(note.markdown)),
                           .baseUrl = QUrl::fromLocalFile(QString::fromStdString(note.path))};
   }
 
@@ -123,7 +115,15 @@ public:
   }
 
 private:
-  static constexpr std::size_t MAX_VISIBLE_TAGS = 2;
+  QVariantList tagMetadata(const ItemType &note) const {
+    if (note.tags.empty()) return {};
+    auto tags = note.tags | std::views::transform([](const std::string &tag) {
+                  return TagItemModel{.text = tag, .color = notes_tags::color(tag)};
+                }) |
+                std::ranges::to<std::vector>();
+    return qml::metadataToVariantList(MetadataModel{
+        .children = {TagListModel{.title = tr("Tags").toStdString(), .items = std::move(tags)}}});
+  }
 
   StaticAction *createAction() const {
     auto *action = new StaticAction(tr("Create Note"),
