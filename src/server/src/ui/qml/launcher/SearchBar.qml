@@ -358,7 +358,7 @@ Item {
 
         Row {
             id: tabHint
-            visible: Launcher.canAskAI && !Launcher.hasCompleter
+            visible: Launcher.canAskAI
 
             spacing: 6
             Layout.alignment: Qt.AlignVCenter
