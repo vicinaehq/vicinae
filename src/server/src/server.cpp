@@ -119,6 +119,7 @@
 #include "services/ai/tool-registry.hpp"
 #include "ui/settings/settings-controller.hpp"
 #include "ui/windows/chat-window-controller.hpp"
+#include "ui/windows/notes-window-controller.hpp"
 #include "services/tray/tray-service.hpp"
 #include "ui/windows/launcher-window.hpp"
 #include "ui/windows/onboarding-window.hpp"
@@ -301,6 +302,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
 
     const auto vicinaeDbPath = Omnicast::dataDir() / "vicinae.db";
     const auto clipboardDbPath = Omnicast::dataDir() / "clipboard.db";
+    const auto notesDirectory = Omnicast::dataDir() / "notes";
     auto keys = db::prepareEncryption(currentConfig.encryptSensitiveData, {vicinaeDbPath, clipboardDbPath});
 
     auto omniDb = std::make_unique<OmniDatabase>(vicinaeDbPath, keys.database);
@@ -431,6 +433,9 @@ int startServer(const ServerLaunchOptions &launchOpts) {
         std::make_unique<DictationService>(Omnicast::dataDir(), *ai, *registry->mediaControl(), *registry));
     registry->setAI(std::move(ai));
     registry->setAiCommands(std::make_unique<AiCommandStore>(Omnicast::dataDir() / "ai-commands.json"));
+    registry->setNotes(std::make_unique<Notes::Store>(
+        notesDirectory, readPreferences<Notes::Preferences>(
+                            currentConfig.providerPreferences("notes").value_or(PreferenceValues{}))));
     registry->setConversations(
         std::make_unique<AI::ConversationStore>(Omnicast::dataDir() / "conversations"));
     QObject::connect(registry->conversations(), &AI::ConversationStore::errorOccurred,
@@ -520,6 +525,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
   ctx.services = ServiceRegistry::instance();
   ctx.chat = std::make_unique<ChatWindowController>(ctx);
   ctx.aiCommands = std::make_unique<AiCommandRunner>(ctx);
+  ctx.notes = std::make_unique<NotesWindowManager>(ctx);
 
   IpcCommandServer commandServer(&ctx);
 

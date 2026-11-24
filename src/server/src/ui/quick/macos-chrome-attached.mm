@@ -362,6 +362,24 @@ void MacOSWindowAttached::apply() {
   installEffectView(nswin, m_blurEnabled, m_material == QStringLiteral("liquidGlass"),
                     materialFromString(m_material), m_appearance, cornerRadius, m_borderColor, m_borderWidth,
                     m_followsWindowActiveState);
+  QMetaObject::invokeMethod(this, &MacOSWindowAttached::updateTitlebarMetrics, Qt::QueuedConnection);
+}
+
+void MacOSWindowAttached::updateTitlebarMetrics() {
+  if (!m_window || !m_surfaceReady || !m_transparentTitlebar) return;
+  NSView *view = nsViewFromWinId(m_window->winId());
+  if (!view || !view.window) return;
+  QRectF bounds;
+  for (auto kind : {NSWindowCloseButton, NSWindowMiniaturizeButton, NSWindowZoomButton}) {
+    NSButton *button = [view.window standardWindowButton:kind];
+    if (!button || button.hidden) continue;
+    const NSRect frame = [button convertRect:button.bounds toView:view];
+    const auto top = view.flipped ? NSMinY(frame) : NSHeight(view.bounds) - NSMaxY(frame);
+    bounds = bounds.united(QRectF(NSMinX(frame), top, NSWidth(frame), NSHeight(frame)));
+  }
+  if (bounds == m_titlebarButtonsRect) return;
+  m_titlebarButtonsRect = bounds;
+  emit titlebarButtonsRectChanged();
 }
 
 void MacOSWindowAttached::revert() {
@@ -396,6 +414,9 @@ void MacOSWindowAttached::revert() {
 }
 
 bool MacOSWindowAttached::eventFilter(QObject *obj, QEvent *event) {
+  if (obj == m_window && (event->type() == QEvent::Show || event->type() == QEvent::Resize ||
+                          event->type() == QEvent::WindowStateChange))
+    QMetaObject::invokeMethod(this, &MacOSWindowAttached::updateTitlebarMetrics, Qt::QueuedConnection);
   if (obj == m_window && event->type() == QEvent::PlatformSurface) {
     auto *se = static_cast<QPlatformSurfaceEvent *>(event); // NOLINT
     if (se->surfaceEventType() == QPlatformSurfaceEvent::SurfaceCreated) {

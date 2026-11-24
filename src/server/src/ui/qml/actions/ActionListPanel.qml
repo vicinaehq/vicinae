@@ -11,6 +11,8 @@ Item {
     required property ActionPanelModel model
     property var boundActions: root.model
     property ActionPanelController controller: Launcher.actionPanel
+    property string emptyText: qsTr("No matching actions")
+    property string filterPlaceholder: qsTr("Filter actions...")
 
     signal navigateBack
 
@@ -113,7 +115,7 @@ Item {
         Text {
             id: emptyLabel
             visible: root._empty
-            text: qsTr("No matching actions")
+            text: root.emptyText
             color: Theme.textMuted
             font.pointSize: Theme.smallerFontSize
             horizontalAlignment: Text.AlignHCenter
@@ -249,7 +251,7 @@ Item {
                     Text {
                         anchors.fill: parent
                         verticalAlignment: Text.AlignVCenter
-                        text: qsTr("Filter actions...")
+                        text: root.filterPlaceholder
                         color: Theme.textPlaceholder
                         font: filterInput.font
                         visible: !filterInput.text

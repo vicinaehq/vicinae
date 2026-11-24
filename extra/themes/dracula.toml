@@ -25,6 +25,23 @@ red = "#FF5555"
 yellow = "#F1FA8C"
 cyan = "#8BE9FD"
 
+[colors.syntax]
+keyword = "colors.accents.magenta"
+control_flow = "colors.accents.magenta"
+function = "colors.accents.green"
+type = "colors.accents.cyan"
+string = "colors.accents.yellow"
+number = "colors.accents.purple"
+constant = "colors.accents.purple"
+attribute = "colors.accents.cyan"
+preprocessor = "colors.accents.magenta"
+special = "colors.accents.magenta"
+heading = "colors.accents.purple"
+emphasis = "colors.accents.magenta"
+link = "colors.accents.cyan"
+link_target = "colors.accents.green"
+inline_code = "colors.accents.yellow"
+
 [colors.list.item.selection]
 background = "#4b4e64"
 secondary_background = "#6272A4"

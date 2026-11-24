@@ -104,10 +104,13 @@ Item {
             cursorShape: Qt.PointingHandCursor
         }
 
-        TapHandler {
+        DraggableMouseArea {
+            anchors.fill: parent
             enabled: root.ready && !root.DocumentScope.measuring
-            acceptedModifiers: Qt.NoModifier
-            onTapped: root.openPreview()
+            acceptedButtons: Qt.LeftButton
+            draggable: root.actions !== null
+            onItemClicked: root.openPreview()
+            onDragRequested: root.actions?.dragImage(root.source, imageFrame)
         }
 
         Rectangle {
@@ -129,7 +132,7 @@ Item {
         }
 
         ToolTip.visible: hover.hovered && !imageMenu.visible
-        ToolTip.text: qsTr("Preview image")
+        ToolTip.text: root.actions ? qsTr("Click to preview. Drag to copy.") : qsTr("Preview image")
         ToolTip.delay: 600
 
         ContextMenu.menu: MarkdownImageMenu {
