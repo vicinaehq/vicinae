@@ -3,6 +3,7 @@ import { useImperativeFormHandle } from "../hooks/use-imperative-form-handle";
 import { useEventCounted } from "../hooks/use-event-counted";
 import { type ImageLike, serializeProtoImage } from "../image";
 import { Dropdown as MainDropdown } from "./dropdown";
+import { toDate } from "./form-values";
 
 /**
  * @category UI Components
@@ -245,19 +246,27 @@ export enum DatePickerType {
 const DatePickerRoot: React.FC<Form.DatePicker.Props> = ({
 	ref,
 	onChange,
+	onFocus,
+	onBlur,
 	...props
 }) => {
 	useImperativeFormHandle(ref);
 
-	const _onChange = onChange
-		? (newValue: string | null) => {
-				const dateObj = newValue ? new Date(newValue) : null;
-				onChange(dateObj);
-			}
-		: undefined;
+	const dateEvent = (
+		type: FormEventType,
+		handler?: (event: FormEvent<Date | null>) => void,
+	) =>
+		handler &&
+		((value: string | null) =>
+			handler({ type, target: { id: props.id, value: toDate(value) } }));
 
 	return (
-		<date-picker-field {...wrapFormItemProps(props)} onChange={_onChange} />
+		<date-picker-field
+			{...props}
+			onFocus={dateEvent("focus", onFocus)}
+			onBlur={dateEvent("blur", onBlur)}
+			onChange={onChange && ((value: string | null) => onChange(toDate(value)))}
+		/>
 	);
 };
 

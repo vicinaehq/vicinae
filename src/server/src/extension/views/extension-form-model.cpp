@@ -1,5 +1,6 @@
 #include "extension/views/extension-form-model.hpp"
 #include "ui/views/view-utils.hpp"
+#include <QDateTime>
 #include <QJsonArray>
 #include <QJsonObject>
 #include <utility>
@@ -85,20 +86,20 @@ void ExtensionFormModel::setFieldValue(int index, const QVariant &value) {
   emit dataChanged(createIndex(index, 0), createIndex(index, 0), {ValueRole, CurrentDropdownItemRole});
 
   if (item.onChange) {
-    m_notify(toQ(*item.onChange), QJsonArray{item.userValue, static_cast<int>(item.eventCount)});
+    m_notify(toQ(*item.onChange), QJsonArray{item.wireValue(), static_cast<int>(item.eventCount)});
   }
 }
 
 void ExtensionFormModel::fieldFocused(int index) {
   if (index < 0 || std::cmp_greater_equal(index, m_items.size())) return;
   const auto &item = m_items[index];
-  if (item.onFocus) { m_notify(toQ(*item.onFocus), QJsonArray{item.effectiveValue()}); }
+  if (item.onFocus) { m_notify(toQ(*item.onFocus), QJsonArray{item.wireValue()}); }
 }
 
 void ExtensionFormModel::fieldBlurred(int index) {
   if (index < 0 || std::cmp_greater_equal(index, m_items.size())) return;
   const auto &item = m_items[index];
-  if (item.onBlur) { m_notify(toQ(*item.onBlur), QJsonArray{item.effectiveValue()}); }
+  if (item.onBlur) { m_notify(toQ(*item.onBlur), QJsonArray{item.wireValue()}); }
 }
 
 bool ExtensionFormModel::isExtensionControlled(int index) const {
@@ -227,7 +228,11 @@ std::expected<QJsonObject, QString> ExtensionFormModel::submit() const {
     if (!item.isField()) continue;
     if (!item.storeValue) continue;
     if (!item.error.isEmpty()) return std::unexpected(tr("One or more fields have errors"));
-    payload[item.fieldId] = item.effectiveValue();
+    if (item.type == FormItemData::Type::DatePicker) {
+      payload[item.fieldId] = QJsonObject{{"$date", item.wireValue()}};
+    } else {
+      payload[item.fieldId] = item.wireValue();
+    }
   }
   return payload;
 }
@@ -369,6 +374,15 @@ QVariantMap ExtensionFormModel::buildFieldData(const FormModel::Field &field) {
              field);
 
   return data;
+}
+
+QJsonValue ExtensionFormModel::FormItemData::wireValue() const {
+  if (type != Type::DatePicker) return effectiveValue();
+
+  auto const date = QDateTime::fromString(effectiveValue().toString(), Qt::ISODateWithMs);
+  if (!date.isValid()) return QJsonValue::Null;
+
+  return date.toUTC().toString(Qt::ISODateWithMs);
 }
 
 QString ExtensionFormModel::FormItemData::typeString() const {

@@ -15,6 +15,7 @@ import {
 	trash,
 } from "../utils";
 import { DatePickerType, type Form } from "./form";
+import { reviveFormValues } from "./form-values";
 import { Icon } from "../icon";
 import { closeMainWindow } from "../controls";
 import { ActionPanel } from "./action-pannel";
@@ -323,6 +324,7 @@ const Push: React.FC<Action.Push.Props> = ({ target, ...props }) => {
 
 const SubmitForm: React.FC<Action.SubmitForm.Props> = ({
 	title = "Submit",
+	onSubmit,
 	...props
 }) => {
 	const stableIdRef = useRef<string | undefined>(undefined);
@@ -331,6 +333,9 @@ const SubmitForm: React.FC<Action.SubmitForm.Props> = ({
 	}
 	const nativeProps: React.JSX.IntrinsicElements["action"] = {
 		...props,
+		onSubmit:
+			onSubmit &&
+			((values: Record<string, unknown>) => onSubmit(reviveFormValues(values))),
 		stableId: stableIdRef.current,
 		title,
 		icon: props.icon ? serializeProtoImage(props.icon) : props.icon,
