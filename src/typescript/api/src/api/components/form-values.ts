@@ -1,27 +1,21 @@
-import { createContext } from "react";
 import type { Form } from "./form";
 
-/** Ids of the date pickers in the current form. The app sends their values back as strings. */
-export const DateFieldsContext = createContext<Set<string> | null>(null);
+type WireDate = { $date: string | null };
 
-const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
+/** The app sends dates as ISO 8601 UTC strings, or null when the field is empty or invalid. */
+export const toDate = (value: string | null): Date | null =>
+	value ? new Date(value) : null;
 
-export const parseDate = (value: unknown): Date | null => {
-	if (typeof value !== "string" || !value) return null;
+const isWireDate = (value: unknown): value is WireDate =>
+	typeof value === "object" && value !== null && "$date" in value;
 
-	// "YYYY-MM-DD" is local midnight, but new Date() would read it as UTC
-	const date = new Date(DATE_ONLY.test(value) ? `${value}T00:00` : value);
-
-	return Number.isNaN(date.getTime()) ? null : date;
-};
-
-export const reviveDateValues = (
-	values: Form.Values,
-	dateFields: Set<string> | null,
-): Form.Values => {
-	const revived = { ...values };
-	for (const id of dateFields ?? []) {
-		if (id in revived) revived[id] = parseDate(revived[id]);
-	}
-	return revived;
-};
+/** The app submits date picker values as `{ $date }` so they can be told apart from strings. */
+export const reviveFormValues = (
+	values: Record<string, unknown>,
+): Form.Values =>
+	Object.fromEntries(
+		Object.entries(values).map(([id, value]) => [
+			id,
+			isWireDate(value) ? toDate(value.$date) : value,
+		]),
+	) as Form.Values;

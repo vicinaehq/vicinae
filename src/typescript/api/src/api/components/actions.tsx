@@ -1,10 +1,4 @@
-import React, {
-	type ReactNode,
-	useContext,
-	useEffect,
-	useRef,
-	useState,
-} from "react";
+import React, { type ReactNode, useEffect, useRef, useState } from "react";
 import { randomUUID } from "node:crypto";
 import type { RunInTerminalOptions } from "../utils";
 import type { PathLike } from "node:fs";
@@ -21,7 +15,7 @@ import {
 	trash,
 } from "../utils";
 import { DatePickerType, type Form } from "./form";
-import { DateFieldsContext, reviveDateValues } from "./form-values";
+import { reviveFormValues } from "./form-values";
 import { Icon } from "../icon";
 import { closeMainWindow } from "../controls";
 import { ActionPanel } from "./action-pannel";
@@ -337,12 +331,11 @@ const SubmitForm: React.FC<Action.SubmitForm.Props> = ({
 	if (!stableIdRef.current) {
 		stableIdRef.current = randomUUID();
 	}
-	const dateFields = useContext(DateFieldsContext);
 	const nativeProps: React.JSX.IntrinsicElements["action"] = {
 		...props,
 		onSubmit:
 			onSubmit &&
-			((values: Form.Values) => onSubmit(reviveDateValues(values, dateFields))),
+			((values: Record<string, unknown>) => onSubmit(reviveFormValues(values))),
 		stableId: stableIdRef.current,
 		title,
 		icon: props.icon ? serializeProtoImage(props.icon) : props.icon,

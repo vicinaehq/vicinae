@@ -1,15 +1,9 @@
-import {
-	type ReactNode,
-	type Ref,
-	useContext,
-	useEffect,
-	useState,
-} from "react";
+import type { ReactNode, Ref } from "react";
 import { useImperativeFormHandle } from "../hooks/use-imperative-form-handle";
 import { useEventCounted } from "../hooks/use-event-counted";
 import { type ImageLike, serializeProtoImage } from "../image";
 import { Dropdown as MainDropdown } from "./dropdown";
-import { DateFieldsContext, parseDate } from "./form-values";
+import { toDate } from "./form-values";
 
 /**
  * @category UI Components
@@ -194,21 +188,17 @@ const FormRoot: React.FC<Form.Props> = ({
 	navigationTitle,
 	searchBarAccessory,
 }) => {
-	const [dateFields] = useState(() => new Set<string>());
-
 	return (
-		<DateFieldsContext.Provider value={dateFields}>
-			<form
-				//@ts-ignore
-				enableDrafts={enableDrafts}
-				isLoading={isLoading}
-				navigationTitle={navigationTitle}
-			>
-				{searchBarAccessory}
-				{children}
-				{actions}
-			</form>
-		</DateFieldsContext.Provider>
+		<form
+			//@ts-ignore
+			enableDrafts={enableDrafts}
+			isLoading={isLoading}
+			navigationTitle={navigationTitle}
+		>
+			{searchBarAccessory}
+			{children}
+			{actions}
+		</form>
 	);
 };
 
@@ -256,24 +246,27 @@ export enum DatePickerType {
 const DatePickerRoot: React.FC<Form.DatePicker.Props> = ({
 	ref,
 	onChange,
+	onFocus,
+	onBlur,
 	...props
 }) => {
 	useImperativeFormHandle(ref);
 
-	const dateFields = useContext(DateFieldsContext);
-	useEffect(() => {
-		dateFields?.add(props.id);
-		return () => {
-			dateFields?.delete(props.id);
-		};
-	}, [dateFields, props.id]);
-
-	const _onChange = onChange
-		? (newValue: string | null) => onChange(parseDate(newValue))
-		: undefined;
+	const dateEvent = (
+		type: FormEventType,
+		handler?: (event: FormEvent<Date | null>) => void,
+	) =>
+		handler &&
+		((value: string | null) =>
+			handler({ type, target: { id: props.id, value: toDate(value) } }));
 
 	return (
-		<date-picker-field {...wrapFormItemProps(props)} onChange={_onChange} />
+		<date-picker-field
+			{...props}
+			onFocus={dateEvent("focus", onFocus)}
+			onBlur={dateEvent("blur", onBlur)}
+			onChange={onChange && ((value: string | null) => onChange(toDate(value)))}
+		/>
 	);
 };
 

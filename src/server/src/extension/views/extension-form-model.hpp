@@ -91,6 +91,7 @@ private:
     CompletionModel *dropdownModel = nullptr;
 
     QJsonValue effectiveValue() const { return hasUserValue ? userValue : modelValue; }
+    QJsonValue wireValue() const;
     QString typeString() const;
     bool isField() const { return type != Type::Description && type != Type::Separator; }
   };
