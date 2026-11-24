@@ -89,7 +89,7 @@ FocusScope {
         return true;
     }
     function ensureCursorVisible() {
-        const top = edit.y + edit.cursorRectangle.y;
+        const top = edit.cursorRectangle.y;
         const bottom = top + edit.cursorRectangle.height;
         if (top < viewport.contentY + 12)
             viewport.contentY = Math.max(0, top - 12);
@@ -106,7 +106,7 @@ FocusScope {
     Binding {
         target: edit
         property: "cursorVisible"
-        value: edit.activeFocus && edit.cursorRectangle.y + edit.y + edit.cursorRectangle.height > viewport.contentY && edit.cursorRectangle.y + edit.y < viewport.contentY + viewport.height
+        value: edit.activeFocus && edit.cursorRectangle.y + edit.cursorRectangle.height > viewport.contentY && edit.cursorRectangle.y < viewport.contentY + viewport.height
     }
     Connections {
         target: root.document
@@ -128,7 +128,7 @@ FocusScope {
         anchors.fill: parent
         clip: true
         contentWidth: width
-        contentHeight: Math.max(height, edit.y + edit.contentHeight + 64)
+        contentHeight: edit.height
         boundsBehavior: Flickable.StopAtBounds
         flickableDirection: Flickable.VerticalFlick
         ScrollBar.vertical: ScrollBar {
@@ -149,10 +149,12 @@ FocusScope {
             // Early accessibility queries enable costly implicit-width measurement on every edit.
             visible: false
             Component.onCompleted: visible = true
-            x: root.contentPadding
-            y: root.topPadding
-            width: Math.max(1, viewport.width - root.contentPadding * 2)
-            height: Math.max(contentHeight, viewport.height - root.topPadding - 28)
+            width: viewport.width
+            height: Math.max(implicitHeight, viewport.height)
+            leftPadding: root.contentPadding
+            rightPadding: root.contentPadding
+            topPadding: root.topPadding
+            bottomPadding: 64
             focus: true
             textFormat: TextEdit.PlainText
             wrapMode: TextEdit.Wrap
@@ -211,6 +213,8 @@ FocusScope {
                     cursorPosition = position;
             }
             Text {
+                x: edit.leftPadding
+                y: edit.topPadding
                 visible: edit.length === 0 && !edit.inputMethodComposing
                 text: root.placeholderText
                 color: root.mutedForeground
@@ -226,7 +230,7 @@ FocusScope {
         clip: true
         enabled: !root.readOnly && !edit.inputMethodComposing
         document: root.document
-        insertionPosition: edit.positionAt(dragPosition.x - edit.x, dragPosition.y + viewport.contentY - edit.y)
+        insertionPosition: edit.positionAt(dragPosition.x, dragPosition.y + viewport.contentY)
         onDropping: position => {
             edit.cursorPosition = position;
             edit.forceActiveFocus();
@@ -235,8 +239,8 @@ FocusScope {
         Rectangle {
             readonly property rect caret: edit.positionToRectangle(dropArea.insertionPosition)
             visible: dropArea.containsDrag
-            x: edit.x + caret.x
-            y: edit.y + caret.y - viewport.contentY
+            x: caret.x
+            y: caret.y - viewport.contentY
             width: 2
             height: caret.height
             color: root.foreground
@@ -279,10 +283,10 @@ FocusScope {
             }
         }
         readonly property bool hasSelection: edit.selectionStart !== edit.selectionEnd
-        readonly property real selectionTop: edit.y + startRect.y - viewport.contentY
-        readonly property real selectionBottom: edit.y + endRect.y + endRect.height - viewport.contentY
+        readonly property real selectionTop: startRect.y - viewport.contentY
+        readonly property real selectionBottom: endRect.y + endRect.height - viewport.contentY
         readonly property bool above: selectionTop >= height + 8
-        readonly property real anchorX: edit.x + startRect.x
+        readonly property real anchorX: startRect.x
 
         width: Math.min(implicitWidth, root.width - 12)
         height: implicitHeight
