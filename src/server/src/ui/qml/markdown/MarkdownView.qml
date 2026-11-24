@@ -14,6 +14,7 @@ Item {
     property real codeFontSize: fontSize * 0.9
     property alias contentHeight: view.contentHeight
     readonly property alias document: view.document
+    readonly property alias flickable: view
     property bool _autoScroll: false
     focus: true
 

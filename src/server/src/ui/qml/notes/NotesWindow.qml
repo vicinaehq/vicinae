@@ -19,6 +19,7 @@ Window {
     property real toolbarCenterY: headerHeight / 2
     property real toolbarLeftInset: 12
     readonly property real toolbarButtonSize: 30
+    readonly property real scrollFade: 12
     readonly property list<Item> titlebarControls: [titleInput, searchButton, newButton, editButton, splitButton, previewButton, moreButton]
     readonly property bool splitView: NotesWindowHost.viewMode === NotesWindowHost.Split
     readonly property bool previewOnly: NotesWindowHost.viewMode === NotesWindowHost.Preview
@@ -336,6 +337,11 @@ Window {
                         fontSize: NotesWindowHost.fontSize
                         contentPadding: root.splitView ? 24 : Math.max(32, (width - 760) / 2)
                         topPadding: 20
+                        flickable.layer.enabled: editor.flickable.contentHeight > editor.flickable.height
+                        flickable.layer.effect: ScrollFade {
+                            topFade: Math.min(root.scrollFade, Math.max(0, editor.flickable.contentY))
+                            bottomFade: Math.min(root.scrollFade, Math.max(0, editor.flickable.contentHeight - editor.flickable.height - editor.flickable.contentY))
+                        }
                         ViciWheelHandler {
                             target: editor.flickable
                         }
@@ -411,6 +417,7 @@ Window {
                     }
                 }
                 MarkdownView {
+                    id: preview
                     visible: root.splitView || root.previewOnly
                     SplitView.minimumWidth: 220
                     SplitView.fillWidth: true
@@ -420,6 +427,11 @@ Window {
                     codeFontSize: editor.fontSize
                     contentPadding: root.splitView ? 24 : Math.max(32, (width - 760) / 2)
                     topPadding: 20
+                    flickable.layer.enabled: preview.flickable.maximumY > preview.flickable.minimumY
+                    flickable.layer.effect: ScrollFade {
+                        topFade: Math.min(root.scrollFade, Math.max(0, preview.flickable.contentY - preview.flickable.minimumY))
+                        bottomFade: Math.min(root.scrollFade, Math.max(0, preview.flickable.maximumY - preview.flickable.contentY))
+                    }
                 }
             }
         }
