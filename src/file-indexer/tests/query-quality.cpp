@@ -1,5 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 #include <chrono>
+#include <cstdint>
 #include <filesystem>
 #include <fstream>
 #include <optional>
@@ -291,6 +292,30 @@ TEST_CASE("indexed entries persist file size and refresh time") {
   CHECK_FALSE(db.retrieveIndexedSizeBytes(dir).has_value());
   CHECK(db.retrieveIndexedAt(file).value_or(0) > 0);
   CHECK(db.retrieveIndexedAt(dir).value_or(0) > 0);
+}
+
+TEST_CASE("indexed modification times are unix seconds") {
+  auto const &env = qualityEnv();
+  fs::path const file = env.root / "mtime-probe" / "zqx-mtime-probe.dat";
+  fs::create_directories(file.parent_path());
+  { std::ofstream{file} << "probe"; }
+
+  using namespace std::chrono;
+  constexpr std::int64_t MTIME = 1'700'000'000;
+  fs::last_write_time(file, clock_cast<fs::file_time_type::clock>(sys_seconds{seconds{MTIME}}));
+
+  FileIndexerDatabase db;
+  FileEvent const event{
+      .type = FileEventType::Modify,
+      .path = file,
+      .eventTime = fs::last_write_time(file),
+      .isDirectory = false,
+      .sizeBytes = 5,
+  };
+  db.indexEvents({event});
+  CHECK(db.retrieveIndexedLastModified(file) == MTIME);
+
+  db.indexEvents({{.type = FileEventType::Delete, .path = file, .eventTime = {}}});
 }
 
 TEST_CASE("query results include indexed file categories") {
