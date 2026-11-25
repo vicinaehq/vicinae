@@ -17,8 +17,8 @@ void postKey(CGKeyCode key, bool down, CGEventFlags flags) {
 
 bool MacosPasteService::supportsPaste() const { return AXIsProcessTrusted(); }
 
-bool MacosPasteService::pasteToApp(const AbstractWindowManager::AbstractWindow *,
-                                   const AbstractApplication *) {
+bool MacosPasteService::pasteToApp(const AbstractWindowManager::AbstractWindow *, const AbstractApplication *,
+                                   bool) {
   postKey(VK_ANSI_V, true, kCGEventFlagMaskCommand);
   postKey(VK_ANSI_V, false, kCGEventFlagMaskCommand);
   return true;

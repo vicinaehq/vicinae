@@ -6,6 +6,6 @@ class AbstractPasteService {
 public:
   virtual ~AbstractPasteService() = default;
   virtual bool supportsPaste() const = 0;
-  virtual bool pasteToApp(const AbstractWindowManager::AbstractWindow *window,
-                          const AbstractApplication *app) = 0;
+  virtual bool pasteToApp(const AbstractWindowManager::AbstractWindow *window, const AbstractApplication *app,
+                          bool pastesAsText) = 0;
 };

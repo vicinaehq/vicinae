@@ -4,6 +4,6 @@
 class WindowsPasteService : public AbstractPasteService {
 public:
   bool supportsPaste() const override;
-  bool pasteToApp(const AbstractWindowManager::AbstractWindow *window,
-                  const AbstractApplication *app) override;
+  bool pasteToApp(const AbstractWindowManager::AbstractWindow *window, const AbstractApplication *app,
+                  bool pastesAsText) override;
 };

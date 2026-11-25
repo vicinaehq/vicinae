@@ -8,10 +8,12 @@ bool LinuxPasteService::supportsPaste() const {
 }
 
 bool LinuxPasteService::pasteToApp(const AbstractWindowManager::AbstractWindow *window,
-                                   const AbstractApplication *app) {
+                                   const AbstractApplication *app, bool pastesAsText) {
   const bool isTerminal = app && (app->isTerminalEmulator() || app->isTerminalApp());
 
-  m_server.injectPaste(isTerminal);
+  // A terminal's own paste shortcut only pastes text: programs that take images or files read the clipboard
+  // themselves when they receive Ctrl+V.
+  m_server.injectPaste(isTerminal && pastesAsText);
 
   return true;
 }

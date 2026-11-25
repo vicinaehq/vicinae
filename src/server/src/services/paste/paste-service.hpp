@@ -42,6 +42,7 @@ private:
 
   Target m_target = Target::FocusHandoff;
   bool m_hasPendingPaste = false;
+  bool m_pastesAsText = true;
   bool m_awaitingCopy = false;
   QTimer m_focusPollTimer;
   QTimer m_copyWaitTimer;

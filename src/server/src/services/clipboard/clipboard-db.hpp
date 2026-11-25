@@ -85,6 +85,7 @@ struct ClipboardSelectionOfferRecord {
 struct ClipboardSelectionRecord {
   std::vector<ClipboardSelectionOfferRecord> offers;
   std::optional<QString> source;
+  ClipboardOfferKind kind = ClipboardOfferKind::Unknown;
 };
 
 struct RemovedSelections {

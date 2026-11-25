@@ -29,7 +29,7 @@ void releaseHeldModifiers(std::vector<INPUT> &inputs) {
 bool WindowsPasteService::supportsPaste() const { return true; }
 
 bool WindowsPasteService::pasteToApp(const AbstractWindowManager::AbstractWindow *,
-                                     const AbstractApplication *) {
+                                     const AbstractApplication *, bool) {
   std::vector<INPUT> inputs;
 
   inputs.reserve(4);

@@ -37,7 +37,7 @@ static constexpr const char *CLIPBOARD_PRAGMAS[] = {
 
 std::optional<ClipboardSelectionRecord> ClipboardDatabase::findSelection(const QString &id) {
   auto stmt = m_db.prepare(R"(
-    SELECT s.source, o.id, o.mime_type, o.encryption_type
+    SELECT s.source, o.id, o.mime_type, o.encryption_type, s.kind
     FROM selection s
     LEFT JOIN data_offer o ON o.selection_id = s.id
     WHERE s.id = :id
@@ -50,6 +50,7 @@ std::optional<ClipboardSelectionRecord> ClipboardDatabase::findSelection(const Q
     if (!selection) {
       selection.emplace();
       if (!stmt.isNull(0)) { selection->source = stmt.columnQString(0); }
+      selection->kind = static_cast<ClipboardOfferKind>(stmt.columnInt(4));
     }
     if (stmt.isNull(1)) continue;
 
