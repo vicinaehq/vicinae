@@ -1,11 +1,14 @@
 #include <QtConcurrentRun>
 #include <algorithm>
+#include <array>
 #include <mutex>
+#include <QBuffer>
 #include <QClipboard>
 #include <QGuiApplication>
-#include <QBuffer>
+#include <QImageReader>
 #include <QMimeData>
 #include <QRegularExpression>
+#include <QSvgRenderer>
 #include <QUrlQuery>
 #include <cmark-gfm.h>
 #include <cmark-gfm-core-extensions.h>
@@ -14,6 +17,7 @@
 #include <cstring>
 #include <utility>
 #include "ui/quick/markdown-model.hpp"
+#include "internal/data-uri/data-uri.hpp"
 #include "markdown-math.hpp"
 #include "services/font-service/font-service.hpp"
 #include "ui/image/image-url.hpp"
@@ -63,6 +67,44 @@ bool isClosedFence(cmark_node *node, QByteArrayView markdown) {
          std::ranges::all_of(last, [first](char c) { return c == first.front(); });
 }
 
+constexpr auto SIZE_HINT_PREFIXES = std::to_array<QLatin1StringView>({
+    QLatin1StringView("raycast-"),
+    QLatin1StringView("omnicast-"),
+});
+
+QString stripSizeHints(const QString &dataUri) {
+  auto const queryStart = dataUri.lastIndexOf('?');
+  if (queryStart == -1) return dataUri;
+
+  auto const items = QUrlQuery(dataUri.sliced(queryStart + 1)).queryItems();
+  auto const isSizeHint = [](const std::pair<QString, QString> &item) {
+    return std::ranges::any_of(SIZE_HINT_PREFIXES,
+                               [&](QLatin1StringView prefix) { return item.first.startsWith(prefix); });
+  };
+
+  if (items.isEmpty() || !std::ranges::all_of(items, isSizeHint)) return dataUri;
+  return dataUri.first(queryStart);
+}
+
+QSize dataUriNaturalSize(const QString &dataUri) {
+  QString const payload = stripSizeHints(dataUri);
+  DataUri const uri(payload);
+  QByteArray bytes = uri.decodeContent();
+  if (bytes.isEmpty()) return {};
+  if (uri.mediaType().contains(QLatin1StringView("svg"))) return QSvgRenderer(bytes).defaultSize();
+
+  QBuffer buffer(&bytes);
+  return QImageReader(&buffer).size();
+}
+
+void addNaturalSize(QVariantMap &data, const QString &rawUrl) {
+  if (!rawUrl.startsWith(QLatin1StringView("data:"))) return;
+  QSize const size = dataUriNaturalSize(rawUrl);
+  if (size.isEmpty()) return;
+  data[QStringLiteral("naturalWidth")] = size.width();
+  data[QStringLiteral("naturalHeight")] = size.height();
+}
+
 QString imageProviderUrl(const QString &rawUrl) {
   QUrl const url(rawUrl);
   auto const scheme = url.scheme();
@@ -73,7 +115,7 @@ QString imageProviderUrl(const QString &rawUrl) {
   if (scheme == "data") {
     ImageURL imgUrl;
     imgUrl.setType(ImageURLType::DataURI);
-    imgUrl.setName(rawUrl);
+    imgUrl.setName(stripSizeHints(rawUrl));
     return imgUrl.toString();
   }
 
@@ -251,8 +293,10 @@ QVariantMap parseImageSize(const QUrl &url) {
 
 QVariantMap buildImageBlock(cmark_node *imageNode) {
   QUrl const imgUrl(QString::fromUtf8(cmark_node_get_url(imageNode)));
+  QString const rawUrl = imgUrl.toString();
   QVariantMap data = parseImageSize(imgUrl);
-  data[QStringLiteral("src")] = imageProviderUrl(imgUrl.toString());
+  addNaturalSize(data, rawUrl);
+  data[QStringLiteral("src")] = imageProviderUrl(rawUrl);
   data[QStringLiteral("alt")] = imageAltText(imageNode);
   return data;
 }
@@ -297,6 +341,7 @@ void processHtmlNodes(pugi::xml_node node, HtmlBlockResult &result, const QUrl &
           img[QStringLiteral("src")] =
               imageProviderUrl(baseUrl.isEmpty() ? src : baseUrl.resolved(QUrl(src)).toString());
           img[QStringLiteral("alt")] = QString();
+          addNaturalSize(img, src);
           if (w > 0) img[QStringLiteral("width")] = w;
           if (h > 0) img[QStringLiteral("height")] = h;
           result.extractedImages.push_back(img);
@@ -748,7 +793,9 @@ void MarkdownModel::applyBlocks(const QString &markdown, std::vector<Block> bloc
     }
     return;
   }
-  if (appended) {
+  const bool sameShape =
+      !m_blocks.empty() && std::ranges::equal(m_blocks, blocks, {}, &Block::type, &Block::type);
+  if (appended || sameShape) {
     const int oldCount = static_cast<int>(m_blocks.size());
     const int newCount = static_cast<int>(blocks.size());
 

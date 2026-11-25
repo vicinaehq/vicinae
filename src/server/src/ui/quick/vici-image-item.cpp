@@ -62,6 +62,12 @@ void ViciImageItem::setSafetyMargins(bool enabled) {
   reload();
 }
 
+void ViciImageItem::setRetainWhileLoading(bool retain) {
+  if (m_retainWhileLoading == retain) return;
+  m_retainWhileLoading = retain;
+  emit retainWhileLoadingChanged();
+}
+
 void ViciImageItem::setFallbackEnabled(bool enabled) {
   if (m_fallbackEnabled == enabled) return;
   m_fallbackEnabled = enabled;
@@ -141,9 +147,24 @@ void ViciImageItem::reload() {
     update();
   });
 
-  connect(m_stream, &ImageStream::failed, this, [this]() { setStatus(Error); });
+  connect(m_stream, &ImageStream::failed, this, [this]() {
+    if (!m_currentFrame.isNull() || m_pendingTexture) {
+      delete m_pendingTexture;
+      m_pendingTexture = nullptr;
+      m_currentFrame = {};
+      m_currentFrameKey = 0;
+      m_frameDirty = true;
+      setImplicitSize(0, 0);
+      update();
+    }
+    setStatus(Error);
+  });
 
   if (!m_stream->start()) {
+    if (m_retainWhileLoading && !m_currentFrame.isNull()) {
+      setStatus(Loading);
+      return;
+    }
     delete m_pendingTexture;
     m_pendingTexture = nullptr;
     m_currentFrame = {};

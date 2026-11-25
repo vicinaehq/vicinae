@@ -17,14 +17,16 @@ Item {
     readonly property string source: blockData.src ?? ""
     readonly property string alt: blockData.alt ?? ""
     readonly property string link: blockData.link ?? ""
-    readonly property bool ready: image.status === ViciImage.Ready
-    readonly property real naturalWidth: image.implicitWidth > 0 ? image.implicitWidth : Math.max(1, requestedWidth || width)
-    readonly property real naturalHeight: image.status === ViciImage.Error ? 72 : image.implicitHeight > 0 ? image.implicitHeight : Math.max(1, requestedHeight || 200)
+    readonly property bool ready: image.status === ViciImage.Ready || (image.status === ViciImage.Loading && image.implicitWidth > 0)
+    readonly property real _naturalW: blockData.naturalWidth ?? 0
+    readonly property real _naturalH: blockData.naturalHeight ?? 0
+    readonly property real naturalWidth: image.status !== ViciImage.Error && _naturalW > 0 ? _naturalW : image.implicitWidth > 0 ? image.implicitWidth : Math.max(1, requestedWidth || width)
+    readonly property real naturalHeight: image.status === ViciImage.Error ? 72 : _naturalH > 0 ? _naturalH : image.implicitHeight > 0 ? image.implicitHeight : Math.max(1, requestedHeight || 200)
     readonly property real aspectRatio: naturalWidth / naturalHeight
     readonly property real preferredWidth: requestedWidth > 0 ? requestedWidth : requestedHeight > 0 ? requestedHeight * aspectRatio : naturalWidth
 
     width: parent?.width ?? 0
-    implicitHeight: imageFrame.height + (caption.visible ? caption.implicitHeight + 8 : 0)
+    implicitHeight: imageFrame.height
 
     function openPreview() {
         if (ready)
@@ -57,6 +59,7 @@ Item {
             anchors.fill: parent
             fillMode: ViciImage.PreserveAspectFit
             fallbackEnabled: false
+            retainWhileLoading: true
             sourceSize: Qt.size(Math.max(1, root.width), Math.max(1, root.maxImageHeight > 0 ? root.maxImageHeight : root.width))
             source: root.DocumentScope.measuring ? "" : root.source
         }
@@ -65,7 +68,7 @@ Item {
             anchors.centerIn: parent
             width: 20
             height: 20
-            visible: image.status === ViciImage.Loading
+            visible: image.status === ViciImage.Loading && image.implicitWidth <= 0
         }
 
         Text {
@@ -144,22 +147,6 @@ Item {
             previewable: root.ready
             onPreviewRequested: root.openPreview()
         }
-    }
-
-    Text {
-        id: caption
-        anchors.top: imageFrame.bottom
-        anchors.topMargin: 8
-        anchors.horizontalCenter: parent.horizontalCenter
-        width: root.width
-        visible: root.alt.length > 0
-        text: root.alt
-        textFormat: Text.PlainText
-        color: Theme.textMuted
-        font.family: Theme.fontFamily
-        font.pointSize: root.fontSize
-        horizontalAlignment: Text.AlignHCenter
-        wrapMode: Text.Wrap
     }
 
     DocumentSelection {
