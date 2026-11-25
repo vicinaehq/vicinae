@@ -48,6 +48,7 @@ bool PasteService::pasteContent(const Clipboard::Content &content, const Clipboa
   m_copyWaitTimer.stop();
   m_awaitingCopy = false;
   m_target = target;
+  m_pastesAsText = m_clipboard.pastesAsText(content);
   m_pasteTimer.start();
 
   const bool confirmable = m_clipboard.supportsMonitoring();
@@ -127,6 +128,6 @@ void PasteService::executePaste() {
     qInfo() << "Pasting to unknown window" << m_pasteTimer.elapsed() << "ms after request";
   }
 
-  m_platform->pasteToApp(window.get(), app.get());
+  m_platform->pasteToApp(window.get(), app.get(), m_pastesAsText);
   m_clipboard.scheduleClipboardRestore();
 }

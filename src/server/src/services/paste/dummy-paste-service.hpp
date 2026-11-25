@@ -4,7 +4,7 @@
 class DummyPasteService : public AbstractPasteService {
 public:
   bool supportsPaste() const override { return false; }
-  bool pasteToApp(const AbstractWindowManager::AbstractWindow *, const AbstractApplication *) override {
+  bool pasteToApp(const AbstractWindowManager::AbstractWindow *, const AbstractApplication *, bool) override {
     return false;
   }
 };

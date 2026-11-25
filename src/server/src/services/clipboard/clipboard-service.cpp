@@ -85,6 +85,35 @@ bool ClipboardService::copyContent(Clipboard::Content content, const Clipboard::
   return std::visit(visitor, content);
 }
 
+bool ClipboardService::pastesAsText(const Clipboard::Content &content) const {
+  const auto isPlainText = [](const QString &mimeType) {
+    return std::ranges::any_of(Clipboard::PLAIN_TEXT_MIME_TYPES,
+                               [&](const char *type) { return mimeType == QLatin1StringView(type); });
+  };
+  const auto classify = [](ClipboardOfferKind kind, bool hasPlainText) {
+    return kind != ClipboardOfferKind::Image && (kind != ClipboardOfferKind::File || hasPlainText);
+  };
+  const auto visitor = overloads{
+      [](const Clipboard::File &) { return false; },
+      [](const Clipboard::Urls &) { return false; },
+      [&](const Clipboard::SelectionRecordHandle &handle) {
+        const auto record = openDatabase().findSelection(handle.id);
+        if (!record) return true;
+        return classify(record->kind, std::ranges::any_of(record->offers, isPlainText,
+                                                          &ClipboardSelectionOfferRecord::mimeType));
+      },
+      [&](const ClipboardSelection &selection) {
+        const auto it = std::ranges::find(selection.offers, getSelectionPreferredMimeType(selection),
+                                          &ClipboardDataOffer::mimeType);
+        const auto kind = it != selection.offers.end() ? getKind(*it) : ClipboardOfferKind::Unknown;
+        return classify(kind, Clipboard::findPlainTextOffer(selection) != selection.offers.end());
+      },
+      [](const auto &) { return true; },
+  };
+
+  return std::visit(visitor, content);
+}
+
 bool ClipboardService::copyFile(const std::filesystem::path &path, const Clipboard::CopyOptions &options) {
   QMimeData *data = new QMimeData;
 

@@ -107,6 +107,9 @@ public:
                 const Clipboard::CopyOptions &options = {.concealed = false});
   bool copyUrls(const std::vector<QUrl> &urls, const Clipboard::CopyOptions &options = {.concealed = false});
   bool copyContent(Clipboard::Content content, const Clipboard::CopyOptions &options = {.concealed = false});
+  // Whether a target that only pastes plain text, such as a terminal, gets what the user expects from this
+  // content. Not the case for images and for files that come without their path as text.
+  bool pastesAsText(const Clipboard::Content &content) const;
   bool clear();
   void saveSelection(ClipboardSelection selection);
   ClipboardSelection retrieveSelection(int offset = 0);
