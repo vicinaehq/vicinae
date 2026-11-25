@@ -12,6 +12,7 @@
 #include "gnome/gnome-window-manager.hpp"
 #include "services/window-manager/kde/kde-window-manager.hpp"
 #include "niri/niri.hpp"
+#include "mango/mango.hpp"
 #include "x11/x11-window-manager.hpp"
 #include "wayland/wayland.hpp"
 #endif
@@ -32,6 +33,7 @@ std::vector<std::unique_ptr<AbstractWindowManager>> WindowManager::createCandida
   candidates.emplace_back(std::make_unique<KDE::WindowManager>());
   candidates.emplace_back(std::make_unique<X11WindowManager>());
   candidates.emplace_back(std::make_unique<Niri::WindowManager>());
+  candidates.emplace_back(std::make_unique<Mango::WindowManager>());
 
   // this implementation is good enough for most standalone wayland compositors
   candidates.emplace_back(std::make_unique<WaylandWindowManager>());
