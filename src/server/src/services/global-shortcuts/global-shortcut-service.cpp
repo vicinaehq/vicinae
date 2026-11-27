@@ -118,9 +118,10 @@ void GlobalShortcutService::reconcile() {
     const auto &binding = entry.binding;
     auto bound =
         m_backend->bindShortcut({.id = id, .trigger = binding.trigger, .description = binding.description});
-    m_applied.emplace(id, binding.trigger);
 
-    if (!bound) {
+    if (bound) {
+      m_applied.emplace(id, binding.trigger);
+    } else {
       qWarning() << "Failed to bind global shortcut" << id << "(" << binding.trigger.toString()
                  << "):" << bound.error();
     }
