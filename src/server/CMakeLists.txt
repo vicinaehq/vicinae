@@ -191,6 +191,8 @@ set(SRCS
 	src/favicon/google-favicon-request.cpp
 	src/favicon/twenty-favicon-request.hpp
 	src/favicon/twenty-favicon-request.cpp
+	src/favicon/duckduckgo-favicon-request.hpp
+	src/favicon/duckduckgo-favicon-request.cpp
 	src/favicon/dummy-favicon-request.hpp
 	src/favicon/dummy-favicon-request.cpp
 

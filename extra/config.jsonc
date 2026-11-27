@@ -66,7 +66,7 @@
 	"pop_to_root_on_close": false,
 
 	// What favicon service to use when loading favicons is needed.
-	// Available values are: 'twenty' | 'google' | 'none'
+	// Available values are: 'twenty' | 'google' | 'duckduckgo' | 'none'
 	// If this is set to 'none', favicon loading is disabled and a placeholder icon will be used when a favicon is expected.
 	"favicon_service": "twenty",
 

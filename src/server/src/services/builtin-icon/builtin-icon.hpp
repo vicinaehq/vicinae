@@ -250,6 +250,7 @@ enum class BuiltinIcon : quint16 {
   Droplets,
   Dropwizard,
   Drupal,
+  Duckduckgo,
   Duplicate,
   Dynamodb,
   Eclipse,
