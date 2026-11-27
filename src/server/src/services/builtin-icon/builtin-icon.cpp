@@ -242,6 +242,7 @@ const BuiltinIconService::Mapping &BuiltinIconService::mapping() {
       {BuiltinIcon::Droplets, "droplets"},
       {BuiltinIcon::Dropwizard, "dropwizard"},
       {BuiltinIcon::Drupal, "drupal"},
+      {BuiltinIcon::Duckduckgo, "duckduckgo"},
       {BuiltinIcon::Duplicate, "duplicate"},
       {BuiltinIcon::Dynamodb, "dynamodb"},
       {BuiltinIcon::Eclipse, "eclipse"},

@@ -239,6 +239,7 @@ export enum Icon {
 	Droplets = "droplets",
 	Dropwizard = "dropwizard",
 	Drupal = "drupal",
+	Duckduckgo = "duckduckgo",
 	Duplicate = "duplicate",
 	Dynamodb = "dynamodb",
 	Eclipse = "eclipse",

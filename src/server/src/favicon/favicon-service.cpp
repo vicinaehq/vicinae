@@ -1,11 +1,42 @@
-#include "favicon/favicon-service.hpp"
-#include "favicon/dummy-favicon-request.hpp"
-#include "favicon/google-favicon-request.hpp"
-#include "favicon/twenty-favicon-request.hpp"
+#include <QBuffer>
+#include <QImageReader>
 #include <QPromise>
 #include <QtConcurrent/QtConcurrent>
 #include <memory>
 #include <qlogging.h>
+#include "favicon/favicon-service.hpp"
+#include "favicon/duckduckgo-favicon-request.hpp"
+#include "favicon/dummy-favicon-request.hpp"
+#include "favicon/google-favicon-request.hpp"
+#include "favicon/twenty-favicon-request.hpp"
+
+static QImage decodeBestImage(const QByteArray &data) {
+  QBuffer buffer;
+  buffer.setData(data);
+  buffer.open(QIODevice::ReadOnly);
+
+  QImageReader reader(&buffer);
+  const int count = reader.imageCount();
+  if (count <= 1) return reader.read();
+
+  QImage best;
+  int bestArea = 0;
+  int bestDepth = 0;
+  for (int i = 0; i < count; ++i) {
+    if (!reader.jumpToImage(i)) continue;
+    QImage candidate = reader.read();
+    if (candidate.isNull()) continue;
+    const int area = candidate.width() * candidate.height();
+    const int depth = candidate.depth();
+    if (area > bestArea || (area == bestArea && depth > bestDepth)) {
+      best = std::move(candidate);
+      bestArea = area;
+      bestDepth = depth;
+    }
+  }
+
+  return best;
+}
 
 static const std::vector<FaviconService::FaviconServiceData> faviconProviders = {
     {.id = "google",
@@ -16,6 +47,10 @@ static const std::vector<FaviconService::FaviconServiceData> faviconProviders = 
      .name = "Twenty",
      .icon = ImageURL::builtin(BuiltinIcon::Twenty),
      .type = FaviconService::Twenty},
+    {.id = "duckduckgo",
+     .name = "DuckDuckGo",
+     .icon = ImageURL::builtin(BuiltinIcon::Duckduckgo),
+     .type = FaviconService::DuckDuckGo},
     {.id = "none",
      .name = "None",
      .icon = ImageURL::builtin(BuiltinIcon::Image),
@@ -92,6 +127,9 @@ void FaviconService::fetch(const QString &domain, QObject *parent) {
   case Twenty:
     requester = new TwentyFaviconRequester(domain, parent);
     break;
+  case DuckDuckGo:
+    requester = new DuckDuckGoFaviconRequester(domain, parent);
+    break;
   case None:
     resolve(domain, std::unexpected("Favicon fetching is disabled"));
     return;
@@ -103,7 +141,7 @@ void FaviconService::fetch(const QString &domain, QObject *parent) {
           [this, requester, domain](const QByteArray &data) {
             requester->deleteLater();
             QtConcurrent::run([data]() {
-              return QImage::fromData(data);
+              return decodeBestImage(data);
             }).then(this, [this, domain](QImage image) {
               if (image.isNull()) {
                 resolve(domain, std::unexpected("Invalid favicon data"));
