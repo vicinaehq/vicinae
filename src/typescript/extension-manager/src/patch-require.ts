@@ -28,8 +28,7 @@ const injectJsxGlobals = () => {
 export const patchRequire = (env: EnvironmentType) => {
 	// we do not want NODE_ENV to be set in the extension worker as it will get inherited by
 	// child processes which may yield to a lot of unexpected behaviour.
-	// We tried many things: the method below has been the most reliable so far.
-	process.env.NODE_ENV = env;
+	process.env.NODE_ENV = env; // we need this in order to load the right React bundle
 	const reconciler = require("react-reconciler");
 	const react = require("react");
 	const jsxRuntime = require("react/jsx-runtime");

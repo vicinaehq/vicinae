@@ -247,6 +247,7 @@ class ExtensionManager extends manager.ManagerService {
 			},
 			env: {
 				...process.env,
+				NODE_ENV: environment,
 			},
 		});
 	}
