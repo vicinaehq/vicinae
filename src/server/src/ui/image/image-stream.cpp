@@ -1,5 +1,6 @@
 #include "image-stream.hpp"
 #include "data-uri/data-uri.hpp"
+#include "favicon/favicon-service.hpp"
 #include "services/image-fetcher/image-fetcher.hpp"
 #include "image-renderer.hpp"
 #include "theme/theme.hpp"
@@ -60,6 +61,7 @@ static QString makeLatestCacheKey(const ImageURL &url) {
   auto key = url.toString();
   if (url.type() == ImageURLType::System || url.type() == ImageURLType::FileIcon)
     key += QStringLiteral("|it:") + QIcon::themeName();
+  if (url.type() == ImageURLType::Favicon) key += QStringLiteral("|fs:") + FaviconService::currentServiceId();
   if (url.type() == ImageURLType::FileThumbnail) {
     const QFileInfo file(url.name());
     key += QStringLiteral("|%1:%2").arg(file.size()).arg(file.lastModified().toMSecsSinceEpoch());
