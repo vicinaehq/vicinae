@@ -12,6 +12,10 @@
  * The name is claimed after a grace period so that a desktop host that briefly drops it
  * (GNOME toggles extensions on lock/unlock) can take it back first, and it is released
  * as soon as another connection is queued for it so the real host wins on its own.
+ *
+ * watcherEnabled is fixed for this object's lifetime. When it is false the constructor
+ * returns before connecting ownership callbacks or starting timers, so a later owner
+ * change cannot arm a claim and this object never exports the watcher service.
  */
 class SniWatcher : public QObject, protected QDBusContext {
   Q_OBJECT
@@ -21,7 +25,7 @@ class SniWatcher : public QObject, protected QDBusContext {
   Q_PROPERTY(int ProtocolVersion READ protocolVersion)
 
 public:
-  explicit SniWatcher(QObject *parent = nullptr);
+  explicit SniWatcher(bool watcherEnabled, QObject *parent = nullptr);
   ~SniWatcher() override;
 
   bool owned() const { return m_owned; }
