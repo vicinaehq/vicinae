@@ -1,5 +1,4 @@
-import React, { type ReactNode, useEffect, useRef, useState } from "react";
-import { randomUUID } from "node:crypto";
+import React, { type ReactNode, useEffect, useId, useState } from "react";
 import type { RunInTerminalOptions } from "../utils";
 import type { PathLike } from "node:fs";
 import { useNavigation } from "../hooks/index";
@@ -152,13 +151,8 @@ export type Quicklink = {
 
 const ActionRoot: React.FC<ActionProps> = ({ icon, ...props }) => {
 	const serializedIcon = icon ? serializeProtoImage(icon) : icon;
-	const stableIdRef = useRef<string | undefined>(undefined);
-	if (!stableIdRef.current) {
-		stableIdRef.current = randomUUID();
-	}
-	return (
-		<action {...props} icon={serializedIcon} stableId={stableIdRef.current} />
-	);
+	const stableId = useId();
+	return <action {...props} icon={serializedIcon} stableId={stableId} />;
 };
 
 const CopyToClipboard: React.FC<Action.CopyToClipboard.Props> = ({
@@ -327,16 +321,13 @@ const SubmitForm: React.FC<Action.SubmitForm.Props> = ({
 	onSubmit,
 	...props
 }) => {
-	const stableIdRef = useRef<string | undefined>(undefined);
-	if (!stableIdRef.current) {
-		stableIdRef.current = randomUUID();
-	}
+	const stableId = useId();
 	const nativeProps: React.JSX.IntrinsicElements["action"] = {
 		...props,
 		onSubmit:
 			onSubmit &&
 			((values: Record<string, unknown>) => onSubmit(reviveFormValues(values))),
-		stableId: stableIdRef.current,
+		stableId,
 		title,
 		icon: props.icon ? serializeProtoImage(props.icon) : props.icon,
 		onAction: () => {},
@@ -355,13 +346,10 @@ const CreateQuicklink: React.FC<Action.CreateQuicklink.Props> = ({
 	quicklink,
 	...props
 }) => {
-	const stableIdRef = useRef<string | undefined>(undefined);
-	if (!stableIdRef.current) {
-		stableIdRef.current = randomUUID();
-	}
+	const stableId = useId();
 	const nativeProps: React.JSX.IntrinsicElements["action"] = {
 		...props,
-		stableId: stableIdRef.current,
+		stableId,
 		title,
 		type: "create-quicklink",
 		quicklink: {

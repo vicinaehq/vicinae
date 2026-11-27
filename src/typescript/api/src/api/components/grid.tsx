@@ -1,6 +1,5 @@
-import React, { ReactNode, useRef } from "react";
+import React, { ReactNode, useId } from "react";
 import { type Image, type ImageLike, serializeProtoImage } from "../image";
-import { randomUUID } from "crypto";
 import { EmptyView } from "./empty-view";
 import { type ColorLike, serializeColorLike } from "../color";
 import { Dropdown } from "./dropdown";
@@ -244,8 +243,8 @@ const GridItem: React.FC<Grid.Item.Props> = ({
 	id: propsId,
 	...props
 }) => {
-	const generatedId = useRef(randomUUID());
-	const id = propsId ?? generatedId.current;
+	const generatedId = useId();
+	const id = propsId ?? generatedId;
 
 	// Remove value wrapper
 	const innerContent =

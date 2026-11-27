@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { useRef } from "react";
+import { useId } from "react";
 import { useEventCounted } from "../hooks/use-event-counted";
 import {
 	type Image,
@@ -7,7 +7,6 @@ import {
 	type SerializedImageLike,
 	serializeProtoImage,
 } from "../image";
-import { randomUUID } from "node:crypto";
 import { Metadata } from "./metadata";
 import { EmptyView } from "./empty-view";
 import {
@@ -357,8 +356,8 @@ const ListItem: React.FC<List.Item.Props> = ({
 	id: propsId,
 	...props
 }) => {
-	const generatedId = useRef(randomUUID());
-	const id = propsId ?? generatedId.current;
+	const generatedId = useId();
+	const id = propsId ?? generatedId;
 
 	// Icon
 	let serializedIcon: React.JSX.IntrinsicElements["list-item"]["icon"];
