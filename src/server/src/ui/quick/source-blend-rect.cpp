@@ -1,7 +1,13 @@
 #include "ui/quick/source-blend-rect.hpp"
 #include <QSGGeometry>
 #include <QSGRendererInterface>
+#include <algorithm>
+#include <array>
+#include <cmath>
 #include <cstring>
+#include <numbers>
+#include <ranges>
+#include "common/enumerate.hpp"
 
 static void colorToFloat4(const QColor &c, float out[4]) {
   out[0] = static_cast<float>(c.redF());
@@ -67,6 +73,21 @@ public:
     float outerBorderWidth = mat->outerBorderWidth;
     memcpy(buf->data() + 192, &outerBorderWidth, 4);
 
+    const qsizetype stopCount = std::min(mat->borderGradient.size(), SourceBlendMaterial::MAX_GRADIENT_STOPS);
+    int gradientCount = stopCount >= 2 ? static_cast<int>(stopCount) : 0;
+    std::memcpy(buf->data() + 196, &gradientCount, 4);
+
+    const float angle = mat->borderGradientAngle * std::numbers::pi_v<float> / 180.0F;
+    std::array<float, 2> gradientDir = {std::cos(angle), std::sin(angle)};
+    std::memcpy(buf->data() + 200, gradientDir.data(), 8);
+
+    for (const auto &[idx, color] :
+         mat->borderGradient | std::views::take(gradientCount) | vicinae::enumerate) {
+      float stop[4];
+      colorToFloat4(color, stop);
+      std::memcpy(buf->data() + 208 + idx * 16, stop, 16);
+    }
+
     return true;
   }
 
@@ -103,6 +124,10 @@ int SourceBlendMaterial::compare(const QSGMaterial *other) const {
     return backgroundColor.rgba() < o->backgroundColor.rgba() ? -1 : 1;
   if (radius != o->radius) return radius < o->radius ? -1 : 1;
   if (borderWidth != o->borderWidth) return borderWidth < o->borderWidth ? -1 : 1;
+  if (borderGradient != o->borderGradient) return borderGradient.size() < o->borderGradient.size() ? -1 : 1;
+  if (borderGradientAngle != o->borderGradientAngle) {
+    return borderGradientAngle < o->borderGradientAngle ? -1 : 1;
+  }
   if (outerBorderColor != o->outerBorderColor)
     return outerBorderColor.rgba() < o->outerBorderColor.rgba() ? -1 : 1;
   if (outerBorderWidth != o->outerBorderWidth) return outerBorderWidth < o->outerBorderWidth ? -1 : 1;
@@ -140,6 +165,22 @@ void SourceBlendRect::setBorderWidth(int w) {
   if (m_borderWidth != w) {
     m_borderWidth = w;
     emit borderWidthChanged();
+    update();
+  }
+}
+
+void SourceBlendRect::setBorderGradient(const QList<QColor> &stops) {
+  if (m_borderGradient != stops) {
+    m_borderGradient = stops;
+    emit borderGradientChanged();
+    update();
+  }
+}
+
+void SourceBlendRect::setBorderGradientAngle(qreal angle) {
+  if (m_borderGradientAngle != angle) {
+    m_borderGradientAngle = angle;
+    emit borderGradientAngleChanged();
     update();
   }
 }
@@ -233,6 +274,8 @@ QSGNode *SourceBlendRect::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData 
   material->itemSize = QSizeF(width(), height());
   material->radius = static_cast<float>(m_radius);
   material->borderWidth = m_borderWidth;
+  material->borderGradient = m_borderGradient;
+  material->borderGradientAngle = static_cast<float>(m_borderGradientAngle);
   material->outerBorderColor = m_outerBorderColor;
   material->outerBorderWidth = static_cast<float>(m_outerBorderWidth);
   material->secondaryHeight = static_cast<float>(m_secondaryHeight);

@@ -21,6 +21,9 @@ border = "#2a241c"
 
 [colors.main_window]
 border = "#2a241c"
+# The border can also be a linear gradient of 2 to 8 evenly spaced colors.
+# The angle is in degrees: 0 goes from left to right, 90 from top to bottom.
+# border = { gradient = ["colors.accents.blue", "colors.accents.magenta"], angle = 45 }
 footer = { background = "colors.core.secondary_background" }
 
 [colors.settings_window]
