@@ -39,6 +39,10 @@ GnomeWindowManager::GnomeWindowManager() {
             }
           });
 
+  // The extension sees clicks outside the launcher, which do not take focus away from it on GNOME
+  connect(m_eventListener.get(), &Gnome::EventListener::closerequested, this,
+          &GnomeWindowManager::launcherDismissRequested);
+
   connect(m_eventListener.get(), &Gnome::EventListener::focuswindow, this,
           [this](const Gnome::WindowAddress &addr) {
             auto wm = ServiceRegistry::instance()->windowManager();
