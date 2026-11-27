@@ -431,6 +431,19 @@ void applyPostTransforms(QImage &image, const QColor &fg, const QColor &bg, cons
   }
 }
 
+static bool hasOpaqueCorners(const QImage &image) {
+  if (image.width() < 2 || image.height() < 2) return false;
+  if (!image.hasAlphaChannel()) return true;
+
+  constexpr int OPAQUE_ALPHA_THRESHOLD = 240;
+  const int maxX = image.width() - 1;
+  const int maxY = image.height() - 1;
+  return image.pixelColor(0, 0).alpha() >= OPAQUE_ALPHA_THRESHOLD &&
+         image.pixelColor(maxX, 0).alpha() >= OPAQUE_ALPHA_THRESHOLD &&
+         image.pixelColor(0, maxY).alpha() >= OPAQUE_ALPHA_THRESHOLD &&
+         image.pixelColor(maxX, maxY).alpha() >= OPAQUE_ALPHA_THRESHOLD;
+}
+
 QFuture<QImage> renderFavicon(const QString &domain, const QSize &size, const QColor &fg, const QColor &bg,
                               OmniPainter::ImageMaskType mask) {
   auto promise = std::make_shared<QPromise<QImage>>();
@@ -451,7 +464,11 @@ QFuture<QImage> renderFavicon(const QString &domain, const QSize &size, const QC
               if (result) {
                 QSize const contentSize = hasBackdrop(bg) ? backdropContentSize(size) : size;
                 QImage img = result->scaled(contentSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
-                applyPostTransforms(img, fg, bg, size, mask);
+                auto const effectiveMask =
+                    (mask == OmniPainter::NoMask && !hasBackdrop(bg) && hasOpaqueCorners(*result))
+                        ? OmniPainter::RoundedRectangleMask
+                        : mask;
+                applyPostTransforms(img, fg, bg, size, effectiveMask);
                 promise->addResult(std::move(img));
               } else {
                 promise->addResult(QImage{});
