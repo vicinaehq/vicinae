@@ -90,6 +90,11 @@
     ];
   };
 
+  cpp-pinyin-src = fetchurl {
+    url = "https://codeload.github.com/wolfgitpr/cpp-pinyin/tar.gz/4a76acccee32290fadf319ff01682a07db12683d";
+    hash = "sha256-wa9ozYgau3CufJAA1UagVojltr3NH4BO4JO+d3573rM=";
+  };
+
   # Pinned like cmake/MediaRemoteAdapter.cmake. Upstream forces a universal build and ad-hoc
   # signs in a post-build step; nix builds per system and signs during fixup.
   mediaremote-adapter-src = applyPatches {
@@ -145,6 +150,7 @@ in
         "USE_SYSTEM_KF6" = "ON";
         "USE_SYSTEM_QT_KEYCHAIN" = "ON";
         "FETCHCONTENT_SOURCE_DIR_JKQTMATHTEXT" = "${jkqtmathtext-src}";
+        "CPP_PINYIN_URL" = "file://${cpp-pinyin-src}";
         "CMAKE_INSTALL_PREFIX" = placeholder "out";
         "CMAKE_INSTALL_DATAROOTDIR" = "share";
         "CMAKE_INSTALL_BINDIR" = "bin";
@@ -223,6 +229,7 @@ in
         install -Dm644 Info.plist "$app/Contents/Info.plist"
         install -Dm644 ../extra/vicinae.icns "$app/Contents/Resources/vicinae.icns"
         cp -r ../extra/themes "$app/Contents/Resources/themes"
+        cp -r Resources/pinyin "$app/Contents/Resources/pinyin"
         install -Dm755 ${mediaremote-adapter-src}/bin/mediaremote-adapter.pl "$app/Contents/Resources/mediaremote-adapter.pl"
         install -d "$app/Contents/Frameworks"
         cp -R _deps/mediaremoteadapter-build/MediaRemoteAdapter.framework "$app/Contents/Frameworks/"

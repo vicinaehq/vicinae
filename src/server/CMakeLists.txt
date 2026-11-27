@@ -4,6 +4,21 @@ set(LIBS)
 set(TARGET vicinae-server)
 
 find_package(Qt6 REQUIRED COMPONENTS Core Network Svg Concurrent Quick Qml GuiPrivate QuickDialogs2 QuickControls2 ShaderTools LinguistTools Multimedia)
+set(CPP_PINYIN_URL "https://codeload.github.com/wolfgitpr/cpp-pinyin/tar.gz/4a76acccee32290fadf319ff01682a07db12683d"
+	CACHE STRING "Source archive for cpp-pinyin2")
+
+function(import_cpp_pinyin)
+	set(BUILD_SHARED_LIBS OFF)
+	set(CMAKE_AUTOMOC OFF)
+	set(CPP_PINYIN2_EMBED_DICTS OFF CACHE INTERNAL "Use the packaged pinyin dictionary")
+	FetchContent_Declare(cpp-pinyin2
+		URL "${CPP_PINYIN_URL}"
+		URL_HASH SHA256=c1af68cd881abb70ae7c9000d546a05688e5b6bdcd1f804ee093be777e7bdeb3
+	)
+	FetchContent_MakeAvailable(cpp-pinyin2)
+endfunction()
+
+import_cpp_pinyin()
 
 if (USE_SYSTEM_KF6)
 	find_package(KF6SyntaxHighlighting REQUIRED)
@@ -39,6 +54,7 @@ list(APPEND LIBS
 	vicinae::crypto
 	sqlcipher
 	numen::numen
+	cpp-pinyin2::cpp-pinyin2
 )
 
 function(vicinae_fetch_inference_engines)
@@ -206,6 +222,7 @@ set(SRCS
 	src/root-search/ai-commands/ai-command-root-provider.cpp
 	src/root-search/apps/app-root-provider.hpp
 	src/root-search/apps/app-root-provider.cpp
+	src/root-search/apps/app-pinyin-keywords.cpp
 
 	src/extension/manager/extension-manager.hpp
 	src/extension/manager/extension-manager.cpp
@@ -1758,6 +1775,36 @@ qt_add_resources(${TARGET} math_licenses
 	FILES "${MATHTEXT_SOURCE_DIR}/LICENSE" "${MATHTEXT_SOURCE_DIR}/lib/jkqtmathtext/resources/xits/OFL.txt"
 )
 
+FetchContent_GetProperties(cpp-pinyin2 SOURCE_DIR CPP_PINYIN_SOURCE_DIR)
+set(PINYIN_MANDARIN_DIR "${CPP_PINYIN_SOURCE_DIR}/data/dialects/mandarin")
+if (APPLE)
+	set(PINYIN_DIR_REL "../Resources/pinyin")
+	file(COPY "${PINYIN_MANDARIN_DIR}" DESTINATION "${CMAKE_BINARY_DIR}/Resources/pinyin")
+elseif (WIN32)
+	file(RELATIVE_PATH PINYIN_DIR_REL "${CMAKE_INSTALL_FULL_BINDIR}" "${CMAKE_INSTALL_PREFIX}/pinyin")
+	add_custom_command(TARGET ${TARGET} POST_BUILD
+		COMMAND ${CMAKE_COMMAND} -E copy_directory "${PINYIN_MANDARIN_DIR}"
+			"$<TARGET_FILE_DIR:${TARGET}>/${PINYIN_DIR_REL}/mandarin"
+		VERBATIM
+	)
+	install(DIRECTORY "${PINYIN_MANDARIN_DIR}" DESTINATION pinyin)
+else()
+	file(RELATIVE_PATH PINYIN_DIR_REL
+		"${CMAKE_INSTALL_FULL_LIBEXECDIR}/vicinae" "${CMAKE_INSTALL_FULL_DATADIR}/vicinae/pinyin")
+	file(COPY "${PINYIN_MANDARIN_DIR}" DESTINATION "${CMAKE_BINARY_DIR}/share/vicinae/pinyin")
+	install(DIRECTORY "${PINYIN_MANDARIN_DIR}" DESTINATION "${CMAKE_INSTALL_DATADIR}/vicinae/pinyin")
+endif()
+set_source_files_properties(src/root-search/apps/app-pinyin-keywords.cpp
+	PROPERTIES COMPILE_DEFINITIONS "VICINAE_PINYIN_DIR_REL=\"${PINYIN_DIR_REL}\"")
+
+set_source_files_properties("${CPP_PINYIN_SOURCE_DIR}/LICENSE" PROPERTIES QT_RESOURCE_ALIAS "CppPinyin.txt")
+set_source_files_properties("${PINYIN_MANDARIN_DIR}/License.txt"
+	PROPERTIES QT_RESOURCE_ALIAS "CppPinyinMandarinDictionary.txt")
+qt_add_resources(${TARGET} pinyin_licenses
+	PREFIX "/licenses"
+	FILES "${CPP_PINYIN_SOURCE_DIR}/LICENSE" "${PINYIN_MANDARIN_DIR}/License.txt"
+)
+
 if (APPLE)
 	add_dependencies(${TARGET} MediaRemoteAdapter)
 	FetchContent_GetProperties(mediaremoteadapter SOURCE_DIR MEDIAREMOTE_ADAPTER_SOURCE_DIR)
@@ -1853,12 +1900,14 @@ if (BUILD_TESTS AND UNIX AND NOT APPLE)
 		src/services/audio-control/pactl/pactl-audio-control.cpp
 		src/services/clipboard/clipboard-mime.cpp
 		src/services/extension-registry/extension-manifest.cpp
+		src/root-search/apps/app-pinyin-keywords.cpp
 		src/utils/utils.cpp
 		tests/pactl-audio-control.cpp
 		tests/clipboard-mime.cpp
 		tests/extension-manifest.cpp
+		tests/app-pinyin-keywords.cpp
 	)
-	target_link_libraries(${TEST_TARGET} PRIVATE vicinae::common Qt6::Concurrent glaze::glaze)
+	target_link_libraries(${TEST_TARGET} PRIVATE vicinae::common vicinae::fuzzy Qt6::Concurrent glaze::glaze cpp-pinyin2::cpp-pinyin2)
 	target_link_libraries(${TEST_TARGET} PRIVATE Catch2::Catch2WithMain Qt6::Core Qt6::Gui)
 	target_compile_features(${TEST_TARGET} PUBLIC cxx_std_23)
 endif()
