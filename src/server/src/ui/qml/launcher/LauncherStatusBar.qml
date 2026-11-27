@@ -10,6 +10,7 @@ Item {
     required property int windowHeight
     required property int windowWidth
     required property int inset
+    property bool dividerVisible: true
     readonly property alias popupAnchor: footer
     implicitHeight: 41 + root.inset
     clip: true
@@ -55,6 +56,7 @@ Item {
     }
 
     ViciDivider {
+        visible: root.dividerVisible
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
