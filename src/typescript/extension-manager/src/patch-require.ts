@@ -10,15 +10,15 @@ const injectJsxGlobals = () => {
 
 	const safeJsx =
 		(original: typeof jsx) =>
-		(type: React.ElementType, props: any, ...rest: unknown[]) => {
-			props ??= {};
-			const classic =
-				rest.length > 1 ||
-				(rest.length === 1 && !isKey(rest[0])) ||
-				"key" in props;
-			if (classic) return createElement(type, props, ...rest);
-			return original(type, props, rest[0] as React.Key);
-		};
+			(type: React.ElementType, props: any, ...rest: unknown[]) => {
+				props ??= {};
+				const classic =
+					rest.length > 1 ||
+					(rest.length === 1 && !isKey(rest[0])) ||
+					"key" in props;
+				if (classic) return createElement(type, props, ...rest);
+				return original(type, props, rest[0] as React.Key);
+			};
 
 	(globalThis as any)._jsx = safeJsx(jsx);
 	(globalThis as any)._jsxs = safeJsx(jsxs);
@@ -28,8 +28,7 @@ const injectJsxGlobals = () => {
 export const patchRequire = (env: EnvironmentType) => {
 	// we do not want NODE_ENV to be set in the extension worker as it will get inherited by
 	// child processes which may yield to a lot of unexpected behaviour.
-	// We tried many things: the method below has been the most reliable so far.
-	process.env.NODE_ENV = env;
+	process.env.NODE_ENV = env; // we need this in order to load the right React bundle
 	const reconciler = require("react-reconciler");
 	const react = require("react");
 	const jsxRuntime = require("react/jsx-runtime");
@@ -63,7 +62,7 @@ export const patchRequire = (env: EnvironmentType) => {
 	injectJsxGlobals();
 
 	// @ts-ignore
-	Module.prototype.require = function (id: string) {
+	Module.prototype.require = function(id: string) {
 		return requireOverrides[id]?.() ?? originalRequire.call(this, id);
 	};
 };

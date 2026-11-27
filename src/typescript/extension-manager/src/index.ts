@@ -134,7 +134,7 @@ class ExtensionManager extends manager.ManagerService {
 			logger.error(`worker error: ${error}`);
 		});
 
-		worker.on("online", () => {});
+		worker.on("online", () => { });
 
 		const stdoutStream = fs.createWriteStream(stdoutLog);
 		const stderrStream = fs.createWriteStream(stderrLog);
@@ -247,6 +247,7 @@ class ExtensionManager extends manager.ManagerService {
 			},
 			env: {
 				...process.env,
+				NODE_ENV: environment,
 			},
 		});
 	}
