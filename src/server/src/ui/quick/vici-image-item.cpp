@@ -1,4 +1,5 @@
 #include "ui/quick/vici-image-item.hpp"
+#include "favicon/favicon-service.hpp"
 #include "theme/theme.hpp"
 #include "ui/image/image-stream.hpp"
 #include <QGuiApplication>
@@ -12,6 +13,11 @@ ViciImageItem::ViciImageItem(QQuickItem *parent) : QQuickItem(parent) {
   connect(&ThemeService::instance(), &ThemeService::themeChanged, this, [this]() {
     if (m_resolvedUrl.isThemeSensitive()) reload();
   });
+  if (FaviconService::isInitialized()) {
+    connect(FaviconService::instance(), &FaviconService::serviceChanged, this, [this]() {
+      if (m_resolvedUrl.imageUrl().type() == ImageURLType::Favicon) reload();
+    });
+  }
 }
 
 ViciImageItem::~ViciImageItem() { delete m_pendingTexture; }

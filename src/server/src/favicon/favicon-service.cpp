@@ -28,6 +28,22 @@ FaviconService *FaviconService::instance() {
   return _instance;
 }
 
+QString FaviconService::serviceIdFor(RequesterType type) {
+  if (auto it = std::ranges::find_if(faviconProviders, [&](const auto &item) { return item.type == type; });
+      it != faviconProviders.end()) {
+    return it->id;
+  }
+  return QStringLiteral("none");
+}
+
+QString FaviconService::cacheKey(const QString &providerId, const QString &domain) {
+  return providerId + QLatin1Char('/') + domain;
+}
+
+QString FaviconService::serviceId() const { return serviceIdFor(_requesterType); }
+
+QString FaviconService::currentServiceId() { return _instance ? _instance->serviceId() : serviceIdFor(None); }
+
 void FaviconService::setService(const QString &id) {
   if (auto it = std::ranges::find_if(faviconProviders, [&](auto &&item) { return item.id == id; });
       it != faviconProviders.end()) {
@@ -38,11 +54,23 @@ void FaviconService::setService(const QString &id) {
   qCritical() << "no favicon provider for id" << id;
 }
 
-void FaviconService::setService(RequesterType type) { _requesterType = type; }
+void FaviconService::setService(RequesterType type) {
+  if (_requesterType == type) return;
+  _requesterType = type;
+  emit serviceChanged();
+}
 
 QFuture<FaviconService::FaviconResponse> FaviconService::makeRequest(const QString &domain, QObject *parent) {
-  if (const auto *image = _cache.object(domain))
-    return QtFuture::makeReadyValueFuture(FaviconResponse(*image));
+  if (_requesterType == None)
+    return QtFuture::makeReadyValueFuture(FaviconResponse(std::unexpected("Favicon fetching is disabled")));
+
+  if (domain.isEmpty())
+    return QtFuture::makeReadyValueFuture(FaviconResponse(std::unexpected("Empty domain")));
+
+  const RequesterType type = _requesterType;
+  const QString key = cacheKey(serviceIdFor(type), domain);
+
+  if (const auto *image = _cache.object(key)) return QtFuture::makeReadyValueFuture(FaviconResponse(*image));
 
   // a QFuture supports a single continuation, so concurrent callers each get their own promise
   auto promise = std::make_shared<QPromise<FaviconResponse>>();
@@ -50,29 +78,29 @@ QFuture<FaviconService::FaviconResponse> FaviconService::makeRequest(const QStri
 
   promise->start();
 
-  auto [it, inserted] = _pending.try_emplace(domain);
+  auto [it, inserted] = _pending.try_emplace(key);
   it->second.emplace_back(std::move(promise));
 
   if (!inserted) return future;
 
-  QtConcurrent::run([path = _dataDir.filePath(domain)]() {
+  QtConcurrent::run([path = _dataDir.filePath(key)]() {
     return QImage(path);
-  }).then(this, [this, domain, parent](QImage image) {
+  }).then(this, [this, type, domain, key, parent](QImage image) {
     if (image.isNull()) {
-      fetch(domain, parent);
+      fetch(type, key, domain, parent);
       return;
     }
-    touch(domain);
-    resolve(domain, std::move(image));
+    touch(key);
+    resolve(key, std::move(image));
   });
 
   return future;
 }
 
-void FaviconService::resolve(const QString &domain, const FaviconResponse &response) {
-  if (response) _cache.insert(domain, new QImage(*response));
+void FaviconService::resolve(const QString &key, const FaviconResponse &response) {
+  if (response) _cache.insert(key, new QImage(*response));
 
-  auto node = _pending.extract(domain);
+  auto node = _pending.extract(key);
 
   if (node.empty()) return;
 
@@ -82,10 +110,10 @@ void FaviconService::resolve(const QString &domain, const FaviconResponse &respo
   }
 }
 
-void FaviconService::fetch(const QString &domain, QObject *parent) {
+void FaviconService::fetch(RequesterType type, const QString &key, const QString &domain, QObject *parent) {
   AbstractFaviconRequest *requester = nullptr;
 
-  switch (_requesterType) {
+  switch (type) {
   case Google:
     requester = new GoogleFaviconRequester(domain, parent);
     break;
@@ -93,47 +121,46 @@ void FaviconService::fetch(const QString &domain, QObject *parent) {
     requester = new TwentyFaviconRequester(domain, parent);
     break;
   case None:
-    resolve(domain, std::unexpected("Favicon fetching is disabled"));
+    resolve(key, std::unexpected("Favicon fetching is disabled"));
     return;
   default:
     requester = new DummyFaviconRequest(domain, parent);
   }
 
-  connect(requester, &AbstractFaviconRequest::finished, this,
-          [this, requester, domain](const QByteArray &data) {
-            requester->deleteLater();
-            QtConcurrent::run([data]() {
-              return QImage::fromData(data);
-            }).then(this, [this, domain](QImage image) {
-              if (image.isNull()) {
-                resolve(domain, std::unexpected("Invalid favicon data"));
-                return;
-              }
-              store(domain, image);
-              resolve(domain, std::move(image));
-            });
-          });
-
-  connect(requester, &AbstractFaviconRequest::failed, this, [this, requester, domain]() {
+  connect(requester, &AbstractFaviconRequest::finished, this, [this, requester, key](const QByteArray &data) {
     requester->deleteLater();
-    resolve(domain, std::unexpected("Failed to fetch favicon"));
+    QtConcurrent::run([data]() { return QImage::fromData(data); }).then(this, [this, key](QImage image) {
+      if (image.isNull()) {
+        resolve(key, std::unexpected("Invalid favicon data"));
+        return;
+      }
+      store(key, image);
+      resolve(key, std::move(image));
+    });
+  });
+
+  connect(requester, &AbstractFaviconRequest::failed, this, [this, requester, key]() {
+    requester->deleteLater();
+    resolve(key, std::unexpected("Failed to fetch favicon"));
   });
 
   requester->start();
 }
 
-void FaviconService::store(const QString &domain, const QImage &favicon) {
-  _ioPool.start([this, domain, favicon, path = _dataDir.filePath(domain)]() {
+void FaviconService::store(const QString &key, const QImage &favicon) {
+  _ioPool.start([this, key, favicon, path = _dataDir.filePath(key)]() {
+    QFileInfo(path).dir().mkpath(QStringLiteral("."));
+
     if (!favicon.save(path, "PNG")) {
       qWarning() << "Failed to save favicon on disk";
       return;
     }
 
     auto stmt = _db.prepare(R"(
-      INSERT INTO favicon (id, created_at, size)
+      INSERT OR REPLACE INTO favicon (id, created_at, size)
       VALUES (:id, :epoch, :size)
     )");
-    stmt.bind(":id", domain);
+    stmt.bind(":id", key);
     stmt.bind(":epoch", static_cast<int64_t>(QDateTime::currentSecsSinceEpoch()));
     stmt.bind(":size", favicon.width());
 
@@ -141,10 +168,10 @@ void FaviconService::store(const QString &domain, const QImage &favicon) {
   });
 }
 
-void FaviconService::touch(const QString &domain) {
-  _ioPool.start([this, domain]() {
+void FaviconService::touch(const QString &key) {
+  _ioPool.start([this, key]() {
     auto stmt = _db.prepare("UPDATE favicon SET last_used_at = :epoch WHERE id = :domain;");
-    stmt.bind(":domain", domain);
+    stmt.bind(":domain", key);
     stmt.bind(":epoch", static_cast<int64_t>(QDateTime::currentSecsSinceEpoch()));
 
     if (!stmt.exec()) {

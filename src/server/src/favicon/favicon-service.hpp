@@ -17,6 +17,12 @@
 #include <unordered_map>
 
 class FaviconService : public QObject {
+  Q_OBJECT
+
+signals:
+  void serviceChanged();
+
+private:
   static constexpr int MEMORY_CACHE_SIZE = 256;
 
 public:
@@ -41,16 +47,22 @@ private:
   // single thread: every database access and disk write after construction goes through it
   QThreadPool _ioPool;
 
-  void fetch(const QString &domain, QObject *parent);
-  void resolve(const QString &domain, const FaviconResponse &response);
-  void store(const QString &domain, const QImage &favicon);
-  void touch(const QString &domain);
+  static QString serviceIdFor(RequesterType type);
+  static QString cacheKey(const QString &providerId, const QString &domain);
+
+  void fetch(RequesterType type, const QString &key, const QString &domain, QObject *parent);
+  void resolve(const QString &key, const FaviconResponse &response);
+  void store(const QString &key, const QImage &favicon);
+  void touch(const QString &key);
 
 public:
   static std::vector<FaviconServiceData> providers();
   static void initialize(FaviconService *service) { _instance = service; }
+  static bool isInitialized() { return _instance != nullptr; }
   static FaviconService *instance();
+  static QString currentServiceId();
 
+  QString serviceId() const;
   void setService(RequesterType type);
   void setService(const QString &id);
 
