@@ -22,6 +22,7 @@ type NoTimeout = number;
 const ctx: HostContext = {};
 const TEXT_TAG = "#text";
 let frameGen = 0;
+let hasTextNodes = false;
 
 const isText = (node: unknown): boolean =>
 	(node as Instance | null | undefined)?.$t === TEXT_TAG;
@@ -29,7 +30,7 @@ const isText = (node: unknown): boolean =>
 const initMeta = (
 	instance: Instance,
 	dirty: boolean,
-	handlers: Set<string>,
+	handlers: Map<string, string>,
 ) => {
 	Object.defineProperties(instance, {
 		_dirtyGen: { value: dirty ? frameGen : -1, writable: true },
@@ -38,9 +39,42 @@ const initMeta = (
 	});
 };
 
-const releaseHandler = (instance: Instance, id: string) => {
-	callbackManager.deferRemoval(id);
-	instance._handlers.delete(id);
+const releaseHandler = (instance: Instance, prop: string) => {
+	callbackManager.deferRemoval(instance._handlers.get(prop));
+	instance._handlers.delete(prop);
+};
+
+const isPlain = (proto: unknown) =>
+	proto === Object.prototype || proto === null;
+
+/**
+ * Whether two prop values serialize to the same thing. Components rebuild objects such as
+ * icons and accessories on every render, so identity alone would flag every node as changed.
+ * Anything that is not a plain object or array is only ever equal to itself.
+ */
+const isWireEqual = (a: unknown, b: unknown): boolean => {
+	if (a === b) return true;
+	if (typeof a !== "object" || typeof b !== "object" || !a || !b) return false;
+
+	if (Array.isArray(a)) {
+		if (!Array.isArray(b) || a.length !== b.length) return false;
+		return a.every((value, idx) => isWireEqual(value, b[idx]));
+	}
+
+	if (!isPlain(Object.getPrototypeOf(a)) || !isPlain(Object.getPrototypeOf(b)))
+		return false;
+
+	const keys = Object.keys(a);
+	if (keys.length !== Object.keys(b).length) return false;
+
+	return keys.every(
+		(key) =>
+			key in b &&
+			isWireEqual(
+				(a as Record<string, unknown>)[key],
+				(b as Record<string, unknown>)[key],
+			),
+	);
 };
 
 const emitDirty = (instance?: Instance) => {
@@ -65,7 +99,7 @@ function traceWrap(hostConfig: any) {
 }
 
 const detachInstance = (instance: Instance) => {
-	for (const handler of instance._handlers)
+	for (const handler of instance._handlers.values())
 		callbackManager.deferRemoval(handler);
 	if (instance.children) {
 		for (const child of instance.children) detachInstance(child);
@@ -97,7 +131,7 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 
 		createInstance(type, props, root, ctx, handle): Instance {
 			const { children, key, ...rest } = props;
-			const handlers = new Set<string>();
+			const handlers = new Map<string, string>();
 			const instance: Instance = { $t: type };
 
 			for (const [k, v] of Object.entries(rest)) {
@@ -108,7 +142,7 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 				if (typeof v === "function") {
 					const { id } = callbackManager.subscribe(v);
 					instance[k] = id;
-					handlers.add(id);
+					handlers.set(k, id);
 				} else {
 					instance[k] = v;
 				}
@@ -120,7 +154,8 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 
 		createTextInstance(text: string) {
 			const instance: TextInstance = { $t: TEXT_TAG, text };
-			initMeta(instance, true, new Set());
+			initMeta(instance, true, new Map());
+			hasTextNodes = true;
 			return instance;
 		},
 
@@ -241,18 +276,18 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 			newText: string,
 		) {
 			textInstance.text = newText;
-			emitDirty(textInstance);
 		},
 		commitMount() {},
 
 		commitUpdate(instance: Instance, type, prevProps, nextProps, handle) {
+			let changed = false;
+
 			for (const key of Object.keys(instance)) {
 				if (key === "$t" || key === "children") continue;
 				if (!(key in nextProps)) {
-					const old = instance[key];
-					if (typeof old === "string" && instance._handlers.has(old))
-						releaseHandler(instance, old);
+					if (instance._handlers.has(key)) releaseHandler(instance, key);
 					delete instance[key];
+					changed = true;
 				}
 			}
 
@@ -260,26 +295,28 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 				if (k === "children" || k === "key") continue;
 				if (React.isValidElement(v)) continue;
 
-				const old = instance[k];
-				const oldIsHandler =
-					typeof old === "string" && instance._handlers.has(old);
+				const handlerId = instance._handlers.get(k);
 
 				if (typeof v === "function") {
-					if (oldIsHandler) {
-						callbackManager.setHandler(old, v);
+					if (handlerId) {
+						callbackManager.setHandler(handlerId, v);
 						continue;
 					}
 					const { id } = callbackManager.subscribe(v);
-					instance._handlers.add(id);
+					instance._handlers.set(k, id);
 					instance[k] = id;
+					changed = true;
 					continue;
 				}
 
-				if (oldIsHandler) releaseHandler(instance, old);
+				if (handlerId) releaseHandler(instance, k);
+				else if (isWireEqual(instance[k], v)) continue;
+
 				instance[k] = v;
+				changed = true;
 			}
 
-			emitDirty(instance);
+			if (changed) emitDirty(instance);
 		},
 
 		replaceContainerChildren() {},
@@ -353,12 +390,13 @@ const stripTextNodes = (key: string, value: unknown) =>
 		? value.filter((node) => !isText(node))
 		: value;
 
+// a replacer makes serialization about three times slower, most trees have no text node
 export const serializeViews = (views: ViewData[]) =>
-	JSON.stringify({ views }, stripTextNodes);
+	JSON.stringify({ views }, hasTextNodes ? stripTextNodes : undefined);
 
 export const createRenderer = (config: RendererConfig) => {
 	const container: Container = { $t: "root", children: [] };
-	initMeta(container, true, new Set());
+	initMeta(container, true, new Map());
 
 	let root: OpaqueRoot | undefined;
 	let debounce: NodeJS.Timer | null = null;
@@ -369,6 +407,8 @@ export const createRenderer = (config: RendererConfig) => {
 		if (!debounce) {
 			debounce = setTimeout(() => {
 				debounce = null;
+
+				if (container._dirtyGen !== frameGen) return;
 
 				//const start = performance.now();
 

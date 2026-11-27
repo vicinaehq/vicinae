@@ -1,5 +1,4 @@
-import { randomUUID } from "node:crypto";
-import React, { type ReactNode, useRef } from "react";
+import React, { type ReactNode, useId } from "react";
 import { type Image, serializeProtoImage } from "../image";
 import type { Keyboard } from "../keyboard";
 import type { ValueOf } from "../lib/types";
@@ -37,14 +36,11 @@ export namespace ActionPanel {
 }
 
 const ActionPanelRoot: React.FC<ActionPanel.Props> = (props) => {
-	const stableIdRef = useRef<string | undefined>(undefined);
-	if (!stableIdRef.current) {
-		stableIdRef.current = randomUUID();
-	}
+	const stableId = useId();
 
 	const nativeProps: React.JSX.IntrinsicElements["action-panel"] = {
 		...props,
-		stableId: stableIdRef.current,
+		stableId,
 	};
 
 	return <action-panel {...nativeProps} />;
@@ -69,18 +65,11 @@ const ActionPannelSubmenu: React.FC<ActionPanel.Submenu.Props> = ({
 	icon,
 	...props
 }) => {
-	const stableIdRef = useRef<string | undefined>(undefined);
-	if (!stableIdRef.current) {
-		stableIdRef.current = randomUUID();
-	}
+	const stableId = useId();
 
 	const serializedIcon = icon ? serializeProtoImage(icon) : icon;
 	return (
-		<action-panel-submenu
-			{...props}
-			icon={serializedIcon}
-			stableId={stableIdRef.current}
-		>
+		<action-panel-submenu {...props} icon={serializedIcon} stableId={stableId}>
 			{children}
 		</action-panel-submenu>
 	);

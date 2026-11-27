@@ -1,5 +1,3 @@
-import { randomBytes } from "node:crypto";
-
 export type CallbackHandler = (...args: any[]) => void;
 
 class CallbackManager {
@@ -51,9 +49,10 @@ class CallbackManager {
 	}
 
 	private generateHandlerId() {
-		return `handler-${randomBytes(16).toString("hex")}`;
+		return `h${(this.nextHandlerId++).toString(36)}`;
 	}
 
+	private nextHandlerId = 0;
 	private readonly handlers = new Map<string, CallbackHandler>();
 	private pendingCleanup = new Set<string>();
 	private previousCleanup = new Set<string>();
