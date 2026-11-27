@@ -1,5 +1,8 @@
+#include <QCoreApplication>
 #include <QtLogging>
+#include <algorithm>
 #include <atomic>
+#include <chrono>
 #include <future>
 #include <windows.h>
 #include "services/global-shortcuts/windows-global-shortcut-backend.hpp"
@@ -9,6 +12,7 @@ namespace {
 constexpr ULONG_PTR VICINAE_INJECT_TAG = 0x7669636e;
 constexpr UINT START_MENU_SUPPRESS_VK = 0xFF;
 constexpr UINT CHORD_BROKEN = ~0u;
+constexpr std::chrono::milliseconds HOTKEY_RELEASE_POLL_INTERVAL{20};
 
 constexpr std::pair<Qt::Key, UINT> KEY_TABLE[] = {
     {Qt::Key_Space, VK_SPACE},       {Qt::Key_Return, VK_RETURN},
@@ -149,7 +153,8 @@ bool isForegroundOurs() {
 // under some circumstances.
 // Typically, switching virtual workspaces and then immediately pressing the registered hotkey
 // won't work until another shell action is performed (opening a new window, pressing Win+Tab again...)
-// The hook works in all cases so we rely on that instead
+// The hook does not have that problem, so it activates shortcuts whenever it can see the keys.
+// It sees nothing while an elevated window has focus, which WM_HOTKEY covers.
 LRESULT CALLBACK keyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam) {
   if (nCode == HC_ACTION) {
     const auto *k = reinterpret_cast<KBDLLHOOKSTRUCT *>(lParam);
@@ -211,6 +216,10 @@ bool WindowsGlobalShortcutBackend::start() {
     return false;
   }
 
+  m_hotkeyReleasePoll.setInterval(HOTKEY_RELEASE_POLL_INTERVAL);
+  connect(&m_hotkeyReleasePoll, &QTimer::timeout, this, &WindowsGlobalShortcutBackend::pollHotkeyReleases);
+  QCoreApplication::instance()->installNativeEventFilter(this);
+
   m_started = true;
   emit ready();
   return true;
@@ -249,10 +258,12 @@ bool WindowsGlobalShortcutBackend::dispatchKey(unsigned int vk, unsigned int mod
       // eat the key up of an eaten key down: some apps act on release (e.g. a
       // focused browser button activates on space key up)
       if (target.down) {
-        eaten = true;
+        // the system saw the key down of a WM_HOTKEY press, so it must see the key up too
+        if (!target.hotkeyActivated) { eaten = true; }
         release(target.id);
       }
       target.down = false;
+      target.hotkeyActivated = false;
       continue;
     }
     if (mods == target.mods) {
@@ -286,6 +297,51 @@ bool WindowsGlobalShortcutBackend::dispatchModifier(unsigned int mods, bool down
   return false;
 }
 
+// The hook sees nothing while an elevated window has focus. But the system still posts
+// WM_HOTKEY for registered shortcuts in that case, and never when the hook ate the key.
+bool WindowsGlobalShortcutBackend::nativeEventFilter(const QByteArray &, void *message, qintptr *) {
+  const auto *msg = static_cast<const MSG *>(message);
+  if (msg->message != WM_HOTKEY || msg->hwnd) { return false; }
+  return handleHotkey(static_cast<int>(msg->wParam));
+}
+
+bool WindowsGlobalShortcutBackend::handleHotkey(int regId) {
+  std::scoped_lock lock(m_targetsMutex);
+
+  // should never receive a registration ID of 0
+  if (regId == 0) { return false; }
+
+  auto it = std::ranges::find(m_targets, regId, &HookTarget::regId);
+  if (it == m_targets.end()) { return false; }
+
+  // registrations do not repeat, so a target that is still down missed its key up
+  if (it->down) { release(it->id); }
+  it->down = true;
+  it->hotkeyActivated = true;
+  activate(it->id);
+  m_hotkeyReleasePoll.start();
+  return true;
+}
+
+// WM_HOTKEY has no key up counterpart, and the hook only sees the key up if focus moved
+// to a window it can observe in the meantime.
+void WindowsGlobalShortcutBackend::pollHotkeyReleases() {
+  std::scoped_lock lock(m_targetsMutex);
+
+  bool pending = false;
+  for (auto &target : m_targets) {
+    if (!target.hotkeyActivated) { continue; }
+    if (target.down && GetAsyncKeyState(static_cast<int>(target.vk)) < 0) {
+      pending = true;
+      continue;
+    }
+    if (target.down) { release(target.id); }
+    target.down = false;
+    target.hotkeyActivated = false;
+  }
+  if (!pending) { m_hotkeyReleasePoll.stop(); }
+}
+
 void WindowsGlobalShortcutBackend::setCapturing(bool capturing) {
   std::scoped_lock lock(m_targetsMutex);
   m_capturing = capturing;
@@ -317,8 +373,9 @@ WindowsGlobalShortcutBackend::bindShortcut(const GlobalShortcutRequest &request)
 
   const int regId = m_nextRegistrationId++;
 
-  // The hook activates shortcuts; the registration only keeps other apps from claiming the combo.
-  const bool registered = RegisterHotKey(nullptr, regId, mods, *vk);
+  // The hook activates shortcuts. The registration keeps other apps from claiming the combo
+  // and covers the cases where the hook is blind, see nativeEventFilter.
+  const bool registered = RegisterHotKey(nullptr, regId, mods | MOD_NOREPEAT, *vk);
 
   std::scoped_lock lock(m_targetsMutex);
   m_targets.push_back({*vk, mods, registered ? regId : 0, request.id, false});
