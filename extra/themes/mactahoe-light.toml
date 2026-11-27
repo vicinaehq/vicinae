@@ -1,0 +1,84 @@
+# Vicinae theme matching MacTahoe light: macOS Tahoe's Spotlight palette.
+# Colours follow Apple's light system colours (systemBlue, label, secondaryLabel,
+# separator) so the launcher reads like the rest of the desktop.
+
+[meta]
+name = "MacTahoe Light"
+description = "macOS Tahoe Spotlight palette for the MacTahoe theme"
+variant = "light"
+inherits = "vicinae-light"
+icon = "icons/mactahoe.svg"
+
+[colors.accents]
+blue = "#007aff"
+green = "#34c759"
+magenta = "#ff2d55"
+orange = "#ff9500"
+red = "#ff3b30"
+yellow = "#ffcc00"
+cyan = "#32ade6"
+purple = "#af52de"
+
+[colors.core]
+accent = "colors.accents.blue"
+accent_foreground = "#ffffff"
+background = "#f6f6f8"
+foreground = "#1d1d1f"
+secondary_background = "#ececf0"
+border = "#d2d2d7"
+
+[colors.main_window]
+border = "#c7c7cc"
+footer = { background = "#f6f6f8" }
+
+[colors.settings_window]
+border = "#c7c7cc"
+
+[colors.shortcut]
+border = "#c7c7cc"
+
+[colors.text]
+default = "colors.core.foreground"
+muted = "#6e6e73"
+danger = "#ff3b30"
+success = "#248a3d"
+placeholder = "#aeaeb2"
+selection = { background = "colors.core.accent", foreground = "#ffffff" }
+
+[colors.text.links]
+default = "#0066cc"
+visited = "#8944ab"
+
+[colors.input]
+border = "#00000000"
+border_focus = "#00000000"
+border_error = "#ff3b30"
+
+[colors.button.primary]
+background = "#e8e8ed"
+foreground = "#1d1d1f"
+hover = { background = "#dcdce1" }
+focus = { outline = "colors.core.accent" }
+
+[colors.list.item.hover]
+foreground = "#1d1d1f"
+secondary_foreground = "#6e6e73"
+
+# Spotlight fills the selected result with the accent colour.
+[colors.list.item.selection]
+background = "colors.core.accent"
+foreground = "#ffffff"
+secondary_background = "#ffffff"
+secondary_foreground = "#e5f1ff"
+
+[colors.grid.item]
+background = "#ececf0"
+hover = { outline = "#c7c7cc" }
+selection = { outline = "colors.core.accent" }
+
+[colors.scrollbars]
+background = "#c7c7cc"
+
+[colors.loading]
+bar = "colors.core.accent"
+spinner = "#6e6e73"
