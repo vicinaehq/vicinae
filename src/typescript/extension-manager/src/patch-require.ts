@@ -10,15 +10,15 @@ const injectJsxGlobals = () => {
 
 	const safeJsx =
 		(original: typeof jsx) =>
-			(type: React.ElementType, props: any, ...rest: unknown[]) => {
-				props ??= {};
-				const classic =
-					rest.length > 1 ||
-					(rest.length === 1 && !isKey(rest[0])) ||
-					"key" in props;
-				if (classic) return createElement(type, props, ...rest);
-				return original(type, props, rest[0] as React.Key);
-			};
+		(type: React.ElementType, props: any, ...rest: unknown[]) => {
+			props ??= {};
+			const classic =
+				rest.length > 1 ||
+				(rest.length === 1 && !isKey(rest[0])) ||
+				"key" in props;
+			if (classic) return createElement(type, props, ...rest);
+			return original(type, props, rest[0] as React.Key);
+		};
 
 	(globalThis as any)._jsx = safeJsx(jsx);
 	(globalThis as any)._jsxs = safeJsx(jsxs);
@@ -62,7 +62,7 @@ export const patchRequire = (env: EnvironmentType) => {
 	injectJsxGlobals();
 
 	// @ts-ignore
-	Module.prototype.require = function(id: string) {
+	Module.prototype.require = function (id: string) {
 		return requireOverrides[id]?.() ?? originalRequire.call(this, id);
 	};
 };
